@@ -23,15 +23,19 @@ public class PlayerListener extends org.bukkit.event.player.PlayerListener {
     
     @Override
     public void onPlayerBedEnter(PlayerBedEnterEvent event) {
+        if (event.isCancelled()) return;
+        
         Main.messageManager.log(MessageLevel.FINE, event.getPlayer().getName() + " entered bed.");
-        this.main.setAway();
+        this.main.setAwaySleeping();
     }
 
-    //TODO Remove nearby hostile mobs? player.getNearbyEntities(16, 16, 16).remove
     @Override
     public void onPlayerTeleport(PlayerTeleportEvent event) {
+        if (event.isCancelled()) return;
+        
         if (!event.getPlayer().isSleepingIgnored()) return;
         
+        Main.messageManager.log(MessageLevel.FINE, "Cancelling teleport for " + event.getPlayer().getName() + ".");
         event.setCancelled(true);
     }
     
