@@ -1,6 +1,7 @@
 package edgruberman.bukkit.simpleawaysleep;
 
 import org.bukkit.event.player.PlayerBedEnterEvent;
+import org.bukkit.event.player.PlayerBedLeaveEvent;
 import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -26,7 +27,13 @@ public class PlayerListener extends org.bukkit.event.player.PlayerListener {
         if (event.isCancelled()) return;
         
         Main.messageManager.log(MessageLevel.FINE, event.getPlayer().getName() + " entered bed.");
-        this.main.setAwaySleeping();
+        this.main.setAwayAsleep();
+    }
+    
+    @Override
+    public void onPlayerBedLeave(PlayerBedLeaveEvent event) {
+        Main.messageManager.log(MessageLevel.FINE, event.getPlayer().getName() + " left bed.");
+        if (this.main.isEveryoneUp()) this.main.setAwake();
     }
 
     @Override
