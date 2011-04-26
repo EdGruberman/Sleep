@@ -70,7 +70,7 @@ public class Main extends org.bukkit.plugin.java.JavaPlugin {
         this.lastActivity.put(player, new GregorianCalendar());
         if (player.isSleepingIgnored()) {
             player.setSleepingIgnored(false);
-            Main.messageManager.log(MessageLevel.FINE, "Set " + player.getName() + " to not ignore sleeping. (Reason: Activity)");
+            Main.messageManager.log(MessageLevel.FINE, "Set " + player.getName() + " to not ignore sleeping.");
         }
     }
     
