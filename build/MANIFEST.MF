@@ -7,7 +7,7 @@ Specification-Title: SimpleAwaySleep
 Specification-Version: 1.0
 Specification-Vendor: EdGruberman (ed@rjump.com)
 Implementation-Title: edgruberman.bukkit.simpleawaysleep
-Implementation-Version: 0b11
+Implementation-Version: 0
 Implementation-Vendor: EdGruberman (ed@rjump.com)
 Class-Path: 
 
