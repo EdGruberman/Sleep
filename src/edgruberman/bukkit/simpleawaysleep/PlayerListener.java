@@ -53,36 +53,36 @@ public class PlayerListener extends org.bukkit.event.player.PlayerListener {
     
     @Override
     public void onPlayerJoin(PlayerJoinEvent event) {
-        this.main.updateActivity(event.getPlayer());
+        this.main.updateActivity(event.getPlayer(), event.getType());
     }
     
     @Override
     public void onPlayerMove(PlayerMoveEvent event) {
-        this.main.updateActivity(event.getPlayer());
+        this.main.updateActivity(event.getPlayer(), event.getType());
     }
     
     @Override
     public void onPlayerInteract(PlayerInteractEvent event) {
-        this.main.updateActivity(event.getPlayer());
+        this.main.updateActivity(event.getPlayer(), event.getType());
     }
     
     @Override
     public void onPlayerChat(PlayerChatEvent event) {
-        this.main.updateActivity(event.getPlayer());
+        this.main.updateActivity(event.getPlayer(), event.getType());
     }
     
     @Override
     public void onPlayerDropItem(PlayerDropItemEvent event) {
-        this.main.updateActivity(event.getPlayer());
+        this.main.updateActivity(event.getPlayer(), event.getType());
     }
     
     @Override
     public void onPlayerToggleSneak(PlayerToggleSneakEvent event) {
-        this.main.updateActivity(event.getPlayer());
+        this.main.updateActivity(event.getPlayer(), event.getType());
     }
     
     @Override
     public void onItemHeldChange(PlayerItemHeldEvent event) {
-        this.main.updateActivity(event.getPlayer());
+        this.main.updateActivity(event.getPlayer(), event.getType());
     }
 }

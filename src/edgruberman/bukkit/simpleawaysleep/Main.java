@@ -87,13 +87,14 @@ public class Main extends org.bukkit.plugin.java.JavaPlugin {
     /**
      * Record current time as last activity for player.
      * 
-     * @param player Player to record last activity for.
+     * @param player Player to record this as last activity for.
+     * @param type Event Type that caused this activity update for player.
      */
-    public void updateActivity(Player player) {
+    public void updateActivity(Player player, Event.Type type) {
         this.lastActivity.put(player, new GregorianCalendar());
         if (player.isSleepingIgnored()) {
             player.setSleepingIgnored(false);
-            Main.messageManager.log(MessageLevel.FINE, "Set " + player.getName() + " to not ignore sleeping. (Reason: Activity)");
+            Main.messageManager.log(MessageLevel.FINE, "Set " + player.getName() + " to not ignore sleeping. (Reason: " + type + ")");
         }
     }
     
@@ -180,8 +181,8 @@ public class Main extends org.bukkit.plugin.java.JavaPlugin {
         for (Player player : this.getAwayPlayers()) {
             if (!player.isOnline()) continue;
 
-            // Only check during an active sleep cycle.
-            if (!player.isSleepingIgnored()) continue;
+            // Only check during an active sleep cycle which will have all away players ignoring sleep.
+            if (!player.isSleepingIgnored()) break;
             
             // Check if distance from player is within a safety radius that should not allow the spawn.
             double distance = this.distanceBetween(location, player.getLocation());
@@ -190,21 +191,6 @@ public class Main extends org.bukkit.plugin.java.JavaPlugin {
         
         return false;
     }
-    
-//    /**
-//     * Remove any entities currently targeting an away player. 
-//     */
-//    public void keepAwaySafe() {
-//        for (Player player : this.getAwayPlayers()) {
-//            if (!player.isOnline()) continue;
-//            
-//            for (Entity entity : player.getNearbyEntities(safeRadius, safeRadius, safeRadius)) {
-//                Creature creature = null;
-//                if (entity instanceof Creature) creature = (Creature) entity;
-//                if (creature != null && creature.getTarget().equals(player)) creature.remove();
-//            }
-//        }
-//    }
     
     /**
      * Long live Pythagoras!
