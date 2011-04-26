@@ -3,4 +3,5 @@ inactivityLimit: 300
 safeRadius: 3
 unsafeCreatureTypes:
     - Skeleton
+    - Spider
     - Zombie

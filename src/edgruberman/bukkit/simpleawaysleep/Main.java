@@ -23,7 +23,7 @@ public class Main extends org.bukkit.plugin.java.JavaPlugin {
     
     public static MessageManager messageManager = null;
     
-    public List<String> unsafeCreatureTypes = new ArrayList<String>(Arrays.asList("Skeleton", "Zombie"));
+    public List<String> unsafeCreatureTypes = new ArrayList<String>(Arrays.asList("Skeleton", "Spider", "Zombie"));
     
     private int inactivityLimit = -1; // Disabled by default.
     private int safeRadius      = -1; // Disabled by default.
