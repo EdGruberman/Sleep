@@ -4,10 +4,10 @@ Created-By: 19.1-b02 (Sun Microsystems Inc.)
 
 Name: edgruberman/bukkit/simpleawaysleep/
 Specification-Title: SimpleAwaySleep
-Specification-Version: 1.0
+Specification-Version: 1.1
 Specification-Vendor: EdGruberman (ed@rjump.com)
 Implementation-Title: edgruberman.bukkit.simpleawaysleep
-Implementation-Version: 0
+Implementation-Version: 0b1
 Implementation-Vendor: EdGruberman (ed@rjump.com)
 Class-Path: 
 
