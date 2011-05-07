@@ -3,3 +3,8 @@ description: Allows sleeping to occur if players are not currently active in gam
 version: %VERSION%
 author: EdGruberman (ed@rjump.com)
 main: edgruberman.bukkit.simpleawaysleep.Main
+commands:
+    sleep:
+        description: Manages sleep functionality.
+        usage: |
+            /<command> (+|-)ignore <Player> - Add/Remove ignore sleep status for <Player>.

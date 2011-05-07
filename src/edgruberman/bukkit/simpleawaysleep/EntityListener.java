@@ -16,7 +16,7 @@ public class EntityListener extends org.bukkit.event.entity.EntityListener {
     public void onCreatureSpawn(CreatureSpawnEvent event) {
         if (event.isCancelled()) return;
         
-        if (!this.main.isAwaySleepSpawn(event.getCreatureType(), event.getLocation())) return;
+        if (!this.main.isIgnoredSleepSpawn(event.getCreatureType(), event.getLocation())) return;
         
         Main.messageManager.log(MessageLevel.FINE, "Cancelling " + event.getCreatureType()
                 + " spawn in \"" + event.getLocation().getWorld().getName() + "\" at"

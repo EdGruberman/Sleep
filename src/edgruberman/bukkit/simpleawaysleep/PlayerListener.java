@@ -27,13 +27,13 @@ public class PlayerListener extends org.bukkit.event.player.PlayerListener {
         if (event.isCancelled()) return;
         
         Main.messageManager.log(MessageLevel.FINE, event.getPlayer().getName() + " entered bed in \"" + event.getPlayer().getWorld().getName() + "\".");
-        this.main.setAwayAsleep(event.getPlayer().getWorld());
+        this.main.setAsleep(event.getPlayer().getWorld());
     }
     
     @Override
     public void onPlayerBedLeave(PlayerBedLeaveEvent event) {
         Main.messageManager.log(MessageLevel.FINE, event.getPlayer().getName() + " left bed in \"" + event.getPlayer().getWorld().getName() + "\".");
-        if (this.main.isEveryoneUp(event.getPlayer().getWorld())) this.main.setAwake(event.getPlayer().getWorld());
+        if (!this.main.isAnyoneSleeping(event.getPlayer().getWorld())) this.main.setAwake(event.getPlayer().getWorld());
     }
 
     @Override
