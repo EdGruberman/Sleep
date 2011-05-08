@@ -143,11 +143,7 @@ public class Main extends org.bukkit.plugin.java.JavaPlugin {
      * @param world World to limit setting players to not ignore sleeping in.
      */
     public void setAwake(World world) {
-        for (Player player : this.getServer().getOnlinePlayers()) {
-            if (!player.isOnline()) continue;
-            
-            if (!player.getWorld().equals(world)) continue;
-            
+        for (Player player : world.getPlayers()) {
             this.setSleepingIgnored(player, false);
         }
     }
@@ -159,8 +155,8 @@ public class Main extends org.bukkit.plugin.java.JavaPlugin {
      * @return true if any player is in bed; false if at least 1 player is in bed.
      */
     public boolean isAnyoneSleeping(World world) {
-        for (Player player : this.getServer().getOnlinePlayers()) {
-            if (player.getWorld().equals(world) && player.isSleeping()) return true;
+        for (Player player : world.getPlayers()) {
+            if (player.isSleeping()) return true;
         }
         
         return false;
@@ -180,29 +176,30 @@ public class Main extends org.bukkit.plugin.java.JavaPlugin {
         Calendar oldestActive = new GregorianCalendar();
         oldestActive.add(Calendar.SECOND, -this.inactivityLimit);
         
-        synchronized (this.lastActivity) {
-            for (Player player : this.getServer().getOnlinePlayers()) {
-                if (!player.getWorld().equals(world)) continue;
+        String status = "";
+        for (Player player : world.getPlayers()) {
+            if (this.isIgnoredAlways(player.getName())) {
+                status = "Always ignores sleep.";
+                ignored.add(player);
                 
-                if (this.isIgnoredAlways(player.getName())) {
-                    Main.messageManager.log(MessageLevel.FINEST
-                            , "Player: " + player.getName()
-                                + " World: " + player.getWorld().getName()
-                                + " Always ignores sleep."
-                    );
-                    
-                    ignored.add(player);
-                    
-                } else if (this.lastActivity.get(player).before(oldestActive)) {
-                    Main.messageManager.log(MessageLevel.FINEST
-                            , "Player: " + player.getName()
-                                + " World: " + player.getWorld().getName()
-                                + " Last Activity: " + this.formatDateTime(this.lastActivity.get(player))
-                    );
-                    
-                    ignored.add(player);
-                }
+            } else if (!this.lastActivity.containsKey(player)) {
+                status = "No activity recorded yet.";
+                ignored.add(player);
+                
+            } else if (this.lastActivity.get(player).before(oldestActive)) {
+                status = "Last activity was at " + this.formatDateTime(this.lastActivity.get(player));
+                ignored.add(player);
+                
+            } else {
+                // Player not ignored, skip log entry below.
+                continue;
             }
+            
+            Main.messageManager.log(MessageLevel.FINEST
+                    , "Ignoring " + player.getName()
+                        + " in \"" + player.getWorld().getName() + "\";"
+                        + " " + status
+            );
         }
         
         return ignored;
@@ -219,12 +216,7 @@ public class Main extends org.bukkit.plugin.java.JavaPlugin {
     public boolean isIgnoredSleepSpawn(CreatureType type, Location spawningAt) {
         if (!nightmares.contains(type.getName())) return false;
         
-        for (Player player : this.getServer().getOnlinePlayers()) {
-            if (!player.isOnline()) continue;
-            
-            // Only check players in the same world as the spawn.
-            if (!player.getWorld().equals(spawningAt.getWorld())) continue;
-
+        for (Player player : spawningAt.getWorld().getPlayers()) {
             // Only check for players involved in a current sleep cycle.
             if (!player.isSleepingIgnored()) continue;
             
