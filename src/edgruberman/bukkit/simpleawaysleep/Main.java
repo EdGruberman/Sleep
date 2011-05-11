@@ -180,21 +180,19 @@ public class Main extends org.bukkit.plugin.java.JavaPlugin {
         for (Player player : world.getPlayers()) {
             if (this.isIgnoredAlways(player.getName())) {
                 status = "Always ignores sleep.";
-                ignored.add(player);
                 
             } else if (!this.lastActivity.containsKey(player)) {
                 status = "No activity recorded yet.";
-                ignored.add(player);
                 
             } else if (this.lastActivity.get(player).before(oldestActive)) {
                 status = "Last activity was at " + this.formatDateTime(this.lastActivity.get(player));
-                ignored.add(player);
                 
             } else {
-                // Player not ignored, skip log entry below.
+                // Player not ignored, skip to next player.
                 continue;
             }
             
+            ignored.add(player);
             Main.messageManager.log(MessageLevel.FINEST
                     , "Ignoring " + player.getName()
                         + " in \"" + player.getWorld().getName() + "\";"
