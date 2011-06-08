@@ -1,5 +1,6 @@
 package edgruberman.bukkit.simpleawaysleep;
 
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,7 +17,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.plugin.PluginManager;
 
-import edgruberman.bukkit.simpleawaysleep.MessageManager.MessageLevel;
+import edgruberman.bukkit.messagemanager.MessageLevel;
+import edgruberman.bukkit.messagemanager.MessageManager;
 
 public class Main extends org.bukkit.plugin.java.JavaPlugin {
     
@@ -26,9 +28,12 @@ public class Main extends org.bukkit.plugin.java.JavaPlugin {
     public static MessageManager messageManager = null;
     
     public List<String> nightmares = new ArrayList<String>(Arrays.asList("Skeleton", "Spider", "Zombie"));
+    
     private List<String> ignoredAlways = new ArrayList<String>();
-    private int inactivityLimit = -1; // Disabled by default.
-    private int safeRadius      = -1; // Disabled by default.
+    private int inactivityLimit   = -1; // Time in seconds a player must not have any recorded activity in order to be considered away.
+    private int safeRadius        = -1; // Distance in blocks as a diameter from player in which nightmares are not allowed to spawn.
+    private int minimumSleepers   = -1; // Minimum number of players needed in bed in a world for percentage to be considered.
+    private int minimumPercentage = -1; // Minimum percentage of current total players in bed in the world that will force a sleep cycle for the world.
    
     private Map<Player, Calendar> lastActivity = new HashMap<Player, Calendar>();
     
@@ -50,8 +55,15 @@ public class Main extends org.bukkit.plugin.java.JavaPlugin {
         this.nightmares = this.getConfiguration().getStringList("unsafeCreatureTypes", this.nightmares);
         Main.messageManager.log(MessageLevel.CONFIG, "Unsafe Creature Types: " + this.nightmares);
         
-        ignoredAlways = this.getConfiguration().getStringList("ignoredAlways", this.ignoredAlways);
+        this.ignoredAlways = this.getConfiguration().getStringList("ignoredAlways", this.ignoredAlways);
         Main.messageManager.log(MessageLevel.CONFIG, "Always Ignored Players: " + this.ignoredAlways);
+        
+        this.minimumSleepers = this.getConfiguration().getInt("minimumSleepers", this.minimumSleepers);
+        Main.messageManager.log(MessageLevel.CONFIG, "Minimum Sleepers: " + this.minimumSleepers);
+        
+        this.minimumPercentage = this.getConfiguration().getInt("minimumPercentage", this.minimumPercentage);
+        Main.messageManager.log(MessageLevel.CONFIG, "Minimum Percentage: " + this.minimumPercentage);
+        
         
         this.registerEvents();
         
@@ -131,8 +143,34 @@ public class Main extends org.bukkit.plugin.java.JavaPlugin {
      * 
      * @param world World to limit players to be considered sleeping to.
      */
-    public void setAsleep(World world) {
+    public void setAsleep(Player bedEnterer) {
+        World world = bedEnterer.getWorld();
+        
+        // Configure away and always ignored to be considered sleeping.
         for (Player player : this.getIgnored(world)) {
+            this.setSleepingIgnored(player, true);
+        }
+        
+        // Check if minimum number of sleepers to force sleeping for all.
+        if (this.minimumSleepers < 0) return;
+        
+        int sleepers = 1; // We start at 1 since we only call this function when someone is entering a bed, but not before they fully enter it to be considered sleeping.
+        for (Player player : world.getPlayers()) {
+            if (player.isSleeping() || player.isSleepingIgnored()) sleepers += 1;
+        }
+        if (sleepers < this.minimumSleepers) return;
+        
+        // Check if minimum percent of sleepers has been met to force sleeping for all.
+        float percentSleeping = (float) sleepers / world.getPlayers().size() * 100;
+        if (percentSleeping < this.minimumPercentage) return;
+        
+        DecimalFormat df = new DecimalFormat("#.#");
+        Main.messageManager.log(MessageLevel.FINE, "(" + sleepers + " Asleep or Ignored) / (" + world.getPlayers().size() + " Players in \"" + world.getName() + "\") = " + df.format(percentSleeping) + "%");
+        
+        // Set sleeping ignored for all remaining players.
+        for (Player player : world.getPlayers()) {
+            if (player.isSleeping() || player.isSleepingIgnored() || player.equals(bedEnterer)) continue;
+            
             this.setSleepingIgnored(player, true);
         }
     }

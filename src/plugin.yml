@@ -1,6 +1,7 @@
 name: SimpleAwaySleep
 description: Allows sleeping to occur if players are not currently active in game.
 version: %VERSION%
+depend: [MessageManager]
 author: EdGruberman (ed@rjump.com)
 main: edgruberman.bukkit.simpleawaysleep.Main
 commands:

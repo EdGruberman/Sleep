@@ -12,7 +12,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
 
-import edgruberman.bukkit.simpleawaysleep.MessageManager.MessageLevel;
+import edgruberman.bukkit.messagemanager.MessageLevel;
 
 public class PlayerListener extends org.bukkit.event.player.PlayerListener {
     
@@ -27,7 +27,7 @@ public class PlayerListener extends org.bukkit.event.player.PlayerListener {
         if (event.isCancelled()) return;
         
         Main.messageManager.log(MessageLevel.FINE, event.getPlayer().getName() + " entered bed in \"" + event.getPlayer().getWorld().getName() + "\".");
-        this.main.setAsleep(event.getPlayer().getWorld());
+        this.main.setAsleep(event.getPlayer());
     }
     
     @Override
@@ -35,7 +35,7 @@ public class PlayerListener extends org.bukkit.event.player.PlayerListener {
         Main.messageManager.log(MessageLevel.FINE, event.getPlayer().getName() + " left bed in \"" + event.getPlayer().getWorld().getName() + "\".");
         if (!this.main.isAnyoneSleeping(event.getPlayer().getWorld())) this.main.setAwake(event.getPlayer().getWorld());
     }
-
+    
     @Override
     public void onPlayerTeleport(PlayerTeleportEvent event) {
         if (event.isCancelled()) return;

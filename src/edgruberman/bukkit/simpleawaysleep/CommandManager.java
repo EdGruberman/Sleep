@@ -6,7 +6,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
-import edgruberman.bukkit.simpleawaysleep.MessageManager.MessageLevel;
+import edgruberman.bukkit.messagemanager.MessageLevel;
 
 public class CommandManager implements CommandExecutor {
     private Main plugin;

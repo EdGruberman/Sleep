@@ -2,7 +2,7 @@ package edgruberman.bukkit.simpleawaysleep;
 
 import org.bukkit.event.entity.CreatureSpawnEvent;
 
-import edgruberman.bukkit.simpleawaysleep.MessageManager.MessageLevel;
+import edgruberman.bukkit.messagemanager.MessageLevel;
 
 public class EntityListener extends org.bukkit.event.entity.EntityListener {
     
