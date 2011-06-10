@@ -31,6 +31,8 @@ public class Main extends org.bukkit.plugin.java.JavaPlugin {
     private int minimumSleepers   = -1; // Minimum number of players needed in bed in a world for percentage to be considered.
     private int minimumPercentage = -1; // Minimum percentage of current total players in bed in the world that will force a sleep cycle for the world.
     
+    private boolean forcingSleep = false;
+    
     private Map<Player, Calendar> lastActivity = new HashMap<Player, Calendar>();
     
     public void onLoad() {
@@ -111,6 +113,9 @@ public class Main extends org.bukkit.plugin.java.JavaPlugin {
         // Only need to change current ignore status if currently ignoring. 
         if (!player.isSleepingIgnored()) return;
         
+        // Do not change ignore status when forcing sleep.
+        if (this.forcingSleep) return;
+        
         // Do not change ignore status for always ignored players.
         if (this.isIgnoredAlways(player.getName())) return;
         
@@ -161,6 +166,7 @@ public class Main extends org.bukkit.plugin.java.JavaPlugin {
         Main.messageManager.log(MessageLevel.FINE, "(" + sleepers + " Asleep or Ignored) / (" + world.getPlayers().size() + " Players in \"" + world.getName() + "\") = " + df.format(percentSleeping) + "%");
         
         // Set sleeping ignored for all remaining players.
+        this.forcingSleep = true;
         for (Player player : world.getPlayers()) {
             if (player.isSleeping() || player.isSleepingIgnored() || player.equals(bedEnterer)) continue;
             
@@ -174,6 +180,8 @@ public class Main extends org.bukkit.plugin.java.JavaPlugin {
      * @param world World to limit setting players to not ignore sleeping in.
      */
     protected void setAwake(World world) {
+        this.forcingSleep = false;
+        
         for (Player player : world.getPlayers()) {
             this.setSleepingIgnored(player, false);
         }
