@@ -3,7 +3,6 @@ package edgruberman.bukkit.simpleawaysleep;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -22,30 +21,27 @@ import edgruberman.bukkit.messagemanager.MessageManager;
 
 public class Main extends org.bukkit.plugin.java.JavaPlugin {
     
-    private final String DEFAULT_LOG_LEVEL = "CONFIG";
-    private final String DEFAULT_SEND_LEVEL = "CONFIG";
+    protected static ConfigurationManager configurationManager;
+    protected static MessageManager messageManager;
     
-    public static MessageManager messageManager = null;
-    
-    public List<String> nightmares = new ArrayList<String>(Arrays.asList("Skeleton", "Spider", "Zombie"));
-    
+    private List<String> nightmares = new ArrayList<String>();
     private List<String> ignoredAlways = new ArrayList<String>();
     private int inactivityLimit   = -1; // Time in seconds a player must not have any recorded activity in order to be considered away.
     private int safeRadius        = -1; // Distance in blocks as a diameter from player in which nightmares are not allowed to spawn.
     private int minimumSleepers   = -1; // Minimum number of players needed in bed in a world for percentage to be considered.
     private int minimumPercentage = -1; // Minimum percentage of current total players in bed in the world that will force a sleep cycle for the world.
-   
+    
     private Map<Player, Calendar> lastActivity = new HashMap<Player, Calendar>();
     
-    public void onEnable() {
+    public void onLoad() {
+        Main.configurationManager = new ConfigurationManager(this);
+        Main.configurationManager.load();
+        
         Main.messageManager = new MessageManager(this);
         Main.messageManager.log("Version " + this.getDescription().getVersion());
-        
-        Configuration.load(this);
-
-        Main.messageManager.setLogLevel(MessageLevel.parse(this.getConfiguration().getString("level.log", this.DEFAULT_LOG_LEVEL)));
-        Main.messageManager.setSendLevel(MessageLevel.parse(this.getConfiguration().getString("level.send", this.DEFAULT_SEND_LEVEL)));
-        
+    }
+    
+    public void onEnable() {
         this.inactivityLimit = this.getConfiguration().getInt("inactivityLimit", this.inactivityLimit);
         Main.messageManager.log(MessageLevel.CONFIG, "Inactivity Limit: " + this.inactivityLimit);
         
@@ -64,35 +60,31 @@ public class Main extends org.bukkit.plugin.java.JavaPlugin {
         this.minimumPercentage = this.getConfiguration().getInt("minimumPercentage", this.minimumPercentage);
         Main.messageManager.log(MessageLevel.CONFIG, "Minimum Percentage: " + this.minimumPercentage);
         
-        
         this.registerEvents();
         
-        this.getCommand("sleep").setExecutor(new CommandManager(this));
+        new CommandManager(this);
 
         Main.messageManager.log("Plugin Enabled");
     }
     
     public void onDisable() {
-        //TODO Unregister listeners when Bukkit supports it.
-        
         this.lastActivity.clear();
         
         Main.messageManager.log("Plugin Disabled");
-        Main.messageManager = null;
     }
     
     private void registerEvents() {
         PluginManager pluginManager = this.getServer().getPluginManager();
         
         PlayerListener playerListener = new PlayerListener(this);
-        pluginManager.registerEvent(Event.Type.PLAYER_TELEPORT, playerListener, Event.Priority.Normal , this);
+        pluginManager.registerEvent(Event.Type.PLAYER_TELEPORT, playerListener, Event.Priority.Normal, this);
         
+        pluginManager.registerEvent(Event.Type.PLAYER_JOIN     , playerListener, Event.Priority.Monitor, this);
         pluginManager.registerEvent(Event.Type.PLAYER_BED_ENTER, playerListener, Event.Priority.Monitor, this);
         pluginManager.registerEvent(Event.Type.PLAYER_BED_LEAVE, playerListener, Event.Priority.Monitor, this);
         pluginManager.registerEvent(Event.Type.PLAYER_QUIT     , playerListener, Event.Priority.Monitor, this);
-        
+       
         // Events that determine player activity.
-        pluginManager.registerEvent(Event.Type.PLAYER_JOIN        , playerListener, Event.Priority.Monitor, this);
         pluginManager.registerEvent(Event.Type.PLAYER_MOVE        , playerListener, Event.Priority.Monitor, this);
         pluginManager.registerEvent(Event.Type.PLAYER_INTERACT    , playerListener, Event.Priority.Monitor, this);
         pluginManager.registerEvent(Event.Type.PLAYER_CHAT        , playerListener, Event.Priority.Monitor, this);
@@ -100,7 +92,7 @@ public class Main extends org.bukkit.plugin.java.JavaPlugin {
         pluginManager.registerEvent(Event.Type.PLAYER_TOGGLE_SNEAK, playerListener, Event.Priority.Monitor, this);
         pluginManager.registerEvent(Event.Type.PLAYER_ITEM_HELD   , playerListener, Event.Priority.Monitor, this);
         
-        if (safeRadius >= 1) {
+        if (safeRadius >= 0) {
             EntityListener entityListener = new EntityListener(this);
             pluginManager.registerEvent(Event.Type.CREATURE_SPAWN, entityListener, Event.Priority.Normal, this);
         }
@@ -113,7 +105,7 @@ public class Main extends org.bukkit.plugin.java.JavaPlugin {
      * @param player Player to record this as last activity for.
      * @param type Event Type that caused this activity update for player.
      */
-    public void updateActivity(Player player, Event.Type type) {
+    protected void updateActivity(Player player, Event.Type type) {
         this.lastActivity.put(player, new GregorianCalendar());
         
         // Only need to change current ignore status if currently ignoring. 
@@ -134,16 +126,17 @@ public class Main extends org.bukkit.plugin.java.JavaPlugin {
      * 
      * @param player Player to be removed from monitoring.
      */
-    public void removePlayer(Player player) {
+    protected void removePlayer(Player player) {
         this.lastActivity.remove(player);
     }
     
     /**
-     * Configure away players and always ignored players to be considered sleeping for a given world.
+     * Configure away players and always ignored players to be considered
+     * sleeping for a given world.
      * 
      * @param world World to limit players to be considered sleeping to.
      */
-    public void setAsleep(Player bedEnterer) {
+    protected void setAsleep(Player bedEnterer) {
         World world = bedEnterer.getWorld();
         
         // Configure away and always ignored to be considered sleeping.
@@ -164,7 +157,7 @@ public class Main extends org.bukkit.plugin.java.JavaPlugin {
         float percentSleeping = (float) sleepers / world.getPlayers().size() * 100;
         if (percentSleeping < this.minimumPercentage) return;
         
-        DecimalFormat df = new DecimalFormat("#.#");
+        DecimalFormat df = new DecimalFormat("#.0");
         Main.messageManager.log(MessageLevel.FINE, "(" + sleepers + " Asleep or Ignored) / (" + world.getPlayers().size() + " Players in \"" + world.getName() + "\") = " + df.format(percentSleeping) + "%");
         
         // Set sleeping ignored for all remaining players.
@@ -180,19 +173,19 @@ public class Main extends org.bukkit.plugin.java.JavaPlugin {
      * 
      * @param world World to limit setting players to not ignore sleeping in.
      */
-    public void setAwake(World world) {
+    protected void setAwake(World world) {
         for (Player player : world.getPlayers()) {
             this.setSleepingIgnored(player, false);
         }
     }
     
     /**
-     * Determines if any player is in bed.
+     * Determines if at least one player is in a bed.
      * 
      * @param world Limit players to check to this world only.
-     * @return true if any player is in bed; false if at least 1 player is in bed.
+     * @return true if at least 1 player is in bed; false otherwise.
      */
-    public boolean isAnyoneSleeping(World world) {
+    protected boolean isAnyoneSleeping(World world) {
         for (Player player : world.getPlayers()) {
             if (player.isSleeping()) return true;
         }
@@ -201,14 +194,76 @@ public class Main extends org.bukkit.plugin.java.JavaPlugin {
     }
     
     /**
-     * Compile a list of players that should ignore sleep status checks by
-     * either always being ignored for sleep or by looking for last activity
-     * older than the defined inactivity limit. 
+     * Determine if spawn is by an unsafe creature within unsafe distance
+     * from an ignored player during a sleep cycle.
+     * 
+     * @param type Type of creature attempting to spawn.
+     * @param spawningAt Location of creature spawning.
+     * @return true if spawn is too close to sleeping away player.
+     */
+    protected boolean isIgnoredSleepSpawn(CreatureType type, Location spawningAt) {
+        if (!nightmares.contains(type.getName())) return false;
+        
+        for (Player player : spawningAt.getWorld().getPlayers()) {
+            // Only check for players involved in a current sleep cycle.
+            if (!player.isSleepingIgnored()) continue;
+            
+            // Check if distance from player is within the safety radius that should not allow the spawn.
+            double distance = this.distanceBetween(spawningAt, player.getLocation());
+            if (distance >= 0 && distance <= this.safeRadius) return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Indicates if the player is always ignored for sleep.
+     * 
+     * @param playerName Name of player.
+     * @return true if player is always ignored; false otherwise.
+     */
+    protected boolean isIgnoredAlways(String playerName) {
+        return this.ignoredAlways.contains(playerName);
+    }
+    
+    /**
+     * Add or remove a player to always be ignored for sleep.
+     * 
+     * @param playerName Name of player.
+     * @param ignore Whether or not to always ignore.
+     */
+    protected void setIgnoredAlways(String playerName, boolean ignore) {
+        if (this.isIgnoredAlways(playerName) == ignore) return;
+        
+        if (ignore) {
+            this.ignoredAlways.add(playerName);
+        } else {
+            this.ignoredAlways.remove(playerName);
+        }
+
+        // Save change to configuration file.
+        this.getConfiguration().setProperty("ignoredAlways", this.ignoredAlways);
+        Main.configurationManager.save();
+        
+        // Notify player of status change if they are online.
+        Player player = this.getServer().getPlayer(playerName);
+        if (player == null) return;
+        
+        if (ignore) {
+            Main.messageManager.send(player, MessageLevel.STATUS, "You will now always ignore sleep.");
+        } else {
+            Main.messageManager.send(player, MessageLevel.STATUS, "You will no longer always ignore sleep.");
+        }
+    }
+    
+    /**
+     * Compile a list of players that should ignore sleep status checks from
+     * either always being ignored or inactivity. 
      * 
      * @param world World to limit away players returned to.
      * @return List of players that should ignore sleep status checks.
      */
-    public List<Player> getIgnored(World world) {
+    private List<Player> getIgnored(World world) {
         List<Player> ignored = new ArrayList<Player>();
         
         Calendar oldestActive = new GregorianCalendar();
@@ -242,30 +297,7 @@ public class Main extends org.bukkit.plugin.java.JavaPlugin {
     }
     
     /**
-     * Determine if spawn is by an unsafe creature within unsafe distance
-     * from an ignored player during a sleep cycle.
-     * 
-     * @param type Type of creature attempting to spawn.
-     * @param spawningAt Location of creature spawning.
-     * @return true if spawn is too close to sleeping away player.
-     */
-    public boolean isIgnoredSleepSpawn(CreatureType type, Location spawningAt) {
-        if (!nightmares.contains(type.getName())) return false;
-        
-        for (Player player : spawningAt.getWorld().getPlayers()) {
-            // Only check for players involved in a current sleep cycle.
-            if (!player.isSleepingIgnored()) continue;
-            
-            // Check if distance from player is within the safety radius that should not allow the spawn.
-            double distance = this.distanceBetween(spawningAt, player.getLocation());
-            if (distance >= 0 && distance <= this.safeRadius) return true;
-        }
-        
-        return false;
-    }
-    
-    /**
-     * Set a player to ignore sleep status checks.
+     * Set a player to temporarily ignore sleep status checks.
      * 
      * @param player Player to set sleeping ignored status on.
      * @param ignore true to set player to ignore sleeping; false otherwise.
@@ -307,33 +339,5 @@ public class Main extends org.bukkit.plugin.java.JavaPlugin {
     
     private String formatDateTime(Calendar calendar, String format) {
         return (new SimpleDateFormat(format)).format(calendar.getTime());
-    }
-    
-    public boolean isIgnoredAlways(String playerName) {
-        return this.ignoredAlways.contains(playerName);
-    }
-    
-    public void setIgnoredAlways(String playerName, boolean ignore) {
-        if (this.isIgnoredAlways(playerName) == ignore) return;
-        
-        if (ignore) {
-            this.ignoredAlways.add(playerName);
-        } else {
-            this.ignoredAlways.remove(playerName);
-        }
-
-        // Save change to configuration file.
-        this.getConfiguration().setProperty("ignoredAlways", this.ignoredAlways);
-        this.getConfiguration().save();
-        
-        // Notify player of status change if they are online.
-        Player player = this.getServer().getPlayer(playerName);
-        if (player == null) return;
-        
-        if (ignore) {
-            Main.messageManager.send(player, MessageLevel.STATUS, "You will now always ignore sleep.");
-        } else {
-            Main.messageManager.send(player, MessageLevel.STATUS, "You will no longer always ignore sleep.");
-        }
     }
 }

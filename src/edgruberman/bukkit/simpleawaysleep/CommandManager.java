@@ -11,8 +11,10 @@ import edgruberman.bukkit.messagemanager.MessageLevel;
 public class CommandManager implements CommandExecutor {
     private Main plugin;
 
-    public CommandManager (Main plugin) {
+    protected CommandManager (Main plugin) {
         this.plugin = plugin;
+        
+        this.plugin.getCommand("sleep").setExecutor(this);
     }
 
     @Override
