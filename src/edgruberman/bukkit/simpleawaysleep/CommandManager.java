@@ -27,7 +27,7 @@ public class CommandManager implements CommandExecutor {
         );
         
         if (!sender.isOp()) {
-            Main.messageManager.log(MessageLevel.RIGHTS, "You must be a server operator to use this command.");
+            Main.messageManager.respond(sender, MessageLevel.RIGHTS, "You must be a server operator to use this command.");
             return false;
         }
         
