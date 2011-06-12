@@ -163,9 +163,12 @@ public class Main extends org.bukkit.plugin.java.JavaPlugin {
         if (percentSleeping < this.minimumPercentage) return;
         
         DecimalFormat df = new DecimalFormat("#.0");
-        Main.messageManager.log(MessageLevel.FINE, "(" + sleepers + " Asleep or Ignored) / (" + world.getPlayers().size() + " Players in \"" + world.getName() + "\") = " + df.format(percentSleeping) + "%");
+        Main.messageManager.log(MessageLevel.FINE
+                , "Forcing sleep; (" + sleepers + " Asleep or Ignored) / (" + world.getPlayers().size()
+                  + " Players in \"" + world.getName() + "\") = " + df.format(percentSleeping) + "%"
+        );
         
-        // Set sleeping ignored for all remaining players.
+        // Force sleep and set sleeping ignored for all remaining players.
         this.forcingSleep = true;
         for (Player player : world.getPlayers()) {
             if (player.isSleeping() || player.isSleepingIgnored() || player.equals(bedEnterer)) continue;

@@ -1,6 +1,6 @@
 level:
     log: INFO
-    send: CONFIG
+    send: RIGHTS
 inactivityLimit: 300
 safeRadius: 3
 unsafeCreatureTypes:

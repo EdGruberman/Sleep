@@ -1,10 +1,12 @@
 package edgruberman.bukkit.simpleawaysleep;
 
 import java.util.Arrays;
+import java.util.List;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 
 import edgruberman.bukkit.messagemanager.MessageLevel;
 
@@ -19,7 +21,15 @@ public class CommandManager implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] split) {
-        if (!sender.isOp()) return false;
+        Main.messageManager.log(MessageLevel.FINE
+                , ((sender instanceof Player) ? ((Player) sender).getName() : "[CONSOLE]")
+                + " issued command: " + label + " " + this.join(split)
+        );
+        
+        if (!sender.isOp()) {
+            Main.messageManager.log(MessageLevel.RIGHTS, "You must be a server operator to use this command.");
+            return false;
+        }
         
         // Syntax: /sleep (+|-)ignore <Player>
         if (split.length < 2 || !Arrays.asList("+ignore", "-ignore").contains(split[0])) {
@@ -52,5 +62,19 @@ public class CommandManager implements CommandExecutor {
         }
         
         return false;
+    }
+    
+    private String join(String[] s) {
+        return this.join(Arrays.asList(s), " ");
+    }
+    
+    private String join(List<String> list, String delim) {
+        if (list == null || list.isEmpty()) return "";
+     
+        StringBuilder sb = new StringBuilder();
+        for (String s : list) sb.append(s + delim);
+        sb.delete(sb.length() - delim.length(), sb.length());
+        
+        return sb.toString();
     }
 }
