@@ -31,6 +31,8 @@ public class Main extends org.bukkit.plugin.java.JavaPlugin {
     private int minimumSleepers   = -1; // Minimum number of players needed in bed in a world for percentage to be considered.
     private int minimumPercentage = -1; // Minimum percentage of current total players in bed in the world that will force a sleep cycle for the world.
     
+    private int safeRadiusSquared;
+    
     private boolean forcingSleep = false;
     
     private Map<Player, Calendar> lastActivity = new HashMap<Player, Calendar>();
@@ -49,6 +51,7 @@ public class Main extends org.bukkit.plugin.java.JavaPlugin {
         
         this.safeRadius = this.getConfiguration().getInt("safeRadius", this.safeRadius);
         Main.messageManager.log(MessageLevel.CONFIG, "Safe Radius: " + this.safeRadius);
+        this.safeRadiusSquared = (int) Math.pow(this.safeRadius, 2);
         
         this.nightmares = this.getConfiguration().getStringList("unsafeCreatureTypes", this.nightmares);
         Main.messageManager.log(MessageLevel.CONFIG, "Unsafe Creature Types: " + this.nightmares);
@@ -220,8 +223,7 @@ public class Main extends org.bukkit.plugin.java.JavaPlugin {
             if (!player.isSleepingIgnored()) continue;
             
             // Check if distance from player is within the safety radius that should not allow the spawn.
-            double distance = this.distanceBetween(spawningAt, player.getLocation());
-            if (distance >= 0 && distance <= this.safeRadius) return true;
+            if (player.getLocation().distanceSquared(spawningAt) <= this.safeRadiusSquared) return true;
         }
         
         return false;
@@ -255,16 +257,6 @@ public class Main extends org.bukkit.plugin.java.JavaPlugin {
         // Save change to configuration file.
         this.getConfiguration().setProperty("ignoredAlways", this.ignoredAlways);
         Main.configurationManager.save();
-        
-        // Notify player of status change if they are online.
-        Player player = this.getServer().getPlayer(playerName);
-        if (player == null) return;
-        
-        if (ignore) {
-            Main.messageManager.send(player, MessageLevel.STATUS, "You will now always ignore sleep.");
-        } else {
-            Main.messageManager.send(player, MessageLevel.STATUS, "You will no longer always ignore sleep.");
-        }
     }
     
     /**
@@ -328,20 +320,6 @@ public class Main extends org.bukkit.plugin.java.JavaPlugin {
         );
         
         player.setSleepingIgnored(ignore);
-    }
-    
-    /**
-     * Long live Pythagoras!
-     */
-    private double distanceBetween(Location locA, Location locB) {
-        if (locA == null || locB == null) return -1;
-        
-        // d = sqrt( (xA-xB)^2 + (yA-yB)^2 + (zA-zB)^2 )       
-        return Math.sqrt(
-                  Math.pow(locA.getX() - locB.getX(), 2)
-                + Math.pow(locA.getY() - locB.getY(), 2)
-                + Math.pow(locA.getZ() - locB.getZ(), 2)
-        );
     }
     
     private String formatDateTime(Calendar calendar) {

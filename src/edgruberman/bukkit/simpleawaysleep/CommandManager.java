@@ -39,6 +39,7 @@ public class CommandManager implements CommandExecutor {
         
         String action = split[0];
         String playerName = split[1];
+        Player player = this.plugin.getServer().getPlayer(playerName);
         
         if (action.equals("+ignore")) {
             if (this.plugin.isIgnoredAlways(playerName)) {
@@ -48,6 +49,8 @@ public class CommandManager implements CommandExecutor {
             
             this.plugin.setIgnoredAlways(playerName, true);
             Main.messageManager.respond(sender, MessageLevel.CONFIG, playerName + " will now be always ignored for sleep.");
+            if (player != null)
+                Main.messageManager.send(player, MessageLevel.STATUS, "You will now always ignore sleep.");
             return true;
             
         } else if (action.equals("-ignore")) {
@@ -58,6 +61,8 @@ public class CommandManager implements CommandExecutor {
             
             this.plugin.setIgnoredAlways(playerName, false);
             Main.messageManager.respond(sender, MessageLevel.CONFIG, playerName + " will no longer be always ignored for sleep.");
+            if (player != null)
+                Main.messageManager.send(player, MessageLevel.STATUS, "You will no longer always ignore sleep.");
             return true;
         }
         
