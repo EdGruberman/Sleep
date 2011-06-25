@@ -11,7 +11,6 @@ import java.util.Map;
 
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.entity.CreatureType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.plugin.PluginManager;
@@ -24,7 +23,6 @@ public class Main extends org.bukkit.plugin.java.JavaPlugin {
     protected static ConfigurationManager configurationManager;
     protected static MessageManager messageManager;
     
-    private List<String> nightmares = new ArrayList<String>();
     private List<String> ignoredAlways = new ArrayList<String>();
     private int inactivityLimit   = -1; // Time in seconds a player must not have any recorded activity in order to be considered away.
     private int safeRadius        = -1; // Distance in blocks as a diameter from player in which nightmares are not allowed to spawn.
@@ -52,10 +50,7 @@ public class Main extends org.bukkit.plugin.java.JavaPlugin {
         this.safeRadius = this.getConfiguration().getInt("safeRadius", this.safeRadius);
         Main.messageManager.log(MessageLevel.CONFIG, "Safe Radius: " + this.safeRadius);
         this.safeRadiusSquared = (int) Math.pow(this.safeRadius, 2);
-        
-        this.nightmares = this.getConfiguration().getStringList("unsafeCreatureTypes", this.nightmares);
-        Main.messageManager.log(MessageLevel.CONFIG, "Unsafe Creature Types: " + this.nightmares);
-        
+                
         this.ignoredAlways = this.getConfiguration().getStringList("ignoredAlways", this.ignoredAlways);
         Main.messageManager.log(MessageLevel.CONFIG, "Always Ignored Players: " + this.ignoredAlways);
         
@@ -208,16 +203,13 @@ public class Main extends org.bukkit.plugin.java.JavaPlugin {
     }
     
     /**
-     * Determine if spawn is by an unsafe creature within unsafe distance
-     * from an ignored player during a sleep cycle.
+     * Determine if spawn is within unsafe distance from an ignored player
+     * during a sleep cycle.
      * 
-     * @param type Type of creature attempting to spawn.
      * @param spawningAt Location of creature spawning.
-     * @return true if spawn is too close to sleeping away player.
+     * @return true if spawn is too close to any player ignoring sleep.
      */
-    protected boolean isIgnoredSleepSpawn(CreatureType type, Location spawningAt) {
-        if (!nightmares.contains(type.getName())) return false;
-        
+    protected boolean isIgnoredSleepSpawn(Location spawningAt) {
         for (Player player : spawningAt.getWorld().getPlayers()) {
             // Only check for players involved in a current sleep cycle.
             if (!player.isSleepingIgnored()) continue;

@@ -1,6 +1,7 @@
 package edgruberman.bukkit.simpleawaysleep;
 
 import org.bukkit.event.entity.CreatureSpawnEvent;
+import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 
 import edgruberman.bukkit.messagemanager.MessageLevel;
 
@@ -16,10 +17,12 @@ public class EntityListener extends org.bukkit.event.entity.EntityListener {
     public void onCreatureSpawn(CreatureSpawnEvent event) {
         if (event.isCancelled()) return;
         
-        if (!this.main.isIgnoredSleepSpawn(event.getCreatureType(), event.getLocation())) return;
+        if (!event.getSpawnReason().equals(SpawnReason.BED)) return;
         
-        Main.messageManager.log(MessageLevel.FINE, "Cancelling " + event.getCreatureType()
-                + " spawn in \"" + event.getLocation().getWorld().getName() + "\" at"
+        if (!this.main.isIgnoredSleepSpawn(event.getLocation())) return;
+        
+        Main.messageManager.log(MessageLevel.FINE, "Cancelling sleep related spawn of " + event.getCreatureType()
+                + " in \"" + event.getLocation().getWorld().getName() + "\" at"
                 + " x: " + event.getLocation().getBlockX()
                 + " y: " + event.getLocation().getBlockY()
                 + " z: " + event.getLocation().getBlockZ()
