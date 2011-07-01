@@ -6,34 +6,36 @@ import java.util.List;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 
 import edgruberman.bukkit.messagemanager.MessageLevel;
 
-public class CommandManager implements CommandExecutor {
-    private Main plugin;
-
-    protected CommandManager (Main plugin) {
+final class CommandManager implements CommandExecutor {
+    
+    private final Main plugin;
+    
+    protected CommandManager (final Main plugin) {
         this.plugin = plugin;
         
-        this.plugin.getCommand("sleep").setExecutor(this);
+        this.setExecutorOf("sleep");
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] split) {
-        Main.messageManager.log(MessageLevel.FINE
+    public boolean onCommand(final CommandSender sender, final Command command, final String label, final String[] split) {
+        Main.getMessageManager().log(MessageLevel.FINE
                 , ((sender instanceof Player) ? ((Player) sender).getName() : "[CONSOLE]")
-                + " issued command: " + label + " " + this.join(split)
+                + " issued command: " + label + " " + CommandManager.join(split)
         );
         
         if (!sender.isOp()) {
-            Main.messageManager.respond(sender, MessageLevel.RIGHTS, "You must be a server operator to use this command.");
+            Main.getMessageManager().respond(sender, MessageLevel.RIGHTS, "You must be a server operator to use this command.");
             return false;
         }
         
         // Syntax: /sleep (+|-)ignore <Player>
         if (split.length < 2 || !Arrays.asList("+ignore", "-ignore").contains(split[0])) {
-            Main.messageManager.respond(sender, MessageLevel.NOTICE, command.getUsage());
+            Main.getMessageManager().respond(sender, MessageLevel.NOTICE, command.getUsage());
             return true;
         }
         
@@ -43,37 +45,65 @@ public class CommandManager implements CommandExecutor {
         
         if (action.equals("+ignore")) {
             if (this.plugin.isIgnoredAlways(playerName)) {
-                Main.messageManager.respond(sender, MessageLevel.WARNING, playerName + " is already always ignored for sleep.");
+                Main.getMessageManager().respond(sender, MessageLevel.WARNING, playerName + " is already always ignored for sleep.");
                 return true;
             }
             
             this.plugin.setIgnoredAlways(playerName, true);
-            Main.messageManager.respond(sender, MessageLevel.CONFIG, playerName + " will now be always ignored for sleep.");
+            Main.getMessageManager().respond(sender, MessageLevel.CONFIG, playerName + " will now be always ignored for sleep.");
             if (player != null)
-                Main.messageManager.send(player, MessageLevel.STATUS, "You will now always ignore sleep.");
+                Main.getMessageManager().send(player, MessageLevel.STATUS, "You will now always ignore sleep.");
             return true;
             
         } else if (action.equals("-ignore")) {
             if (!this.plugin.isIgnoredAlways(playerName)) {
-                Main.messageManager.respond(sender, MessageLevel.WARNING, playerName + " is not currently always ignored for sleep.");
+                Main.getMessageManager().respond(sender, MessageLevel.WARNING, playerName + " is not currently always ignored for sleep.");
                 return true;
             }
             
             this.plugin.setIgnoredAlways(playerName, false);
-            Main.messageManager.respond(sender, MessageLevel.CONFIG, playerName + " will no longer be always ignored for sleep.");
+            Main.getMessageManager().respond(sender, MessageLevel.CONFIG, playerName + " will no longer be always ignored for sleep.");
             if (player != null)
-                Main.messageManager.send(player, MessageLevel.STATUS, "You will no longer always ignore sleep.");
+                Main.getMessageManager().send(player, MessageLevel.STATUS, "You will no longer always ignore sleep.");
             return true;
         }
         
         return false;
     }
     
-    private String join(String[] s) {
-        return this.join(Arrays.asList(s), " ");
+    /**
+     * Registers this class as executor for a chat/console command.
+     * 
+     * @param label Command label to register.
+     */
+    private void setExecutorOf(final String label) {
+        PluginCommand command = this.plugin.getCommand(label);
+        if (command == null) {
+            Main.getMessageManager().log(MessageLevel.WARNING, "Unable to register \"" + label + "\" command.");
+            return;
+        }
+        
+        command.setExecutor(this);
     }
     
-    private String join(List<String> list, String delim) {
+    /**
+     * Concatenate all string elements of an array together with a space.
+     * 
+     * @param s String array
+     * @return Concatenated elements
+     */
+    private static String join(final String[] s) {
+        return join(Arrays.asList(s), " ");
+    }
+    
+    /**
+     * Combine all the elements of a list together with a delimiter between each.
+     * 
+     * @param list List of elements to join.
+     * @param delim Delimiter to place between each element.
+     * @return String combined with all elements and delimiters.
+     */
+    private static String join(final List<String> list, final String delim) {
         if (list == null || list.isEmpty()) return "";
      
         StringBuilder sb = new StringBuilder();
