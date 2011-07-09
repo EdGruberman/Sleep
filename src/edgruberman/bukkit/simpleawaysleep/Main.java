@@ -6,8 +6,10 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -28,7 +30,7 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
     private int inactivityLimit   = -1; // Time in seconds a player must not have any recorded activity in order to be considered away.
     private int safeRadius        = -1; // Distance in blocks as a diameter from player in which nightmares are not allowed to spawn.
     private int minimumSleepers   = -1; // Minimum number of players needed in bed in a world for percentage to be considered.
-    private int minimumPercentage = -1; // Minimum percentage of current total players in bed in the world that will force a sleep cycle for the world.
+    private int minimumPercent = -1; // Minimum percent of current total players in bed in the world that will force a sleep cycle for the world.
     
     private int safeRadiusSquared;
     private World nether;
@@ -36,7 +38,7 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
     private Map<Player, Calendar> lastActivity = new HashMap<Player, Calendar>();
     
     public void onLoad() {
-        Main.configurationFile = new ConfigurationFile(this, "config.yml", "/defaults/config.yml");
+        Main.configurationFile = new ConfigurationFile(this);
         Main.getConfigurationFile().load();
         
         Main.messageManager = new MessageManager(this);
@@ -54,13 +56,13 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
         this.ignoredAlways = this.getConfiguration().getStringList("ignoredAlways", this.ignoredAlways);
         Main.getMessageManager().log(MessageLevel.CONFIG, "Always Ignored Players: " + this.ignoredAlways);
         
-        this.minimumSleepers = this.getConfiguration().getInt("minimumSleepers", this.minimumSleepers);
+        this.minimumSleepers = this.getConfiguration().getInt("force.sleepers", this.minimumSleepers);
         Main.getMessageManager().log(MessageLevel.CONFIG, "Minimum Sleepers: " + this.minimumSleepers);
         
-        this.minimumPercentage = this.getConfiguration().getInt("minimumPercentage", this.minimumPercentage);
-        Main.getMessageManager().log(MessageLevel.CONFIG, "Minimum Percentage: " + this.minimumPercentage);
+        this.minimumPercent = this.getConfiguration().getInt("force.percentage", this.minimumPercent);
+        Main.getMessageManager().log(MessageLevel.CONFIG, "Minimum Percentage: " + this.minimumPercent);
         
-        this.nether = this.getNether();
+        this.nether = this.defaultNether();
         
         this.registerEvents();
         
@@ -115,7 +117,7 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
      * @param player Player to record this as last activity for.
      * @param type Event Type that caused this activity update for player.
      */
-    void updateActivity(final Player player, final Event.Type type) {
+    void registerActivity(final Player player, final Event.Type type) {
         this.lastActivity.put(player, new GregorianCalendar());
         
         // Only need to change current ignore status if currently ignoring. 
@@ -134,7 +136,7 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
                 , "Activity detected for " + player.getName() + " (Event: " + type.toString() + ")"
         );
         
-        this.setSleepingIgnored(player, false);
+        this.ignoreSleep(player, false);
     }
     
     /**
@@ -142,7 +144,7 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
      * 
      * @param player Player to be removed from monitoring.
      */
-    void removePlayer(final Player player) {
+    void deregisterActivity(final Player player) {
         this.lastActivity.remove(player);
     }
     
@@ -152,43 +154,78 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
      * 
      * @param world World to limit players to be considered sleeping to.
      */
-    void setAsleep(final Player bedEnterer) {
+    void lullPlayers(final Player bedEnterer) {
         World world = bedEnterer.getWorld();
         
         // Ignore players in default/first nether world.
         for (Player player : this.nether.getPlayers())
-            this.setSleepingIgnored(player, true);
+            this.ignoreSleep(player, true);
         
         // Configure away and always ignored to be considered sleeping.
-        for (Player player : this.getIgnored(world))
-            this.setSleepingIgnored(player, true);
+        for (Player player : this.ignoredPlayers(world))
+            this.ignoreSleep(player, true);
         
-        // Check if minimum number of sleepers to force sleeping for all.
-        if (this.minimumSleepers < 0) return;
-        
-        int sleepers = 1; // We start at 1 since we only call this function when someone is entering a bed, but not before they fully enter it to be considered sleeping.
-        for (Player player : world.getPlayers()) {
-            if (player.isSleeping() || player.isSleepingIgnored()) sleepers += 1;
-        }
-        if (sleepers < this.minimumSleepers) return;
-        
-        // Check if minimum percent of sleepers has been met to force sleeping for all.
-        float percentSleeping = (float) sleepers / world.getPlayers().size() * 100;
-        if (percentSleeping < this.minimumPercentage) return;
-        
-        DecimalFormat df = new DecimalFormat("#.0");
-        Main.getMessageManager().log(MessageLevel.FINE
-                , "Forcing sleep; (" + sleepers + " Asleep or Ignored) / (" + world.getPlayers().size()
-                  + " Players in \"" + world.getName() + "\") = " + df.format(percentSleeping) + "%"
-        );
+        if (!this.isSleepForcible(world)) return;
         
         // Force sleep and set sleeping ignored for all remaining players.
-        this.setForcingSleep(world, true);
+        this.forcingSleep(world, true);
         for (Player player : world.getPlayers()) {
             if (player.isSleeping() || player.isSleepingIgnored() || player.equals(bedEnterer)) continue;
             
-            this.setSleepingIgnored(player, true);
+            this.ignoreSleep(player, true);
         }
+    }
+    
+    /**
+     * Determine if enough players are sleeping to force a sleep cycle. Check
+     * both minimum number of sleepers and minimum percent of sleepers. Both
+     * criteria must be met for a sleep cycle to be considered forcible.
+     * (This function assumes it was called as a result of a player entering
+     * bed but not before the bed enter event has completed.)
+     * (For percent comparison purposes, possible players are determined as
+     * active and not always ignored.)
+     * 
+     * @param world world to check if sleep should be forced
+     * @return true if enough players are in bed to force sleep; otherwise false
+     */
+    private boolean isSleepForcible(World world) {
+        boolean result = false;
+        
+        if (this.minimumSleepers <= -1 && this.minimumPercent <= -1) return result;
+        
+        // Check minimum number of sleepers criteria met by active sleepers (actually in bed).
+        int sleepers = 1 + this.inBed(world).size(); // Add 1 to compensate for bed enterer not completing event yet.
+        if (sleepers >= this.minimumSleepers) result = true;
+        
+        // Check if minimum percent of sleepers has been met to force sleeping for all.
+        int possible = world.getPlayers().size() - this.ignoredPlayers(world).size();
+        float percent = (float) sleepers / (float) possible * 100;
+        if (this.minimumPercent >= 1 && percent < this.minimumPercent) result = false;
+        
+        DecimalFormat df = new DecimalFormat("#.0");
+        Main.getMessageManager().log(MessageLevel.FINE
+                , "Forced sleep status for " + world.getName()
+                  + " : (" + sleepers + " in bed) / (" + possible + " possible)"
+                  + " = " + df.format(percent) + "%"
+        );
+        
+        return result;
+    }
+    
+    /**
+     * Players in a bed.
+     * 
+     * @param world world to filter players to
+     * @return players in a bed
+     */
+    private Set<Player> inBed(World world) {
+        Set<Player> inBed = new HashSet<Player>();
+        
+        for (Player player : world.getPlayers())
+            if (player.isSleeping())
+                inBed.add(player);
+
+        return inBed;
     }
     
     /**
@@ -197,14 +234,14 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
      * 
      * @param world World to limit setting players to not ignore sleeping in.
      */
-    void setAwake(final World world) {
-        this.setForcingSleep(world, false);
+    void awakenSleepers(final World world) {
+        this.forcingSleep(world, false);
         
         for (Player player : world.getPlayers())
-            this.setSleepingIgnored(player, false);
+            this.ignoreSleep(player, false);
         
         for (Player player : this.nether.getPlayers())
-            this.setSleepingIgnored(player, false);
+            this.ignoreSleep(player, false);
     }
     
     /**
@@ -255,7 +292,7 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
      * @param playerName Name of player.
      * @param ignore Whether or not to always ignore.
      */
-    void setIgnoredAlways(final String playerName, final boolean ignore) {
+    void ignoreSleepAlways(final String playerName, final boolean ignore) {
         if (this.isIgnoredAlways(playerName) == ignore) return;
         
         if (ignore) {
@@ -274,7 +311,7 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
      * 
      * @return world that is associated as default nether.
      */
-    private World getNether() {
+    private World defaultNether() {
         // Find first nether world which should be the nether world the server associates by default.
         for (int i = 0; i < this.getServer().getWorlds().size(); ++i)
             if (this.getServer().getWorlds().get(i).getEnvironment().equals(Environment.NETHER))
@@ -290,7 +327,7 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
      * @param world World to limit away players returned to.
      * @return List of players that should ignore sleep status checks.
      */
-    private List<Player> getIgnored(final World world) {
+    private List<Player> ignoredPlayers(final World world) {
         List<Player> ignored = new ArrayList<Player>();
         
         Calendar oldestActive = new GregorianCalendar();
@@ -329,7 +366,7 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
      * @param player Player to set sleeping ignored status on.
      * @param ignore true to set player to ignore sleeping; false otherwise.
      */
-    private void setSleepingIgnored(final Player player, final boolean ignore) {
+    private void ignoreSleep(final Player player, final boolean ignore) {
         if (!player.isOnline()) return;
         
         // Don't modify players already set as expected.
@@ -352,7 +389,7 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
      * @param world world to configure forced sleeping on
      * @param force true to force sleep; false to not force sleep
      */
-    private void setForcingSleep(final World world, final boolean force) {
+    private void forcingSleep(final World world, final boolean force) {
         this.forcingSleep.put(world.getId(), force);
     }
     

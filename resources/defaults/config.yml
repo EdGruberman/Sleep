@@ -3,3 +3,6 @@ level:
     send: RIGHTS
 inactivityLimit: 300
 safeRadius: 3
+force:
+    sleepers: null
+    percent: null

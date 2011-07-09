@@ -36,7 +36,7 @@ final class PlayerListener extends org.bukkit.event.player.PlayerListener {
         if (event.getPlayer().getWorld().getEnvironment().equals(Environment.NETHER)) return;
         
         Main.getMessageManager().log(MessageLevel.FINE, event.getPlayer().getName() + " entered bed in \"" + event.getPlayer().getWorld().getName() + "\".");
-        this.main.setAsleep(event.getPlayer());
+        this.main.lullPlayers(event.getPlayer());
     }
     
     @Override
@@ -47,7 +47,7 @@ final class PlayerListener extends org.bukkit.event.player.PlayerListener {
         }
         
         Main.getMessageManager().log(MessageLevel.FINE, event.getPlayer().getName() + " left bed in \"" + event.getPlayer().getWorld().getName() + "\".");
-        if (!this.main.isAnyoneSleeping(event.getPlayer().getWorld())) this.main.setAwake(event.getPlayer().getWorld());
+        if (!this.main.isAnyoneSleeping(event.getPlayer().getWorld())) this.main.awakenSleepers(event.getPlayer().getWorld());
     }
     
     @Override
@@ -65,41 +65,41 @@ final class PlayerListener extends org.bukkit.event.player.PlayerListener {
     
     @Override
     public void onPlayerQuit(final PlayerQuitEvent event) {
-        this.main.removePlayer(event.getPlayer());
+        this.main.deregisterActivity(event.getPlayer());
     }
     
     @Override
     public void onPlayerJoin(final PlayerJoinEvent event) {
-        this.main.updateActivity(event.getPlayer(), event.getType());
+        this.main.registerActivity(event.getPlayer(), event.getType());
     }
     
     @Override
     public void onPlayerMove(final PlayerMoveEvent event) {
-        this.main.updateActivity(event.getPlayer(), event.getType());
+        this.main.registerActivity(event.getPlayer(), event.getType());
     }
     
     @Override
     public void onPlayerInteract(final PlayerInteractEvent event) {
-        this.main.updateActivity(event.getPlayer(), event.getType());
+        this.main.registerActivity(event.getPlayer(), event.getType());
     }
     
     @Override
     public void onPlayerChat(final PlayerChatEvent event) {
-        this.main.updateActivity(event.getPlayer(), event.getType());
+        this.main.registerActivity(event.getPlayer(), event.getType());
     }
     
     @Override
     public void onPlayerDropItem(final PlayerDropItemEvent event) {
-        this.main.updateActivity(event.getPlayer(), event.getType());
+        this.main.registerActivity(event.getPlayer(), event.getType());
     }
     
     @Override
     public void onPlayerToggleSneak(final PlayerToggleSneakEvent event) {
-        this.main.updateActivity(event.getPlayer(), event.getType());
+        this.main.registerActivity(event.getPlayer(), event.getType());
     }
     
     @Override
     public void onItemHeldChange(final PlayerItemHeldEvent event) {
-        this.main.updateActivity(event.getPlayer(), event.getType());
+        this.main.registerActivity(event.getPlayer(), event.getType());
     }
 }

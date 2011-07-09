@@ -49,7 +49,7 @@ final class CommandManager implements CommandExecutor {
                 return true;
             }
             
-            this.plugin.setIgnoredAlways(playerName, true);
+            this.plugin.ignoreSleepAlways(playerName, true);
             Main.getMessageManager().respond(sender, MessageLevel.CONFIG, playerName + " will now be always ignored for sleep.");
             if (player != null)
                 Main.getMessageManager().send(player, MessageLevel.STATUS, "You will now always ignore sleep.");
@@ -61,7 +61,7 @@ final class CommandManager implements CommandExecutor {
                 return true;
             }
             
-            this.plugin.setIgnoredAlways(playerName, false);
+            this.plugin.ignoreSleepAlways(playerName, false);
             Main.getMessageManager().respond(sender, MessageLevel.CONFIG, playerName + " will no longer be always ignored for sleep.");
             if (player != null)
                 Main.getMessageManager().send(player, MessageLevel.STATUS, "You will no longer always ignore sleep.");

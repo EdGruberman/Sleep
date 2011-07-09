@@ -11,6 +11,9 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 
 import org.bukkit.plugin.Plugin;
+import org.bukkit.util.config.Configuration;
+
+import edgruberman.bukkit.messagemanager.MessageLevel;
 
 /**
  * Standardized plugin configuration file management class.<br />
@@ -18,46 +21,104 @@ import org.bukkit.plugin.Plugin;
  * Defaults will be extracted from the JAR.  Save requests can be queued to
  * avoid performance penalties for too many save requests occurring too
  * frequently.
- * 
- * @author EdGruberman
  */
-final class ConfigurationFile {
+public final class ConfigurationFile {
     
+    /**
+     * Standard plugin configuration file.
+     */
+    private static final String PLUGIN_FILE = "config.yml";
+    
+    /**
+     * Path in JAR to find files containing default values.
+     */
+    private static final String DEFAULTS = "/defaults/";
+    
+    /**
+     * Default maximum save frequency.
+     */
+    private static final int DEFAULT_SAVE = -1;
+    
+    /**
+     * Clock ticks per second; Used to determine durations between saves.
+     */
     private static final int TICKS_PER_SECOND = 20;
     
     private final Plugin owner;
     private final File file;
     private final URL defaults;
+    private final Configuration configuration;
     private int maxSaveFrequency;
     private Calendar lastSave = null;
     private Integer taskSave = null;
     
     /**
      * Construct configuration file reference for standardized load and save
+     * management.  (config.yml assumed.  Defaults assumed to be in
+     * /defaults/config.yml.  No restrictions on how frequent saves can occur.)
+     * 
+     * @param owner plugin that owns this configuration file
+     */
+    ConfigurationFile(final Plugin owner) {
+        this(owner, null);
+    }
+    
+    /**
+     * Construct configuration file reference for standardized load and save
+     * management.  (config.yml assumed.  Defaults assumed to be in
+     * /defaults/config.yml.)
+     * 
+     * @param owner plugin that owns this configuration file
+     * @param maxSaveFrequency shortest duration in seconds each save can occur
+     */
+    ConfigurationFile(final Plugin owner, final int maxSaveFrequency) {
+        this(owner, null, null, maxSaveFrequency);
+    }
+    
+    /**
+     * Construct configuration file reference for standardized load and save
+     * management.  (Defaults assumed to be in /defaults/file.  No restrictions
+     * on how frequent saves can occur.)
+     * 
+     * @param owner plugin that owns this configuration file
+     * @param file name of file in the default data directory
+     */
+    ConfigurationFile(final Plugin owner, final String file) {
+        this(owner, file, null);
+    }
+    
+    /**
+     * Construct configuration file reference for standardized load and save
      * management.  (No restrictions on how frequent saves can occur.)
      * 
-     * @param owner plugin that owns this configuration file.
-     * @param file name of file in the default data directory.
-     * @param defaults path to default configuration file supplied in JAR.
+     * @param owner plugin that owns this configuration file
+     * @param file name of file in the default data directory
+     * @param defaults path to default configuration file supplied in JAR
      */
     ConfigurationFile(final Plugin owner, final String file, final String defaults) {
-        this(owner, file, defaults, -1);
+        this(owner, file, defaults, ConfigurationFile.DEFAULT_SAVE);
     }
     
     /**
      * Construct configuration file reference for standardized load and save
      * management.
      * 
-     * @param owner plugin that owns this configuration file.
-     * @param file name of file in the default data directory.
-     * @param defaults path to default configuration file supplied in JAR.
-     * @param maxSaveFrequency shortest duration in seconds each save can occur.
+     * @param owner plugin that owns this configuration file
+     * @param file name of file in the default data directory
+     * @param defaults path to default configuration file supplied in JAR
+     * @param maxSaveFrequency shortest duration in seconds each save can occur
      */
     ConfigurationFile(final Plugin owner, final String file, final String defaults, final int maxSaveFrequency) {
         this.owner = owner;
-        this.file = new File(this.owner.getDataFolder(), file);
-        this.defaults = this.owner.getClass().getResource(defaults);
+        
+        this.file = new File(this.owner.getDataFolder(), (file != null ? file : ConfigurationFile.PLUGIN_FILE));
+        this.defaults = this.owner.getClass().getResource((defaults != null ? defaults : ConfigurationFile.DEFAULTS + this.file.getName()));
         this.maxSaveFrequency = maxSaveFrequency;
+        if (this.file.equals(ConfigurationFile.PLUGIN_FILE)) {
+            this.configuration = this.owner.getConfiguration();
+        } else {
+            this.configuration = new Configuration(this.file);
+        }
     }
     
     /**
@@ -79,7 +140,7 @@ final class ConfigurationFile {
             }
         }
         
-        this.owner.getConfiguration().load();
+        this.configuration.load();
     }
     
     int getMaxSaveFrequency() {
@@ -90,9 +151,13 @@ final class ConfigurationFile {
         this.maxSaveFrequency = frequency;
     }
     
+    Configuration getConfiguration() {
+        return this.configuration;
+    }
+    
     /**
      * Save the configuration file immediately. All cached save requests will be
-     * saved to the file system.
+     * saved to the file system
      */
     void save() {
         this.save(true);
@@ -104,9 +169,9 @@ final class ConfigurationFile {
      * then request will be cached and a scheduled task will kick off after the
      * max frequency has expired since last save.
      * 
-     * @param immediately true to force a save of the configuration file immediately.
+     * @param immediately true to force a save of the configuration file immediately
      */
-    void save(final boolean immediately) {
+    public void save(final boolean immediately) {
         if (!immediately) {
             // Determine how long since last save.
             long sinceLastSave = this.maxSaveFrequency;
@@ -116,13 +181,16 @@ final class ConfigurationFile {
             // Schedule a cache flush to run if last save was less than maximum save frequency.
             if (sinceLastSave < this.maxSaveFrequency) {
                 // If task already scheduled let it run when expected.
-                if (this.taskSave != null && this.owner.getServer().getScheduler().isQueued(this.taskSave)) return;
+                if (this.taskSave != null && this.owner.getServer().getScheduler().isQueued(this.taskSave)) {
+                    Main.getMessageManager().log(MessageLevel.FINEST, "Save request queued; Last save was " + sinceLastSave + " seconds ago.");
+                    return;
+                }
                 
                 // Schedule task to save cache to file system.
-                final ConfigurationFile configurationManager = this;
+                final ConfigurationFile configurationFile = this;
                 this.taskSave = this.owner.getServer().getScheduler().scheduleSyncDelayedTask(
                           this.owner
-                        , new Runnable() { public void run() { configurationManager.save(true); } }
+                        , new Runnable() { public void run() { configurationFile.save(true); } }
                         , (this.maxSaveFrequency - sinceLastSave) * ConfigurationFile.TICKS_PER_SECOND
                 );
             
@@ -130,8 +198,9 @@ final class ConfigurationFile {
             }
         }
         
-        this.owner.getConfiguration().save();
+        this.configuration.save();
         this.lastSave = new GregorianCalendar();
+        Main.getMessageManager().log(MessageLevel.FINEST, "Configuration file " + this.file.getName() + " saved.");
     }
     
     /**
