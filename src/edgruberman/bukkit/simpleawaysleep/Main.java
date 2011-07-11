@@ -1,41 +1,29 @@
 package edgruberman.bukkit.simpleawaysleep;
 
-import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.World.Environment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
-import org.bukkit.plugin.PluginManager;
+import org.bukkit.util.config.ConfigurationNode;
 
 import edgruberman.bukkit.messagemanager.MessageLevel;
 import edgruberman.bukkit.messagemanager.MessageManager;
+import edgruberman.bukkit.simpleawaysleep.commands.SleepCommand;
 
 public final class Main extends org.bukkit.plugin.java.JavaPlugin {
     
     private static ConfigurationFile configurationFile;
     private static MessageManager messageManager;
     
-    private List<String> ignoredAlways = new ArrayList<String>();
-    private int inactivityLimit   = -1; // Time in seconds a player must not have any recorded activity in order to be considered away.
-    private int safeRadius        = -1; // Distance in blocks as a diameter from player in which nightmares are not allowed to spawn.
-    private int minimumSleepers   = -1; // Minimum number of players needed in bed in a world for percentage to be considered.
-    private int minimumPercent = -1; // Minimum percent of current total players in bed in the world that will force a sleep cycle for the world.
+    static World defaultNether;
     
-    private int safeRadiusSquared;
-    private World nether;
-    private Map<Long, Boolean> forcingSleep = new HashMap<Long, Boolean>();
-    private Map<Player, Calendar> lastActivity = new HashMap<Player, Calendar>();
+    public Map<World, State> tracked = new HashMap<World, State>();
+    Set<String> excluded = new HashSet<String>();
     
     public void onLoad() {
         Main.configurationFile = new ConfigurationFile(this);
@@ -46,383 +34,169 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
     }
     
     public void onEnable() {
-        this.inactivityLimit = this.getConfiguration().getInt("inactivityLimit", this.inactivityLimit);
-        Main.getMessageManager().log(MessageLevel.CONFIG, "Inactivity Limit: " + this.inactivityLimit);
+        Main.defaultNether = this.findDefaultNether();
+
+        // Track sleep state for each loaded world.
+        for (int i = 0; i < this.getServer().getWorlds().size(); i += 1)
+            this.trackState(this.getServer().getWorlds().get(i));
         
-        this.safeRadius = this.getConfiguration().getInt("safeRadius", this.safeRadius);
-        Main.getMessageManager().log(MessageLevel.CONFIG, "Safe Radius: " + this.safeRadius);
-        this.safeRadiusSquared = (int) Math.pow(this.safeRadius, 2);
-                
-        this.ignoredAlways = this.getConfiguration().getStringList("ignoredAlways", this.ignoredAlways);
-        Main.getMessageManager().log(MessageLevel.CONFIG, "Always Ignored Players: " + this.ignoredAlways);
+        // Track new worlds if created.
+        new WorldListener(this);
         
-        this.minimumSleepers = this.getConfiguration().getInt("force.sleepers", this.minimumSleepers);
-        Main.getMessageManager().log(MessageLevel.CONFIG, "Minimum Sleepers: " + this.minimumSleepers);
+        // Start required events listener.
+        Event.Priority priorityPlayerTeleport = Event.Priority.valueOf(this.getConfiguration().getString("event.PLAYER_TELEPORT.priority", PlayerListener.DEFAULT_PLAYER_TELEPORT.name()));
+        Main.getMessageManager().log(MessageLevel.CONFIG, "Wakeup Bed Return Teleport Cancellation Priority: " + priorityPlayerTeleport);
+        new PlayerListener(this, priorityPlayerTeleport);
         
-        this.minimumPercent = this.getConfiguration().getInt("force.percentage", this.minimumPercent);
-        Main.getMessageManager().log(MessageLevel.CONFIG, "Minimum Percentage: " + this.minimumPercent);
+        // Monitor mob spawns if a safety radius has been defined on at least one world.
+        for (State state : this.tracked.values())
+            if (state.getSafeRadiusSquared() >= 0) {
+                Event.Priority priorityCreatureSpawn = Event.Priority.valueOf(this.getConfiguration().getString("event.CREATURE_SPAWN.priority", EntityListener.DEFAULT_CREATURE_SPAWN.name()));
+                Main.getMessageManager().log(MessageLevel.CONFIG, "Ignored Sleep Spawn Cancellation Priority: " + priorityCreatureSpawn);
+                new EntityListener(this, priorityCreatureSpawn);
+                break;
+            }
         
-        this.nether = this.defaultNether();
+        // Start optional activity monitors.
+        new PlayerMonitor(this);
         
-        this.registerEvents();
-        
-        new CommandManager(this);
+        new SleepCommand(this);
 
         Main.getMessageManager().log("Plugin Enabled");
     }
     
     public void onDisable() {
-        this.lastActivity.clear();
+        this.tracked.clear();
+        Main.defaultNether = null;
         
         Main.getMessageManager().log("Plugin Disabled");
+    }
+    
+    /**
+     * Track sleep state for a specified world. (Worlds explicitly excluded in
+     * the configuration file and the default nether world will be cancelled.) 
+     * 
+     * @param world world to track sleep state for
+     */
+    void trackState(World world) {
+        // Cancel this function for explicitly excluded worlds and the default nether.
+        if (this.excluded.contains(world.getName()) && !world.equals(Main.defaultNether)) return;
+        
+        // Load configuration values using defaults defined in code, overridden
+        // by defaults in the configuration file, overridden by explicit world
+        // settings in the configuration file.
+        ConfigurationNode defaults = this.getConfiguration();
+        ConfigurationNode explicit = this.findWorldExplicits(world);
+        if (explicit == null) explicit = defaults;
+        
+        int inactivityLimit = explicit.getInt("inactivityLimit", defaults.getInt("inactivityLimit", State.DEFAULT_INACTIVITY_LIMIT));
+        Main.getMessageManager().log(MessageLevel.CONFIG, "[" + world.getName() + "] Inactivity Limit (seconds): " + inactivityLimit);
+        
+        int safeRadius = explicit.getInt("safeRadius", defaults.getInt("safeRadius", State.DEFAULT_SAFE_RADIUS));
+        Main.getMessageManager().log(MessageLevel.CONFIG, "[" + world.getName() + "] Safe Radius (blocks): " + safeRadius);
+        
+        Set<String> ignoredAlways = new HashSet<String>(explicit.getStringList("ignoredAlways", defaults.getStringList("ignoredAlways", null)));
+        ignoredAlways.addAll(explicit.getStringList("ignoredAlwaysAlso", defaults.getStringList("ignoredAlwaysAlso", null)));
+        Main.getMessageManager().log(MessageLevel.CONFIG, "[" + world.getName() + "] Always Ignored Players: " + ignoredAlways);
+        
+        int forceCount = explicit.getInt("force.sleepers", defaults.getInt("force.count", State.DEFAULT_FORCE_COUNT));
+        Main.getMessageManager().log(MessageLevel.CONFIG, "[" + world.getName() + "] Forced Sleep Minimum Sleepers: " + forceCount);
+        
+        int forcePercent = explicit.getInt("force.percent", defaults.getInt("force.percent", State.DEFAULT_FORCE_PERCENT));
+        Main.getMessageManager().log(MessageLevel.CONFIG, "[" + world.getName() + "] Forced Sleep Minimum Percentage: " + forcePercent);
+        
+        String messageEnterBed = explicit.getString("messages.enterBed", defaults.getString("messages.enterBed", State.DEFAULT_MESSAGE_ENTER_BED));
+        Main.getMessageManager().log(MessageLevel.CONFIG, "[" + world.getName() + "] Enter Bed Message " + messageEnterBed);
+        
+        int messageMaxFrequency = explicit.getInt("messages.maxFrequency", defaults.getInt("messages.maxFrequency", State.DEFAULT_MESSAGE_MAX_FREQUENCY));
+        Main.getMessageManager().log(MessageLevel.CONFIG, "[" + world.getName() + "] Maximum Message Frequency: " + messageMaxFrequency);
+        
+        boolean messageTimestamp = explicit.getBoolean("messages.timestamp", defaults.getBoolean("messages.timestamp", State.DEFAULT_MESSAGE_TIMESTAMP));
+        Main.getMessageManager().log(MessageLevel.CONFIG, "[" + world.getName() + "] Message Timstamp: " + messageTimestamp);
+        
+        Set<Event.Type> monitoredActivity = new HashSet<Event.Type>();
+        for (String type : explicit.getStringList("activity", defaults.getStringList("activity", null)))
+            monitoredActivity.add(Event.Type.valueOf(type));
+        if (monitoredActivity.size() == 0) monitoredActivity = State.DEFAULT_MONITORED_ACTIVITY;
+        Main.getMessageManager().log(MessageLevel.CONFIG, "[" + world.getName() + "] Monitored Activity: " + monitoredActivity.toString());
+        
+        // Register the world's sleep state as being tracked.
+        State state = new State(world, inactivityLimit, safeRadius, ignoredAlways, forceCount, forcePercent
+                , messageEnterBed, messageMaxFrequency, messageTimestamp, monitoredActivity
+        );
+        this.tracked.put(world, state);
+    }
+    
+    /**
+     * Find the configuration node that defines explicit world settings that
+     * are used to override the defaults in code and the defaults in the
+     * configuration file.
+     * 
+     * @param world world to find explicit settings node for
+     * @return configuration node associated with explicit settings for world
+     */
+    private ConfigurationNode findWorldExplicits(World world) {
+        ConfigurationNode override = this.getConfiguration().getNode("override");
+        for (String key : override.getKeys()) {
+            if (key.equals(world.getName())) return override.getNode(key);
+            if (override.getNode(key).getString("name", "").equals(world.getName())) return override.getNode(key);
+        }
+        return null;
     }
     
     static ConfigurationFile getConfigurationFile() {
         return Main.configurationFile;
     }
     
-    static MessageManager getMessageManager() {
+    public static MessageManager getMessageManager() {
         return Main.messageManager;
     }
     
-    private void registerEvents() {
-        PluginManager pluginManager = this.getServer().getPluginManager();
-        
-        PlayerListener playerListener = new PlayerListener(this);
-        pluginManager.registerEvent(Event.Type.PLAYER_TELEPORT, playerListener, Event.Priority.Normal, this);
-        
-        pluginManager.registerEvent(Event.Type.PLAYER_JOIN     , playerListener, Event.Priority.Monitor, this);
-        pluginManager.registerEvent(Event.Type.PLAYER_BED_ENTER, playerListener, Event.Priority.Monitor, this);
-        pluginManager.registerEvent(Event.Type.PLAYER_BED_LEAVE, playerListener, Event.Priority.Monitor, this);
-        pluginManager.registerEvent(Event.Type.PLAYER_QUIT     , playerListener, Event.Priority.Monitor, this);
-       
-        // Events that determine player activity.
-        pluginManager.registerEvent(Event.Type.PLAYER_MOVE        , playerListener, Event.Priority.Monitor, this);
-        pluginManager.registerEvent(Event.Type.PLAYER_INTERACT    , playerListener, Event.Priority.Monitor, this);
-        pluginManager.registerEvent(Event.Type.PLAYER_CHAT        , playerListener, Event.Priority.Monitor, this);
-        pluginManager.registerEvent(Event.Type.PLAYER_DROP_ITEM   , playerListener, Event.Priority.Monitor, this);
-        pluginManager.registerEvent(Event.Type.PLAYER_TOGGLE_SNEAK, playerListener, Event.Priority.Monitor, this);
-        pluginManager.registerEvent(Event.Type.PLAYER_ITEM_HELD   , playerListener, Event.Priority.Monitor, this);
-        
-        if (safeRadius >= 0) {
-            EntityListener entityListener = new EntityListener(this);
-            pluginManager.registerEvent(Event.Type.CREATURE_SPAWN, entityListener, Event.Priority.Normal, this);
-        }
-    }
-    
     /**
-     * Record current time as last activity for player and configure player
-     * to not ignore sleeping.  This could be called on each PLAYER_MOVE event.
+     * Register activity with associated world sleep state.
+     * (This could be called on high frequency events such as PLAYER_MOVE.)
      * 
-     * @param player Player to record this as last activity for.
-     * @param type Event Type that caused this activity update for player.
+     * @param player player to record this as last activity for
+     * @param type event type that player engaged in
      */
     void registerActivity(final Player player, final Event.Type type) {
-        this.lastActivity.put(player, new GregorianCalendar());
+        // Ignore for untracked world sleep states.
+        if (!this.tracked.containsKey(player.getWorld())) return;
         
-        // Only need to change current ignore status if currently ignoring. 
-        if (!player.isSleepingIgnored()) return;
-        
-        // Do not change ignore status for players in the default nether.
-        if (player.getWorld().equals(this.nether)) return;
-        
-        // Do not change ignore status when forcing sleep.
-        if (this.isForcingSleep(player.getWorld())) return;
-        
-        // Do not change ignore status for always ignored players.
-        if (this.isIgnoredAlways(player.getName())) return;
-        
-        Main.getMessageManager().log(MessageLevel.FINE
-                , "Activity detected for " + player.getName() + " (Event: " + type.toString() + ")"
-        );
-        
-        this.ignoreSleep(player, false);
+        this.tracked.get(player.getWorld()).registerActivity(player, type);
     }
     
-    /**
-     * Remove player from being monitored for last activity.
-     * 
-     * @param player Player to be removed from monitoring.
-     */
-    void deregisterActivity(final Player player) {
-        this.lastActivity.remove(player);
-    }
-    
-    /**
-     * Configure away players and always ignored players to be considered
-     * sleeping for a given world and the default nether world.
-     * 
-     * @param world World to limit players to be considered sleeping to.
-     */
-    void lullPlayers(final Player bedEnterer) {
-        World world = bedEnterer.getWorld();
-        
-        // Ignore players in default/first nether world.
-        for (Player player : this.nether.getPlayers())
-            this.ignoreSleep(player, true);
-        
-        // Configure away and always ignored to be considered sleeping.
-        for (Player player : this.ignoredPlayers(world))
-            this.ignoreSleep(player, true);
-        
-        if (!this.isSleepForcible(world)) return;
-        
-        // Force sleep and set sleeping ignored for all remaining players.
-        this.forcingSleep(world, true);
-        for (Player player : world.getPlayers()) {
-            if (player.isSleeping() || player.isSleepingIgnored() || player.equals(bedEnterer)) continue;
-            
-            this.ignoreSleep(player, true);
-        }
-    }
-    
-    /**
-     * Determine if enough players are sleeping to force a sleep cycle. Check
-     * both minimum number of sleepers and minimum percent of sleepers. Both
-     * criteria must be met for a sleep cycle to be considered forcible.
-     * (This function assumes it was called as a result of a player entering
-     * bed but not before the bed enter event has completed.)
-     * (For percent comparison purposes, possible players are determined as
-     * active and not always ignored.)
-     * 
-     * @param world world to check if sleep should be forced
-     * @return true if enough players are in bed to force sleep; otherwise false
-     */
-    private boolean isSleepForcible(World world) {
-        boolean result = false;
-        
-        if (this.minimumSleepers <= -1 && this.minimumPercent <= -1) return result;
-        
-        // Check minimum number of sleepers criteria met by active sleepers (actually in bed).
-        int sleepers = 1 + this.inBed(world).size(); // Add 1 to compensate for bed enterer not completing event yet.
-        if (sleepers >= this.minimumSleepers) result = true;
-        
-        // Check if minimum percent of sleepers has been met to force sleeping for all.
-        int possible = world.getPlayers().size() - this.ignoredPlayers(world).size();
-        float percent = (float) sleepers / (float) possible * 100;
-        if (this.minimumPercent >= 1 && percent < this.minimumPercent) result = false;
-        
-        DecimalFormat df = new DecimalFormat("#.0");
-        Main.getMessageManager().log(MessageLevel.FINE
-                , "Forced sleep status for " + world.getName()
-                  + " : (" + sleepers + " in bed) / (" + possible + " possible)"
-                  + " = " + df.format(percent) + "%"
-        );
-        
-        return result;
-    }
-    
-    /**
-     * Players in a bed.
-     * 
-     * @param world world to filter players to
-     * @return players in a bed
-     */
-    private Set<Player> inBed(World world) {
-        Set<Player> inBed = new HashSet<Player>();
-        
-        for (Player player : world.getPlayers())
-            if (player.isSleeping())
-                inBed.add(player);
-
-        return inBed;
-    }
-    
-    /**
-     * Configure players in world and the default nether world to be considered
-     * awake.
-     * 
-     * @param world World to limit setting players to not ignore sleeping in.
-     */
-    void awakenSleepers(final World world) {
-        this.forcingSleep(world, false);
-        
-        for (Player player : world.getPlayers())
-            this.ignoreSleep(player, false);
-        
-        for (Player player : this.nether.getPlayers())
-            this.ignoreSleep(player, false);
-    }
-    
-    /**
-     * Determines if at least one player is in a bed.
-     * 
-     * @param world Limit players to check to this world only.
-     * @return true if at least 1 player is in bed; false otherwise.
-     */
-    boolean isAnyoneSleeping(final World world) {
-        for (Player player : world.getPlayers())
-            if (player.isSleeping()) return true;
-        
-        return false;
-    }
-    
-    /**
-     * Determine if spawn is within unsafe distance from an ignored player
-     * during a sleep cycle.
-     * 
-     * @param spawningAt Location of creature spawning.
-     * @return true if spawn is too close to any player ignoring sleep.
-     */
-    boolean isIgnoredSleepSpawn(final Location spawningAt) {
-        for (Player player : spawningAt.getWorld().getPlayers()) {
-            // Only check for players involved in a current sleep cycle.
-            if (!player.isSleepingIgnored()) continue;
-            
-            // Check if distance from player is within the safety radius that should not allow the spawn.
-            if (player.getLocation().distanceSquared(spawningAt) <= this.safeRadiusSquared) return true;
-        }
-        
-        return false;
-    }
-    
-    /**
-     * Indicates if the player is always ignored for sleep.
-     * 
-     * @param playerName Name of player.
-     * @return true if player is always ignored; false otherwise.
-     */
-    boolean isIgnoredAlways(final String playerName) {
-        return this.ignoredAlways.contains(playerName);
-    }
-    
-    /**
-     * Add or remove a player to always be ignored for sleep.
-     * 
-     * @param playerName Name of player.
-     * @param ignore Whether or not to always ignore.
-     */
-    void ignoreSleepAlways(final String playerName, final boolean ignore) {
-        if (this.isIgnoredAlways(playerName) == ignore) return;
-        
-        if (ignore) {
-            this.ignoredAlways.add(playerName);
-        } else {
-            this.ignoredAlways.remove(playerName);
-        }
-
-        // Save change to configuration file.
-        this.getConfiguration().setProperty("ignoredAlways", this.ignoredAlways);
-        Main.getConfigurationFile().save();
-    }
+//    /**
+//     * Add or remove a player to always be ignored for sleep.
+//     * 
+//     * @param playerName Name of player.
+//     * @param ignore Whether or not to always ignore.
+//     */
+//    void ignoreSleepAlways(final String playerName, final boolean ignore) {
+//        if (this.isIgnoredAlways(playerName) == ignore) return;
+//        
+//        if (ignore) {
+//            this.ignoredAlways.add(playerName);
+//        } else {
+//            this.ignoredAlways.remove(playerName);
+//        }
+//
+//        // Save change to configuration file.
+//        this.getConfiguration().setProperty("ignoredAlways", this.ignoredAlways);
+//        Main.getConfigurationFile().save();
+//    }
     
     /**
      * Determine default nether world.
      * 
-     * @return world that is associated as default nether.
+     * @return world that is associated as default nether
      */
-    private World defaultNether() {
+    private World findDefaultNether() {
         // Find first nether world which should be the nether world the server associates by default.
         for (int i = 0; i < this.getServer().getWorlds().size(); ++i)
             if (this.getServer().getWorlds().get(i).getEnvironment().equals(Environment.NETHER))
                 return this.getServer().getWorlds().get(i);
         
         return null;
-    }
-    
-    /**
-     * Compile a list of players that should ignore sleep status checks from
-     * either always being ignored or inactivity. 
-     * 
-     * @param world World to limit away players returned to.
-     * @return List of players that should ignore sleep status checks.
-     */
-    private List<Player> ignoredPlayers(final World world) {
-        List<Player> ignored = new ArrayList<Player>();
-        
-        Calendar oldestActive = new GregorianCalendar();
-        oldestActive.add(Calendar.SECOND, -this.inactivityLimit);
-        
-        String status = "";
-        for (Player player : world.getPlayers()) {
-            if (this.isIgnoredAlways(player.getName())) {
-                status = "Always ignores sleep.";
-                
-            } else if (!this.lastActivity.containsKey(player)) {
-                status = "No activity recorded yet.";
-                
-            } else if (this.lastActivity.get(player).before(oldestActive)) {
-                status = "Last activity was at " + Main.formatDateTime(this.lastActivity.get(player));
-                
-            } else {
-                // Player not ignored, skip to next player.
-                continue;
-            }
-            
-            ignored.add(player);
-            Main.getMessageManager().log(MessageLevel.FINEST
-                    , "Ignoring " + player.getName()
-                        + " in \"" + player.getWorld().getName() + "\";"
-                        + " " + status
-            );
-        }
-        
-        return ignored;
-    }
-    
-    /**
-     * Set a player to temporarily ignore sleep status checks.
-     * 
-     * @param player Player to set sleeping ignored status on.
-     * @param ignore true to set player to ignore sleeping; false otherwise.
-     */
-    private void ignoreSleep(final Player player, final boolean ignore) {
-        if (!player.isOnline()) return;
-        
-        // Don't modify players already set as expected.
-        if (player.isSleepingIgnored() == ignore) return;
-        
-        // Don't ignore players in bed like normal.
-        if (ignore && player.isSleeping()) return;
-        
-        Main.getMessageManager().log(MessageLevel.FINE
-                , "Setting " + player.getName()
-                    + " in \"" + player.getWorld().getName() + "\" to " + (ignore ? "asleep" : "awake") + "."
-        );
-        
-        player.setSleepingIgnored(ignore);
-    }
-    
-    /**
-     * Configure world to be in a forced sleep mode.
-     * 
-     * @param world world to configure forced sleeping on
-     * @param force true to force sleep; false to not force sleep
-     */
-    private void forcingSleep(final World world, final boolean force) {
-        this.forcingSleep.put(world.getId(), force);
-    }
-    
-    /**
-     * Determines if world is in a forced sleeping state.
-     * 
-     * @param world world to determine sleep state
-     * @return true if world is forcing sleep; otherwise false
-     */
-    private boolean isForcingSleep(final World world) {
-        if (!this.forcingSleep.containsKey(world.getId())) return false;
-        
-        return this.forcingSleep.get(world.getId());
-    }
-    
-    /**
-     * Format a date/time to an ISO 8601 format.
-     * 
-     * @param calendar date/time to format
-     * @return formatted date/time
-     */
-    private static String formatDateTime(final Calendar calendar) {
-        return Main.formatDateTime(calendar, "yyyy-MM-dd'T'HH:mm:ss");
-    }
-    
-    /**
-     * Format a date/time using SimpleDateFormat.
-     * 
-     * @param calendar date/time to format
-     * @param format SimpleDateFormat format specifier
-     * @return formatted date/time
-     */
-    private static String formatDateTime(final Calendar calendar, final String format) {
-        return (new SimpleDateFormat(format)).format(calendar.getTime());
     }
 }
