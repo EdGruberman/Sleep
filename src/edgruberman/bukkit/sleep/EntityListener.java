@@ -1,4 +1,4 @@
-package edgruberman.bukkit.simpleawaysleep;
+package edgruberman.bukkit.sleep;
 
 import org.bukkit.event.Event;
 import org.bukkit.event.Event.Priority;
@@ -41,11 +41,13 @@ final class EntityListener extends org.bukkit.event.entity.EntityListener {
         State state = this.main.tracked.get(event.getLocation().getWorld());
         if (!state.isIgnoredSleepSpawn(event.getLocation())) return;
         
-        Main.getMessageManager().log(MessageLevel.FINER, "Cancelling sleep related spawn of " + event.getCreatureType()
-                + " in [" + event.getLocation().getWorld().getName() + "] at"
-                + " x: " + event.getLocation().getBlockX()
-                + " y: " + event.getLocation().getBlockY()
-                + " z: " + event.getLocation().getBlockZ()
+        Main.messageManager.log(
+                "Cancelling sleep related spawn of " + event.getCreatureType()
+                    + " in [" + event.getLocation().getWorld().getName() + "] at"
+                    + " x: " + event.getLocation().getBlockX()
+                    + " y: " + event.getLocation().getBlockY()
+                    + " z: " + event.getLocation().getBlockZ()
+                , MessageLevel.FINER
         );
         event.setCancelled(true);
     }

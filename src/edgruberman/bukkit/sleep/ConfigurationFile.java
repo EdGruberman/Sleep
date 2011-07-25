@@ -1,4 +1,4 @@
-package edgruberman.bukkit.simpleawaysleep;
+package edgruberman.bukkit.sleep;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -114,19 +114,22 @@ public final class ConfigurationFile {
         this.file = new File(this.owner.getDataFolder(), (file != null ? file : ConfigurationFile.PLUGIN_FILE));
         this.defaults = this.owner.getClass().getResource((defaults != null ? defaults : ConfigurationFile.DEFAULTS + this.file.getName()));
         this.maxSaveFrequency = maxSaveFrequency;
-        if (this.file.equals(ConfigurationFile.PLUGIN_FILE)) {
+        if (this.file.getName().equals(ConfigurationFile.PLUGIN_FILE)) {
             this.configuration = this.owner.getConfiguration();
         } else {
             this.configuration = new Configuration(this.file);
         }
+        
+        this.load();
     }
     
     /**
-     * Loads the configuration file from plugin data folder.  This method will
-     * create the file from the default supplied in the JAR if necessary.
+     * Loads the configuration file from owning plugin's data folder.  This
+     * method will create the file from the default supplied in the JAR if 
+     * the file does not exist and the default is supplied.
      */
     void load() {
-        if (!this.file.exists()) {
+        if (!this.file.exists() && this.defaults != null) {
             try {
                 ConfigurationFile.extract(this.defaults, this.file);
             
@@ -171,7 +174,7 @@ public final class ConfigurationFile {
      * 
      * @param immediately true to force a save of the configuration file immediately
      */
-    public void save(final boolean immediately) {
+    void save(final boolean immediately) {
         if (!immediately) {
             // Determine how long since last save.
             long sinceLastSave = this.maxSaveFrequency;
@@ -182,7 +185,7 @@ public final class ConfigurationFile {
             if (sinceLastSave < this.maxSaveFrequency) {
                 // If task already scheduled let it run when expected.
                 if (this.taskSave != null && this.owner.getServer().getScheduler().isQueued(this.taskSave)) {
-                    Main.getMessageManager().log(MessageLevel.FINEST, "Save request queued; Last save was " + sinceLastSave + " seconds ago.");
+                    Main.messageManager.log("Save request queued; Last save was " + sinceLastSave + " seconds ago.", MessageLevel.FINEST);
                     return;
                 }
                 
@@ -200,7 +203,7 @@ public final class ConfigurationFile {
         
         this.configuration.save();
         this.lastSave = new GregorianCalendar();
-        Main.getMessageManager().log(MessageLevel.FINEST, "Configuration file " + this.file.getName() + " saved.");
+        Main.messageManager.log("Configuration file " + this.file.getName() + " saved.", MessageLevel.FINEST);
     }
     
     /**
@@ -210,7 +213,7 @@ public final class ConfigurationFile {
      * @param destination file to save out to in file system
      */
     private static void extract(final URL source, final File destination) throws FileNotFoundException, IOException {
-        destination.getParentFile().mkdir();
+        destination.getParentFile().mkdirs();
         
         InputStream in = null;
         OutputStream out = null;

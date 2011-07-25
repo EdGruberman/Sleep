@@ -1,4 +1,4 @@
-package edgruberman.bukkit.simpleawaysleep;
+package edgruberman.bukkit.sleep;
 
 import org.bukkit.event.world.WorldLoadEvent;
 

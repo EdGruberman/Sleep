@@ -1,10 +1,10 @@
-package edgruberman.bukkit.simpleawaysleep.commands;
+package edgruberman.bukkit.sleep.commands;
 
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import edgruberman.bukkit.messagemanager.MessageLevel;
-import edgruberman.bukkit.simpleawaysleep.Main;
+import edgruberman.bukkit.sleep.Main;
 
 public final class SleepCommand extends Command implements org.bukkit.command.CommandExecutor {
     
@@ -13,6 +13,9 @@ public final class SleepCommand extends Command implements org.bukkit.command.Co
         this.setExecutorOf("sleep", this);
         
         this.registerAction(new StatusAction(this), true);
+        this.registerAction(new WhoAction(this));
+        this.registerAction(new DetailAction(this));
+        this.registerAction(new ReloadAction(this));
     }
     
     @Override
@@ -20,13 +23,18 @@ public final class SleepCommand extends Command implements org.bukkit.command.Co
             , final String label, final String[] args) {
         Context context = super.parse(this, sender, command, label, args);
         
-        if (!super.isAllowed(sender)) {
-            Main.getMessageManager().respond(sender, MessageLevel.RIGHTS, "You are not allowed to use this command.");
+        if (!this.isAllowed(context.sender)) {
+            Main.messageManager.respond(context.sender, "You are not allowed to use this command.", MessageLevel.RIGHTS, false);
             return true;
         }
         
         if (context.action == null) {
-            Main.getMessageManager().respond(sender, MessageLevel.WARNING, "Unrecognized action \"" + context.action.name + "\"");
+            Main.messageManager.respond(context.sender, "Unrecognized action \"" + context.action.name + "\"", MessageLevel.WARNING, false);
+            return true;
+        }
+        
+        if (!context.action.isAllowed(context.sender)) {
+            Main.messageManager.respond(context.sender, "You are not allowed to use this action.", MessageLevel.RIGHTS, false);
             return true;
         }
         

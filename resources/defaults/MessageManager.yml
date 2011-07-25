@@ -1,0 +1,9 @@
+send:
+    PLAYER:
+        level: CONFIG
+    SERVER:
+        level: EVENT
+    WORLD:
+        level: EVENT
+    LOG:
+        level: INFO

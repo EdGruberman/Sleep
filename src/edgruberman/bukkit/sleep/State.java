@@ -1,6 +1,5 @@
-package edgruberman.bukkit.simpleawaysleep;
+package edgruberman.bukkit.sleep;
 
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
@@ -16,6 +15,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 
 import edgruberman.bukkit.messagemanager.MessageLevel;
+import edgruberman.bukkit.messagemanager.channels.Channel;
 
 /**
  * Sleep state management for a specific world. 
@@ -159,11 +159,9 @@ public class State {
         // Do not change ignore status for always ignored players.
         if (this.isIgnoredAlways(player)) return;
         
-        Main.getMessageManager().log(MessageLevel.FINE
-                , "Activity recorded for " + player.getName() + " (Event: " + type.toString() + ")"
-        );
+        Main.messageManager.log("Activity recorded for " + player.getName() + " (Event: " + type.toString() + ")", MessageLevel.FINE);
         
-        this.ignoreSleep(player, false);
+        this.ignoreSleep(player, false, "Monitored Activity");
     }
     
     /**
@@ -200,25 +198,35 @@ public class State {
      * world, and always ignored players in this world to ignore sleep. If all
      * players in the world are then either in bed or ignoring sleep, a natural
      * sleep cycle should automatically commence.
+     */
+    public void lull() {
+        this.lull(null);
+    }
+    
+    /**
+     * Configure all players in the default nether, inactive players in this
+     * world, and always ignored players in this world to ignore sleep. If all
+     * players in the world are then either in bed or ignoring sleep, a natural
+     * sleep cycle should automatically commence.
      * 
-     * @param bedEnterer player entering bed
+     * @param bedEnterer player entering bed (but not completely in bed yet)
      */
     void lull(final Player bedEnterer) {
         // Ignore players in default/first nether world.
         for (Player player : Main.defaultNether.getPlayers())
-            this.ignoreSleep(player, true);
+            this.ignoreSleep(player, true, "Default Nether");
         
         // Configure away and always ignored to be considered sleeping.
         for (Player player : this.ignoredPlayers())
-            this.ignoreSleep(player, true);
+            if (!player.equals(bedEnterer)) this.ignoreSleep(player, true, "Inactive or Always Ignored");
         
-        if (Main.getMessageManager().isLogLevel(MessageLevel.FINE))
-            Main.getMessageManager().log(MessageLevel.FINE, "[" + this.world.getName() + "] " + this.description(true));
+        if (Main.messageManager.isLevel(Channel.Type.LOG, MessageLevel.FINE))
+            Main.messageManager.log("[" + this.world.getName() + "] " + this.description(bedEnterer != null), MessageLevel.FINE);
         
         // Check if sleep should be forced now.
         if (this.forceCount <= -1 && this.forcePercent <= -1) return;
         
-        if ((this.needForSleep() - 1) == 0)
+        if ((this.needForSleep() - (bedEnterer != null ? 1 : 0)) == 0)
             this.forceSleep(bedEnterer);
     }
     
@@ -233,7 +241,7 @@ public class State {
         for (Player player : world.getPlayers()) {
             if (player.isSleeping() || player.isSleepingIgnored() || player.equals(ignore)) continue;
             
-            this.ignoreSleep(player, true);
+            this.ignoreSleep(player, true, "Forcing Sleep");
         }
     }
     
@@ -245,10 +253,10 @@ public class State {
         this.forcingSleep = false;
         
         for (Player player : this.world.getPlayers())
-            this.ignoreSleep(player, false);
+            this.ignoreSleep(player, false, "Awakening World");
         
         for (Player player : Main.defaultNether.getPlayers())
-            this.ignoreSleep(player, false);
+            this.ignoreSleep(player, false, "Awakening Default Nether");
     }
     
     /**
@@ -286,21 +294,21 @@ public class State {
      * Broadcast a message to this world that a player has entered bed, if
      * configured.
      * 
-     * @param player player that entered bed
+     * @param enterer player that entered bed
      */
-    void broadcastEnter(final Player player) {
+    void broadcastEnter(final Player enterer) {
         if (this.messageEnterBed == null || this.messageEnterBed.length() == 0) return;
         
-        if (this.lastMessage.containsKey(player)) {
+        if (this.lastMessage.containsKey(enterer)) {
             Calendar latest = new GregorianCalendar();
             latest.add(Calendar.SECOND, -this.messageMaxFrequency);
             
-            if (this.lastMessage.get(player).after(latest)) return;
+            if (this.lastMessage.get(enterer).after(latest)) return;
         }
 
-        this.lastMessage.put(player, new GregorianCalendar());
-        String formatted = String.format(this.messageEnterBed, player.getDisplayName(), this.needForSleep());
-        Main.getMessageManager().broadcast(this.world, MessageLevel.EVENT, formatted, this.messageTimestamp);
+        this.lastMessage.put(enterer, new GregorianCalendar());
+        String formatted = String.format(this.messageEnterBed, enterer.getDisplayName(), this.needForSleep() - 1);
+        Main.messageManager.send(this.world, formatted, MessageLevel.EVENT, this.messageTimestamp);
     }
     
     /**
@@ -308,8 +316,9 @@ public class State {
      * 
      * @param player player to set sleeping ignored status on
      * @param ignore true to set player to ignore sleeping; false otherwise
+     * @param reason brief description for logging/troubleshooting purposes
      */
-    private void ignoreSleep(final Player player, final boolean ignore) {
+    private void ignoreSleep(final Player player, final boolean ignore, final String reason) {
         if (!player.isOnline()) return;
         
         // Don't modify players already set as expected.
@@ -318,9 +327,10 @@ public class State {
         // Don't ignore players actually in bed.
         if (ignore && player.isSleeping()) return;
         
-        Main.getMessageManager().log(MessageLevel.FINE
-                , "Setting " + player.getName()
-                    + " in [" + player.getWorld().getName() + "] to " + (ignore ? "" : "not ") + " ignore sleep."
+        Main.messageManager.log(
+                "Setting " + player.getName() + " in [" + player.getWorld().getName() + "]"
+                    + " to" + (ignore ? "" : " not") + " ignore sleep. (" + reason + ")"
+                , MessageLevel.FINE
         );
         
         player.setSleepingIgnored(ignore);
@@ -335,34 +345,34 @@ public class State {
     private Set<Player> ignoredPlayers() {
         Set<Player> ignored = new HashSet<Player>();
         
-        Calendar oldestActive = new GregorianCalendar();
-        oldestActive.add(Calendar.SECOND, -this.inactivityLimit);
-        
-        String status = "";
         for (Player player : this.world.getPlayers()) {
-            if (this.isIgnoredAlways(player)) {
-                status = "Always ignores sleep.";
-                
-            } else if (!this.lastActivity.containsKey(player)) {
-                status = "No activity recorded yet.";
-                
-            } else if (this.lastActivity.get(player).before(oldestActive)) {
-                status = "Last activity was at " + State.formatDateTime(this.lastActivity.get(player));
-                
-            } else {
-                // Player not ignored, skip to next player.
+            if (this.isIgnoredAlways(player)
+                    || !this.isActive(player)
+                    || player.hasPermission("edgruberman.bukkit.sleep.ignore")
+                    || player.hasPermission("edgruberman.bukkit.sleep.ignore." + this.world.getName())) {
+                ignored.add(player);
                 continue;
             }
-            
-            ignored.add(player);
-            Main.getMessageManager().log(MessageLevel.FINEST
-                    , "Ignoring " + player.getName()
-                        + " in [" + player.getWorld().getName() + "];"
-                        + " " + status
-            );
         }
         
         return ignored;
+    }
+    
+    /**
+     * Determine if player has any recent activity.
+     * 
+     * @param player player to check activity on
+     * @return true if player has been active recently; otherwise false
+     */
+    public boolean isActive(Player player) {
+        if (!this.lastActivity.containsKey(player)) return false;
+        
+        Calendar oldestActive = new GregorianCalendar();
+        oldestActive.add(Calendar.SECOND, -this.inactivityLimit);
+        if (this.lastActivity.get(player).before(oldestActive))
+            return false;
+        
+        return true;
     }
     
     /**
@@ -370,7 +380,7 @@ public class State {
      * 
      * @return text description of status
      */
-    String description() {
+    public String description() {
         return this.description(false);
     }
     
@@ -387,15 +397,16 @@ public class State {
         // "Sleep needs +2; 3 in bed (need 5) out of 7 possible = 42.9%";
         // "Sleep needs +1; 3 in bed out of 7 possible = 42.9% (need 50%)";
         // "Sleep needs no more; 5 in bed (need 5) out of 7 possible = 71.4% (need 50.0%)";
-        int need = this.needForSleep();
-        int count = (bedEntered ? 1 : 0) + this.inBed().size();
+        int need = this.needForSleep() - (bedEntered ? 1 : 0);
+        int count = this.inBed().size() + (bedEntered ? 1 : 0);
         int possible = this.possibleSleepers();
         int requiredPercent = (this.forcePercent >= 0 ? this.forcePercent : 100);
+        int currentPercent = Math.round((float) count / (possible != 0 ? possible : 1) * 100);
         
         return "Sleep needs " + (need > 0 ? "+" + need : "no more") + ";"
-            + " " + this.inBed().size() + " in bed" + (this.forceCount >= 0 ? " (need " + this.forceCount + ")" : "")
+            + " " + count + " in bed" + (this.forceCount >= 0 ? " (need " + this.forceCount + ")" : "")
             + " out of " + possible + " possible"
-            + " = " +  (count / possible * 100) + "%" + (requiredPercent > 0 ? " (need " + requiredPercent + "%)" : "")
+            + " = " + currentPercent + "%" + (requiredPercent > 0 ? " (need " + requiredPercent + "%)" : "")
         ;
     }
     
@@ -409,18 +420,24 @@ public class State {
         
         // Minimum count of players in bed needed.
         int total = (this.forceCount >= 0 ? this.forceCount : possible);
-        int need = total - this.inBed().size();
+        int inBed = this.inBed().size();
+        int needCount = total - inBed;
         
-        int largest = (need > 0 ? need : 0);
+        int need = needCount;
         
         // Minimum percentage of players in bed needed.
-        int percent = (this.forcePercent >= 0 ? this.forcePercent : 100);
-        percent = (int) Math.ceil(percent / 100 * possible);
+        int needPercent = (this.forcePercent >= 0 ? this.forcePercent : 100);
+        needPercent = (int) Math.ceil((float) needPercent / 100 * possible) - inBed;
         
-        if (percent > largest)
-            largest = percent;
+        if (needPercent > need)
+            need = needPercent;
         
-        return (largest > 0 ? largest : 0);
+        need = (need > 0 ? need : 0);
+        
+        // Always need at least 1 player in bed to start a sleep cycle.
+        if (need == 0 && inBed == 0) need = 1;
+        
+        return need;
     }
     
     /**
@@ -438,7 +455,7 @@ public class State {
      * 
      * @return players in bed
      */
-    private Set<Player> inBed() {
+    public Set<Player> inBed() {
         Set<Player> inBed = new HashSet<Player>();
         
         for (Player player : this.world.getPlayers())
@@ -448,24 +465,24 @@ public class State {
         return inBed;
     }
     
-    /**
-     * Format a date/time to an ISO 8601 format.
-     * 
-     * @param calendar date/time to format
-     * @return formatted date/time
-     */
-    private static String formatDateTime(final Calendar calendar) {
-        return State.formatDateTime(calendar, "yyyy-MM-dd'T'HH:mm:ss");
-    }
-    
-    /**
-     * Format a date/time using SimpleDateFormat.
-     * 
-     * @param calendar date/time to format
-     * @param format SimpleDateFormat format specifier
-     * @return formatted date/time
-     */
-    private static String formatDateTime(final Calendar calendar, final String format) {
-        return (new SimpleDateFormat(format)).format(calendar.getTime());
-    }
+//    /**
+//     * Format a date/time to an ISO 8601 format.
+//     * 
+//     * @param calendar date/time to format
+//     * @return formatted date/time
+//     */
+//    private static String formatDateTime(final Calendar calendar) {
+//        return State.formatDateTime(calendar, "yyyy-MM-dd'T'HH:mm:ss");
+//    }
+//    
+//    /**
+//     * Format a date/time using SimpleDateFormat.
+//     * 
+//     * @param calendar date/time to format
+//     * @param format SimpleDateFormat format specifier
+//     * @return formatted date/time
+//     */
+//    private static String formatDateTime(final Calendar calendar, final String format) {
+//        return (new SimpleDateFormat(format)).format(calendar.getTime());
+//    }
 }

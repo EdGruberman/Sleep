@@ -1,11 +1,36 @@
-name: SimpleAwaySleep
-description: Allows sleeping to occur if players are not currently active in game.
+name: Sleep
+description: Manages sleep based on activity or minimum criteria.
 version: %VERSION%
 depend: [MessageManager]
 author: EdGruberman (ed@rjump.com)
-main: edgruberman.bukkit.simpleawaysleep.Main
+main: edgruberman.bukkit.sleep.Main
 commands:
     sleep:
         description: Manages sleep functionality.
         usage: |
             /<command> (+|-)ignore <Player> - Add/Remove ignore sleep status for <Player>.
+permissions:
+    edgruberman.bukkit.sleep.command.sleep.info:
+        description: Grants basic Sleep command usage
+        children:
+            edgruberman.bukkit.sleep.command.sleep: true
+            edgruberman.bukkit.sleep.command.sleep.action.status: true
+            edgruberman.bukkit.sleep.command.sleep.action.who: true
+            edgruberman.bukkit.sleep.command.sleep.action.detail: true
+    edgruberman.bukkit.sleep.command.sleep:
+        description: Can use the sleep command
+        default: op
+    edgruberman.bukkit.sleep.command.sleep.action.status:
+        description: Can use command "/sleep[ status]" to see basic sleep status
+        default: op
+    edgruberman.bukkit.sleep.command.sleep.action.who:
+        description: Can use command "/sleep who" to see who is in bed currently
+        default: op
+    edgruberman.bukkit.sleep.command.sleep.action.detail:
+        description: Can use command "/sleep detail" to see what is required for sleep
+        default: op
+    edgruberman.bukkit.sleep.command.sleep.action.reload:
+        description: Can reload Sleep plugin configuration
+        default: op
+    edgruberman.bukkit.sleep.ignore:
+        description: Player will always be ignored for sleep

@@ -1,4 +1,4 @@
-package edgruberman.bukkit.simpleawaysleep.commands;
+package edgruberman.bukkit.sleep.commands;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -12,15 +12,15 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import edgruberman.bukkit.messagemanager.MessageLevel;
-import edgruberman.bukkit.simpleawaysleep.Main;
+import edgruberman.bukkit.sleep.Main;
 
-public abstract class Command  {
+class Command  {
     
+    protected PluginCommand command;
     protected final JavaPlugin plugin;
-    protected CommandExecutor executor = null;
     
     Map<String, Action> actions = new HashMap<String, Action>();
-    String defaultAction = null;
+    Action defaultAction = null;
     
     protected Command(final JavaPlugin plugin) {
         this.plugin = plugin;
@@ -28,16 +28,17 @@ public abstract class Command  {
     
     protected Context parse(final Command owner, final CommandSender sender, final org.bukkit.command.Command command
             , final String label, final String[] args) {
-        Main.getMessageManager().log(MessageLevel.FINE
-                , ((sender instanceof Player) ? ((Player) sender).getName() : "[CONSOLE]")
-                + " issued command: " + label + " " + Command.join(args)
+        Main.messageManager.log(
+                ((sender instanceof Player) ? ((Player) sender).getName() : "[CONSOLE]")
+                    + " issued command: " + label + " " + Command.join(args)
+                , MessageLevel.FINE
         );
         
         return new Context(this, sender, command, label, args);
     }
     
     protected boolean isAllowed(CommandSender sender) {
-        return sender.isOp();
+        return sender.hasPermission("edgruberman.bukkit.sleep.command." + this.command.getLabel());
     }
     
     protected void registerAction(final Action action) {
@@ -45,8 +46,14 @@ public abstract class Command  {
     }
     
     protected void registerAction(final Action action, final boolean isDefault) {
+        if (action == null)
+            throw new IllegalArgumentException("Action can not be null.");
+        
+        if (this.actions.containsKey(action.name))
+            throw new IllegalArgumentException("Action " + action.name + " already registered.");
+        
         this.actions.put(action.name, action);
-        if (isDefault) this.defaultAction = action.name;
+        if (isDefault || this.defaultAction == null) this.defaultAction = action;
     }
     
     /**
@@ -54,15 +61,14 @@ public abstract class Command  {
      * 
      * @param label command label to register
      */
-    protected void setExecutorOf(final String name, final CommandExecutor executor) {
-        PluginCommand command = this.plugin.getCommand(name);
-        if (command == null) {
-            Main.getMessageManager().log(MessageLevel.WARNING, "Unable to register \"" + name + "\" command.");
+    protected void setExecutorOf(final String label, final CommandExecutor executor) {
+        this.command = this.plugin.getCommand(label);
+        if (this.command == null) {
+            Main.messageManager.log("Unable to register \"" + label + "\" command.", MessageLevel.WARNING);
             return;
         }
         
-        this.executor = executor;
-        command.setExecutor(executor);
+        this.command.setExecutor(executor);
     }
     
     /**

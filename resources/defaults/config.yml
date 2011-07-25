@@ -1,13 +1,10 @@
 inactivityLimit: 300
 safeRadius: 3
-ignoredAlways:
-    - EdGruberman
-    - Bot1
 force:
     count: null
     percent: null
 message:
-    enterBed: '%1$s is in bed. (Need %2$n more to force sleep.)'
+    enterBed: null
     maxFrequency: 10
     timestamp: false
 activity:
@@ -18,38 +15,8 @@ activity:
     - PLAYER_TOGGLE_SNEAK
     - PLAYER_ITEM_HELD
     - PLAYER_JOIN
-override:
-    World1:
-        inactivityLimit: 60
-        force:
-            count: 2
-        ignoredAlways:
-        - JustThisGuyInThisWorld
-    World2:
-        force:
-            percent: 25
-        ignoredAlwaysAlso:
-            - ThisGuyAndDefaults
-        activity:
-            - PLAYER_MOVE
-    Worlds/World3:
-        safeRadius: 50
-        messages:
-            enterBed: '%1$s is rolling in the hay.'
-            maxFrequency: -1
-    World4:
-        name: Worlds/World.with.periods
-        inactivityLimit: null
-        teleport: HIGHEST
-exclude:
-    - World5
-    - Another.World.with.PERIODS
 event:
     PLAYER_TELEPORT:
         priority: Normal
     CREATURE_SPAWN:
         priority: Normal
-level:
-    log: INFO
-    send: RIGHTS
-    broadcast: EVENT

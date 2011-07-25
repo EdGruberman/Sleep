@@ -1,4 +1,4 @@
-package edgruberman.bukkit.simpleawaysleep;
+package edgruberman.bukkit.sleep;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -51,7 +51,7 @@ final class PlayerListener extends org.bukkit.event.player.PlayerListener {
         // "There's no sleeping in the nether!"
         if (event.getPlayer().getWorld().getEnvironment().equals(Environment.NETHER)) return;
         
-        Main.getMessageManager().log(MessageLevel.FINE, event.getPlayer().getName() + " entered bed in [" + event.getPlayer().getWorld().getName() + "]");
+        Main.messageManager.log(event.getPlayer().getName() + " entered bed in [" + event.getPlayer().getWorld().getName() + "]", MessageLevel.FINE);
         State state = this.main.tracked.get(event.getPlayer().getWorld());
         state.broadcastEnter(event.getPlayer());
         state.lull(event.getPlayer());
@@ -73,7 +73,7 @@ final class PlayerListener extends org.bukkit.event.player.PlayerListener {
         
         // Otherwise this is assumed to be a player requested action and the
         // tracked world should then be awakened if no one is left in bed.
-        Main.getMessageManager().log(MessageLevel.FINE, event.getPlayer().getName() + " left bed in [" + event.getPlayer().getWorld().getName() + "]");
+        Main.messageManager.log(event.getPlayer().getName() + " left bed in [" + event.getPlayer().getWorld().getName() + "]", MessageLevel.FINE);
         State state = this.main.tracked.get(event.getPlayer().getWorld());
         if (!state.isAnyoneInBed()) state.awaken();
     }
@@ -88,7 +88,7 @@ final class PlayerListener extends org.bukkit.event.player.PlayerListener {
         // Only cancel teleport if player just left bed while ignoring sleep.
         if (!this.ignoreBedTeleport.contains(event.getPlayer())) return;
         
-        Main.getMessageManager().log(MessageLevel.FINE, "Cancelling wakeup bed return teleport for " + event.getPlayer().getName() + " who is ignoring sleep.");
+        Main.messageManager.log("Cancelling wakeup bed return teleport for " + event.getPlayer().getName() + " who is ignoring sleep.", MessageLevel.FINE);
         this.ignoreBedTeleport.remove(event.getPlayer());
         event.setCancelled(true);
     }
