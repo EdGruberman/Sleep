@@ -8,29 +8,32 @@ commands:
     sleep:
         description: Manages sleep functionality.
         usage: |
-            /<command> (+|-)ignore <Player> - Add/Remove ignore sleep status for <Player>.
+            /<command>[ status[ <World>]] - Display how many players still needed for sleep in <World>.
+            /<command> who[ <World] - Display who is in bed in <World>.
+            /<command> details[ <World>] - Display sleep requirements in <World>.
+            /<command> reload - Reload configuration files.
 permissions:
     edgruberman.bukkit.sleep.command.sleep.info:
-        description: Grants basic Sleep command usage
+        description: Can use all the basic information actions of the sleep command.
         children:
             edgruberman.bukkit.sleep.command.sleep: true
             edgruberman.bukkit.sleep.command.sleep.action.status: true
             edgruberman.bukkit.sleep.command.sleep.action.who: true
             edgruberman.bukkit.sleep.command.sleep.action.detail: true
     edgruberman.bukkit.sleep.command.sleep:
-        description: Can use the sleep command
+        description: Can use sleep command.
         default: op
     edgruberman.bukkit.sleep.command.sleep.action.status:
-        description: Can use command "/sleep[ status]" to see basic sleep status
+        description: Can use status action of sleep command.
         default: op
     edgruberman.bukkit.sleep.command.sleep.action.who:
-        description: Can use command "/sleep who" to see who is in bed currently
+        description: Can use who action of sleep command.
         default: op
     edgruberman.bukkit.sleep.command.sleep.action.detail:
-        description: Can use command "/sleep detail" to see what is required for sleep
+        description: Can use detail action of sleep command.
         default: op
     edgruberman.bukkit.sleep.command.sleep.action.reload:
-        description: Can reload Sleep plugin configuration
+        description: Can use reload action of sleep command.
         default: op
     edgruberman.bukkit.sleep.ignore:
         description: Player will always be ignored for sleep
