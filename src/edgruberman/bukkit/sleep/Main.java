@@ -70,6 +70,7 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
     
     public void onDisable() {
         this.tracked.clear();
+        this.activityMonitor = null;
         Main.defaultNether = null;
         
         Main.messageManager.log("Plugin Disabled");
