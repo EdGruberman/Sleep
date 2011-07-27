@@ -10,7 +10,7 @@ commands:
         usage: |
             /<command>[ status[ <World>]] - Display how many players still needed for sleep in <World>.
             /<command> who[ <World] - Display who is in bed in <World>.
-            /<command> details[ <World>] - Display sleep requirements in <World>.
+            /<command> detail[ <World>] - Display sleep requirements in <World>.
             /<command> reload - Reload configuration files.
 permissions:
     edgruberman.bukkit.sleep.command.sleep.info:
