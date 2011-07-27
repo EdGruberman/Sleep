@@ -15,6 +15,7 @@ commands:
 permissions:
     edgruberman.bukkit.sleep.command.sleep.info:
         description: Can use all the basic information actions of the sleep command.
+        default: true
         children:
             edgruberman.bukkit.sleep.command.sleep.status: true
             edgruberman.bukkit.sleep.command.sleep.who: true
