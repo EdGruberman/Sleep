@@ -12,7 +12,9 @@ class ReloadAction extends Action {
     @Override
     void execute(final Context context) {
         Main main = (Main) this.command.plugin;
+        
         main.loadConfiguration();
+        main.activityMonitor.registerEvents();
         
         Main.messageManager.respond(context.sender, "Configuration reloaded.", MessageLevel.STATUS, false);
     }

@@ -96,6 +96,6 @@ final class PlayerListener extends org.bukkit.event.player.PlayerListener {
     @Override
     public void onPlayerQuit(final PlayerQuitEvent event) {
         for (State state : this.main.tracked.values())
-            state.deregisterActivity(event.getPlayer());
+            state.removeActivity(event.getPlayer());
     }
 }

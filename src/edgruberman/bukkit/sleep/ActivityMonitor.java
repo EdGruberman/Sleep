@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerAnimationEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent;
@@ -26,9 +27,10 @@ import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 
-final class ActivityMonitor extends org.bukkit.event.player.PlayerListener {
+public final class ActivityMonitor extends org.bukkit.event.player.PlayerListener {
     
     /**
      * Events this listener recognizes and can monitor player activity for.
@@ -55,154 +57,182 @@ final class ActivityMonitor extends org.bukkit.event.player.PlayerListener {
           , Event.Type.PLAYER_RESPAWN
           , Event.Type.PLAYER_TELEPORT
           , Event.Type.PLAYER_TOGGLE_SNEAK
-  ));
+    ));
     
-    private final Main main;
+    private final Plugin plugin;
     
-    public ActivityMonitor(final Main main) {
-        this.main = main;
+    private Set<Event.Type> registered = new HashSet<Event.Type>();
+    
+    public ActivityMonitor(final Plugin plugin) {
+        this.plugin = plugin;
+        this.registerEvents();
+    }
+    
+    public void registerEvents() {
+        PluginManager pm = this.plugin.getServer().getPluginManager();
         
-        PluginManager pluginManager = this.main.getServer().getPluginManager();
-        
-        // Determine which events are monitored by at least one world and supported by this monitor.
+        // Determine which events are monitored by at least one world.
         Set<Event.Type> monitored = new HashSet<Event.Type>();
-        for (State state : this.main.tracked.values())
+        for (State state : ((Main) this.plugin).tracked.values())
             monitored.addAll(state.getMonitoredActivity());
+        
+        // Keep only events this monitor supports.
         monitored.retainAll(ActivityMonitor.SUPPORTS);
         
+        // Filter out events this monitor has already registered.
+        monitored.removeAll(this.registered);
+        
         // Register events which are monitored by at least one world and supported by this monitor.
-        for (Event.Type type : monitored)
-            pluginManager.registerEvent(type, this, Event.Priority.Monitor, this.main);
+        for (Event.Type type : monitored) {
+            pm.registerEvent(type, this, Event.Priority.Monitor, this.plugin);
+            this.registered.add(type);
+        }
+    }
+    
+    /**
+     * Register activity with associated world sleep state.
+     * (This could be called on high frequency events such as PLAYER_MOVE.)
+     * 
+     * @param player player to record this as last activity for
+     * @param type event type that player engaged in
+     */
+    private void updateActivity(final Player player, final Event.Type type) {
+        Main main = (Main) this.plugin;
+        
+        // Ignore for untracked world sleep states.
+        if (!main.tracked.containsKey(player.getWorld())) return;
+        
+        main.tracked.get(player.getWorld()).registerActivity(player, type);
     }
     
     @Override
     public void onPlayerBedEnter(final PlayerBedEnterEvent event) {
         if (event.isCancelled()) return;
 
-        this.main.registerActivity(event.getPlayer(), event.getType());
+        this.updateActivity(event.getPlayer(), event.getType());
     }
     
     @Override
     public void onPlayerBedLeave(final PlayerBedLeaveEvent event) {
-        this.main.registerActivity(event.getPlayer(), event.getType());
+        this.updateActivity(event.getPlayer(), event.getType());
     }
     
     @Override
     public void onPlayerTeleport(final PlayerTeleportEvent event) {
         if (event.isCancelled()) return;
 
-        this.main.registerActivity(event.getPlayer(), event.getType());
+        this.updateActivity(event.getPlayer(), event.getType());
     }
     
     @Override
     public void onPlayerJoin(final PlayerJoinEvent event) {
-        this.main.registerActivity(event.getPlayer(), event.getType());
+        this.updateActivity(event.getPlayer(), event.getType());
     }
     
     @Override
     public void onPlayerMove(final PlayerMoveEvent event) {
         if (event.isCancelled()) return;
         
-        this.main.registerActivity(event.getPlayer(), event.getType());
+        this.updateActivity(event.getPlayer(), event.getType());
     }
     
     @Override
     public void onPlayerInteract(final PlayerInteractEvent event) {
         if (event.isCancelled()) return;
         
-        this.main.registerActivity(event.getPlayer(), event.getType());
+        this.updateActivity(event.getPlayer(), event.getType());
     }
     
     @Override
     public void onPlayerChat(final PlayerChatEvent event) {
         if (event.isCancelled()) return;
         
-        this.main.registerActivity(event.getPlayer(), event.getType());
+        this.updateActivity(event.getPlayer(), event.getType());
     }
     
     @Override
     public void onPlayerDropItem(final PlayerDropItemEvent event) {
         if (event.isCancelled()) return;
         
-        this.main.registerActivity(event.getPlayer(), event.getType());
+        this.updateActivity(event.getPlayer(), event.getType());
     }
     
     @Override
     public void onPlayerToggleSneak(final PlayerToggleSneakEvent event) {
         if (event.isCancelled()) return;
         
-        this.main.registerActivity(event.getPlayer(), event.getType());
+        this.updateActivity(event.getPlayer(), event.getType());
     }
     
     @Override
     public void onItemHeldChange(final PlayerItemHeldEvent event) {
-        this.main.registerActivity(event.getPlayer(), event.getType());
+        this.updateActivity(event.getPlayer(), event.getType());
     }
     
     @Override
     public void onPlayerAnimation(final PlayerAnimationEvent event) {
-        this.main.registerActivity(event.getPlayer(), event.getType());
+        this.updateActivity(event.getPlayer(), event.getType());
     }
     
     @Override
     public void onPlayerBucketFill(final PlayerBucketFillEvent event) {
         if (event.isCancelled()) return;
 
-        this.main.registerActivity(event.getPlayer(), event.getType());
+        this.updateActivity(event.getPlayer(), event.getType());
     }
     
     @Override
     public void onPlayerBucketEmpty(final PlayerBucketEmptyEvent event) {
         if (event.isCancelled()) return;
 
-        this.main.registerActivity(event.getPlayer(), event.getType());
+        this.updateActivity(event.getPlayer(), event.getType());
     }
     
     @Override
     public void onPlayerEggThrow(final PlayerEggThrowEvent event) {
-        this.main.registerActivity(event.getPlayer(), event.getType());
+        this.updateActivity(event.getPlayer(), event.getType());
     }
     
     @Override
     public void onPlayerFish(final PlayerFishEvent event) {
         if (event.isCancelled()) return;
 
-        this.main.registerActivity(event.getPlayer(), event.getType());
+        this.updateActivity(event.getPlayer(), event.getType());
     }
     
     @Override
     public void onPlayerInteractEntity(final PlayerInteractEntityEvent event) {
         if (event.isCancelled()) return;
 
-        this.main.registerActivity(event.getPlayer(), event.getType());
+        this.updateActivity(event.getPlayer(), event.getType());
     }
     
     @Override
     public void onInventoryOpen(final PlayerInventoryEvent event) {
-        this.main.registerActivity(event.getPlayer(), event.getType());
+        this.updateActivity(event.getPlayer(), event.getType());
     }
     
     @Override
     public void onPlayerLogin(final PlayerLoginEvent event) {
-        this.main.registerActivity(event.getPlayer(), event.getType());
+        this.updateActivity(event.getPlayer(), event.getType());
     }
     
     @Override
     public void onPlayerPickupItem(final PlayerPickupItemEvent event) {
         if (event.isCancelled()) return;
 
-        this.main.registerActivity(event.getPlayer(), event.getType());
+        this.updateActivity(event.getPlayer(), event.getType());
     }
     
     @Override
     public void onPlayerPortal(final PlayerPortalEvent event) {
         if (event.isCancelled()) return;
 
-        this.main.registerActivity(event.getPlayer(), event.getType());
+        this.updateActivity(event.getPlayer(), event.getType());
     }
     
     @Override
     public void onPlayerRespawn(final PlayerRespawnEvent event) {
-        this.main.registerActivity(event.getPlayer(), event.getType());
+        this.updateActivity(event.getPlayer(), event.getType());
     }
 }

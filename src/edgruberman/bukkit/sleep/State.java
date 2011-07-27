@@ -169,7 +169,7 @@ public class State {
      * 
      * @param player Player to be removed from monitoring.
      */
-    void deregisterActivity(final Player player) {
+    void removeActivity(final Player player) {
         this.lastActivity.remove(player);
     }
     

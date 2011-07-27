@@ -7,7 +7,6 @@ import java.util.Set;
 
 import org.bukkit.World;
 import org.bukkit.World.Environment;
-import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.util.config.Configuration;
 
@@ -34,6 +33,7 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
     
     Set<String> excluded = new HashSet<String>();
     
+    public ActivityMonitor activityMonitor;
     public Map<World, State> tracked = new HashMap<World, State>();
     
     public void onLoad() {
@@ -60,7 +60,7 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
         new EntityListener(this, priorityCreatureSpawn);
         
         // Start optional activity monitors.
-        new ActivityMonitor(this);
+        this.activityMonitor = new ActivityMonitor(this);
         
         // Register commands.
         new SleepCommand(this);
@@ -153,20 +153,6 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
         // Track sleep state for each loaded world.
         for (int i = 0; i < this.getServer().getWorlds().size(); i += 1)
             this.trackState(this.getServer().getWorlds().get(i));
-    }
-    
-    /**
-     * Register activity with associated world sleep state.
-     * (This could be called on high frequency events such as PLAYER_MOVE.)
-     * 
-     * @param player player to record this as last activity for
-     * @param type event type that player engaged in
-     */
-    void registerActivity(final Player player, final Event.Type type) {
-        // Ignore for untracked world sleep states.
-        if (!this.tracked.containsKey(player.getWorld())) return;
-        
-        this.tracked.get(player.getWorld()).registerActivity(player, type);
     }
     
     /**
