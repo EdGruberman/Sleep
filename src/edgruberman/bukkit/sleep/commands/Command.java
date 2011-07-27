@@ -38,7 +38,12 @@ class Command  {
     }
     
     protected boolean isAllowed(CommandSender sender) {
-        return sender.hasPermission("edgruberman.bukkit.sleep.command." + this.command.getLabel());
+        // Determine if player has permission for any action of this command.
+        for (Action action : this.actions.values())
+            if (sender.hasPermission(Main.PERMISSION_PREFIX + ".command." + this.command.getLabel() + "." + action.name))
+                    return true;
+        
+        return false;
     }
     
     protected void registerAction(final Action action) {

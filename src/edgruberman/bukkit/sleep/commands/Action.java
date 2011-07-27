@@ -2,6 +2,8 @@ package edgruberman.bukkit.sleep.commands;
 
 import org.bukkit.command.CommandSender;
 
+import edgruberman.bukkit.sleep.Main;
+
 abstract class Action {
     
     String name;
@@ -19,7 +21,7 @@ abstract class Action {
     }
     
     protected boolean isAllowed(final CommandSender sender) {
-        return sender.hasPermission("edgruberman.bukkit.sleep.command." + this.command.command.getLabel() + ".action." + this.name);
+        return sender.hasPermission(Main.PERMISSION_PREFIX + ".command." + this.command.command.getLabel() + "." + this.name);
     }
  
     abstract void execute(final Context context);

@@ -18,9 +18,14 @@ import edgruberman.bukkit.sleep.commands.SleepCommand;
 public final class Main extends org.bukkit.plugin.java.JavaPlugin {
     
     /**
+     * Prefix for all permissions used in this plugin.
+     */
+    public static final String PERMISSION_PREFIX = "edgruberman.bukkit.sleep";
+    
+    /**
      * Folder to look for world explicit configuration overrides in.
      */
-    private static final String WORLD_EXPLICITS = "Worlds"; 
+    private static final String WORLD_EXPLICITS = "Worlds";
 
     public static MessageManager messageManager;
     
