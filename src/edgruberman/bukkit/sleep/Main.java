@@ -17,7 +17,7 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
     /**
      * Prefix for all permissions used in this plugin.
      */
-    public static final String PERMISSION_PREFIX = "edgruberman.bukkit.sleep";
+    public static final String PERMISSION_PREFIX = Main.class.getPackage().getName();
     
     /**
      * Base path, relative to plugin data folder, to look for world specific
