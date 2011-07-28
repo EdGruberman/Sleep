@@ -22,13 +22,12 @@ class DetailAction extends Action {
             return;
         }
         
-        Main main = (Main) this.command.plugin;
-        if (!main.tracked.containsKey(world)) {
+        if (!State.tracked.containsKey(world)) {
             Main.messageManager.respond(context.sender, "Sleep state for [" + world.getName() + "] is not tracked.", MessageLevel.SEVERE, false);
             return;
         }
         
-        State state = main.tracked.get(world);
+        State state = State.tracked.get(world);
         Main.messageManager.respond(context.sender, state.description(), MessageLevel.STATUS, false);
         state.lull();
     }

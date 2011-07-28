@@ -4,6 +4,7 @@ import org.bukkit.event.Event;
 import org.bukkit.event.Event.Priority;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
+import org.bukkit.plugin.Plugin;
 
 import edgruberman.bukkit.messagemanager.MessageLevel;
 
@@ -20,13 +21,9 @@ final class EntityListener extends org.bukkit.event.entity.EntityListener {
      */
     static final Event.Priority DEFAULT_CREATURE_SPAWN = Priority.Normal;
     
-    private final Main main;
-    
-    public EntityListener(final Main main, final Event.Priority priorityCreatureSpawn) {
-        this.main = main;
-        
-        this.main.getServer().getPluginManager().registerEvent(Event.Type.CREATURE_SPAWN, this
-                , (priorityCreatureSpawn != null ? priorityCreatureSpawn : EntityListener.DEFAULT_CREATURE_SPAWN), this.main);
+    public EntityListener(final Plugin plugin, final Event.Priority priorityCreatureSpawn) {
+        plugin.getServer().getPluginManager().registerEvent(Event.Type.CREATURE_SPAWN, this
+                , (priorityCreatureSpawn != null ? priorityCreatureSpawn : EntityListener.DEFAULT_CREATURE_SPAWN), plugin);
     }
     
     @Override
@@ -36,13 +33,13 @@ final class EntityListener extends org.bukkit.event.entity.EntityListener {
         if (!event.getSpawnReason().equals(SpawnReason.BED)) return;
         
         // Ignore for untracked world sleep states.
-        if (!this.main.tracked.containsKey(event.getLocation().getWorld())) return;
+        if (!State.tracked.containsKey(event.getLocation().getWorld())) return;
         
-        State state = this.main.tracked.get(event.getLocation().getWorld());
+        State state = State.tracked.get(event.getLocation().getWorld());
         if (!state.isIgnoredSleepSpawn(event.getLocation())) return;
         
         Main.messageManager.log(
-                "Cancelling sleep related spawn of " + event.getCreatureType()
+                "Cancelling ignored sleep related spawn of " + event.getCreatureType()
                     + " in [" + event.getLocation().getWorld().getName() + "] at"
                     + " x: " + event.getLocation().getBlockX()
                     + " y: " + event.getLocation().getBlockY()

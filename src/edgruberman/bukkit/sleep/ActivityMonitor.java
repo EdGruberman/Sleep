@@ -68,12 +68,16 @@ public final class ActivityMonitor extends org.bukkit.event.player.PlayerListene
         this.registerEvents();
     }
     
+    /**
+     * Register events monitored by at least one world, that this monitor
+     * supports, and have not already been registered by this monitor.
+     */
     public void registerEvents() {
         PluginManager pm = this.plugin.getServer().getPluginManager();
         
         // Determine which events are monitored by at least one world.
         Set<Event.Type> monitored = new HashSet<Event.Type>();
-        for (State state : ((Main) this.plugin).tracked.values())
+        for (State state : State.tracked.values())
             monitored.addAll(state.getMonitoredActivity());
         
         // Keep only events this monitor supports.
@@ -90,19 +94,17 @@ public final class ActivityMonitor extends org.bukkit.event.player.PlayerListene
     }
     
     /**
-     * Register activity with associated world sleep state.
+     * Update activity for player with associated world sleep state.
      * (This could be called on high frequency events such as PLAYER_MOVE.)
      * 
      * @param player player to record this as last activity for
      * @param type event type that player engaged in
      */
     private void updateActivity(final Player player, final Event.Type type) {
-        Main main = (Main) this.plugin;
-        
         // Ignore for untracked world sleep states.
-        if (!main.tracked.containsKey(player.getWorld())) return;
+        if (!State.tracked.containsKey(player.getWorld())) return;
         
-        main.tracked.get(player.getWorld()).registerActivity(player, type);
+        State.tracked.get(player.getWorld()).updateActivity(player, type);
     }
     
     @Override

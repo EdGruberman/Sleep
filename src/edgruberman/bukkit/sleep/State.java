@@ -81,6 +81,8 @@ public class State {
             , Event.Type.PLAYER_JOIN
     ));
     
+    public static Map<World, State> tracked = new HashMap<World, State>();
+    
     private World world;
     private int inactivityLimit;
     private int safeRadiusSquared;
@@ -112,6 +114,8 @@ public class State {
         this.messageMaxFrequency = messageMaxFrequency;
         this.messageTimestamp = messageTimestamp;
         this.monitoredActivity = (monitoredActivity != null ? monitoredActivity : State.DEFAULT_MONITORED_ACTIVITY);
+        
+        State.tracked.put(world, this);
     }
     
     /**
@@ -141,7 +145,7 @@ public class State {
      * @param player player to record this as last activity for
      * @param type event type that caused this activity update for player
      */
-    void registerActivity(final Player player, final Event.Type type) {
+    void updateActivity(final Player player, final Event.Type type) {
         // Only register monitored activity.
         if (!this.monitoredActivity.contains(type)) return;
         
@@ -464,25 +468,4 @@ public class State {
 
         return inBed;
     }
-    
-//    /**
-//     * Format a date/time to an ISO 8601 format.
-//     * 
-//     * @param calendar date/time to format
-//     * @return formatted date/time
-//     */
-//    private static String formatDateTime(final Calendar calendar) {
-//        return State.formatDateTime(calendar, "yyyy-MM-dd'T'HH:mm:ss");
-//    }
-//    
-//    /**
-//     * Format a date/time using SimpleDateFormat.
-//     * 
-//     * @param calendar date/time to format
-//     * @param format SimpleDateFormat format specifier
-//     * @return formatted date/time
-//     */
-//    private static String formatDateTime(final Calendar calendar, final String format) {
-//        return (new SimpleDateFormat(format)).format(calendar.getTime());
-//    }
 }
