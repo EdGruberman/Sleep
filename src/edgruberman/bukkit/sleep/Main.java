@@ -17,7 +17,7 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
     /**
      * Prefix for all permissions used in this plugin.
      */
-    public static final String PERMISSION_PREFIX = Main.class.getPackage().getName();
+    public static final String PERMISSION_PREFIX = "sleep";
     
     /**
      * Base path, relative to plugin data folder, to look for world specific
@@ -107,10 +107,10 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
         Main.messageManager.log("Sleep state for [" + world.getName() + "] Always Ignored Players (Configuration File Defined): " + ignoredAlways, MessageLevel.CONFIG);
         
         int forceCount = worldSpecific.getInt("force.sleepers", pluginMain.getInt("force.count", State.DEFAULT_FORCE_COUNT));
-        Main.messageManager.log("Sleep state for [" + world.getName() + "] Forced Sleep Minimum Sleepers: " + forceCount, MessageLevel.CONFIG);
+        Main.messageManager.log("Sleep state for [" + world.getName() + "] Forced Sleep Minimum Count: " + forceCount, MessageLevel.CONFIG);
         
         int forcePercent = worldSpecific.getInt("force.percent", pluginMain.getInt("force.percent", State.DEFAULT_FORCE_PERCENT));
-        Main.messageManager.log("Sleep state for [" + world.getName() + "] Forced Sleep Minimum Percentage: " + forcePercent, MessageLevel.CONFIG);
+        Main.messageManager.log("Sleep state for [" + world.getName() + "] Forced Sleep Minimum Percent: " + forcePercent, MessageLevel.CONFIG);
         
         String messageEnterBed = worldSpecific.getString("message.enterBed", pluginMain.getString("message.enterBed", State.DEFAULT_MESSAGE_ENTER_BED));
         Main.messageManager.log("Sleep state for [" + world.getName() + "] Enter Bed Message: " + messageEnterBed, MessageLevel.CONFIG);
@@ -144,7 +144,7 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
         Main.configurationFile.load();
         
         Main.defaultNether = this.findDefaultNether();
-        Main.messageManager.log("Default Nether: " + Main.defaultNether.getName(), MessageLevel.CONFIG);
+        Main.messageManager.log("Default Nether: " + (Main.defaultNether != null ? Main.defaultNether.getName() : "<Not found>"), MessageLevel.CONFIG);
         
         this.excluded.clear();
         this.excluded.addAll(Main.configurationFile.getConfiguration().getStringList("excluded", null));

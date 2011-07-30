@@ -7,30 +7,45 @@ main: edgruberman.bukkit.sleep.Main
 commands:
     sleep:
         description: Manages sleep functionality.
+        permission: sleep.sleep
         usage: |
             /<command>[ status[ <World>]] - Display how many players still needed for sleep in <World>.
             /<command> who[ <World] - Display who is in bed in <World>.
             /<command> detail[ <World>] - Display sleep requirements in <World>.
             /<command> reload - Reload configuration files.
 permissions:
-    edgruberman.bukkit.sleep.command.sleep.info:
+    sleep.sleep.info:
         description: Can use all the basic information actions of the sleep command.
         default: true
         children:
-            edgruberman.bukkit.sleep.command.sleep.status: true
-            edgruberman.bukkit.sleep.command.sleep.who: true
-            edgruberman.bukkit.sleep.command.sleep.detail: true
-    edgruberman.bukkit.sleep.command.sleep.status:
+            sleep.sleep.status: true
+            sleep.sleep.who: true
+            sleep.sleep.detail: true
+    sleep.sleep:
+        description: Can use sleep command.
+        default: op
+    sleep.sleep.status:
         description: Can use status action of sleep command.
         default: op
-    edgruberman.bukkit.sleep.command.sleep.who:
+        children:
+            sleep.sleep: true
+    sleep.sleep.who:
         description: Can use who action of sleep command.
         default: op
-    edgruberman.bukkit.sleep.command.sleep.detail:
+        children:
+            sleep.sleep: true
+    sleep.sleep.detail:
         description: Can use detail action of sleep command.
         default: op
-    edgruberman.bukkit.sleep.command.sleep.reload:
+        children:
+            sleep.sleep: true
+    sleep.sleep.reload:
         description: Can use reload action of sleep command.
         default: op
-    edgruberman.bukkit.sleep.ignore:
-        description: Player will always be ignored for sleep
+        children:
+            sleep.sleep: true
+    sleep.sleep.ignore:
+        description: Player will always be ignored for sleep.
+        default: false
+        children:
+            sleep.sleep: true

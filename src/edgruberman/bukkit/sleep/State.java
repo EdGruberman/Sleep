@@ -1,6 +1,5 @@
 package edgruberman.bukkit.sleep;
 
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.GregorianCalendar;
@@ -27,14 +26,14 @@ public class State {
      * be considered away. (-1 will disable this feature and never treat a
      * player as inactive.)
      */
-    static final int DEFAULT_INACTIVITY_LIMIT = 300;
+    static final int DEFAULT_INACTIVITY_LIMIT = -1;
     
     /**
      * Distance in blocks as a radius from an ignored player in which sleep
      * related mob spawns are not allowed. (-1 will disable this feature and
      * never prevent a sleep related spawn.)
      */
-    static final int DEFAULT_SAFE_RADIUS = 3;
+    static final int DEFAULT_SAFE_RADIUS = -1;
     
     /**
      * Minimum number of players needed in bed for sleep to be forced. (-1 will
@@ -61,7 +60,7 @@ public class State {
      * Maximum frequency in seconds a message can be broadcast to a world per
      * player. (-1 will remove any restrictions on message frequency.)
      */
-    static final int DEFAULT_MESSAGE_MAX_FREQUENCY = 10;
+    static final int DEFAULT_MESSAGE_MAX_FREQUENCY = -1;
     
     /**
      * Indicates if messages should have a timestamp included when broadcast.
@@ -71,15 +70,7 @@ public class State {
     /**
      * Events monitored to determine if a player is active or not.
      */
-    static final Set<Event.Type> DEFAULT_MONITORED_ACTIVITY = new HashSet<Event.Type>(Arrays.asList(
-              Event.Type.PLAYER_MOVE
-            , Event.Type.PLAYER_CHAT
-            , Event.Type.PLAYER_INTERACT
-            , Event.Type.PLAYER_DROP_ITEM
-            , Event.Type.PLAYER_TOGGLE_SNEAK
-            , Event.Type.PLAYER_ITEM_HELD
-            , Event.Type.PLAYER_JOIN
-    ));
+    static final Set<Event.Type> DEFAULT_MONITORED_ACTIVITY = new HashSet<Event.Type>();
     
     public static Map<World, State> tracked = new HashMap<World, State>();
     
@@ -216,9 +207,10 @@ public class State {
      * @param bedEnterer player entering bed (but not completely in bed yet)
      */
     void lull(final Player bedEnterer) {
-        // Ignore players in default/first nether world.
-        for (Player player : Main.defaultNether.getPlayers())
-            this.ignoreSleep(player, true, "Default Nether");
+        // Ignore players in default nether world.
+        if (Main.defaultNether != null)
+            for (Player player : Main.defaultNether.getPlayers())
+                this.ignoreSleep(player, true, "Default Nether");
         
         // Configure away and always ignored to be considered sleeping.
         for (Player player : this.ignoredPlayers())
@@ -349,15 +341,13 @@ public class State {
     private Set<Player> ignoredPlayers() {
         Set<Player> ignored = new HashSet<Player>();
         
-        for (Player player : this.world.getPlayers()) {
-            if (this.isIgnoredAlways(player)
-                    || !this.isActive(player)
-                    || player.hasPermission("edgruberman.bukkit.sleep.ignore")
-                    || player.hasPermission("edgruberman.bukkit.sleep.ignore." + this.world.getName())) {
-                ignored.add(player);
-                continue;
-            }
-        }
+        for (Player player : this.world.getPlayers())
+            if (!player.isSleeping())
+                if (this.isIgnoredAlways(player)
+                        || !this.isActive(player)
+                        || player.hasPermission("edgruberman.bukkit.sleep.ignore")
+                        || player.hasPermission("edgruberman.bukkit.sleep.ignore." + this.world.getName()))
+                    ignored.add(player);
         
         return ignored;
     }
@@ -369,6 +359,8 @@ public class State {
      * @return true if player has been active recently; otherwise false
      */
     public boolean isActive(Player player) {
+        if (this.inactivityLimit <= -1) return true;
+        
         if (!this.lastActivity.containsKey(player)) return false;
         
         Calendar oldestActive = new GregorianCalendar();
@@ -421,27 +413,28 @@ public class State {
      */
     public int needForSleep() {
         int possible = this.possibleSleepers();
+        int inBed = this.inBed().size();
+        
+        // Default, all possible except those already in bed.
+        int need = (possible - inBed);
         
         // Minimum count of players in bed needed.
-        int total = (this.forceCount >= 0 ? this.forceCount : possible);
-        int inBed = this.inBed().size();
-        int needCount = total - inBed;
+        int needCount = this.forceCount - inBed;
+        if (this.forceCount >= 0 && this.forcePercent <= -1)
+            need = needCount;
         
-        int need = needCount;
-        
-        // Minimum percentage of players in bed needed.
-        int needPercent = (this.forcePercent >= 0 ? this.forcePercent : 100);
-        needPercent = (int) Math.ceil((float) needPercent / 100 * possible) - inBed;
-        
-        if (needPercent > need)
+        // Minimum percent of players in bed needed.
+        int needPercent = (int) Math.ceil((float) this.forcePercent / 100 * possible) - inBed;
+        if (this.forceCount <= -1 && this.forcePercent >= 0)
             need = needPercent;
         
-        need = (need > 0 ? need : 0);
+        // Both minimum count and minimum percent needed.
+        if (this.forceCount >= 0 && this.forcePercent >= 0)
+            need = (needCount > needPercent ? needCount : needPercent);
         
         // Always need at least 1 player in bed to start a sleep cycle.
-        if (need == 0 && inBed == 0) need = 1;
-        
-        return need;
+        // 1 will be subtracted from this value later for a bed enterer.
+        return (need > 1 ? need : 1);
     }
     
     /**
