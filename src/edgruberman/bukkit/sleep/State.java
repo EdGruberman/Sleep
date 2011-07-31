@@ -50,7 +50,7 @@ public class State {
     
     /**
      * Message to broadcast to world when a player enters a bed. Format
-     * identifiers: %1$s = player display name; %2$s = how many more players
+     * identifiers: %1$s = player display name; %2$d = how many more players
      * needed in bed to cause a sleep cycle to commence (null or empty string
      * will cause no message to appear.)
      */
@@ -67,15 +67,10 @@ public class State {
      */
     static final boolean DEFAULT_MESSAGE_TIMESTAMP = false;
     
-    /**
-     * Events monitored to determine if a player is active or not.
-     */
-    static final Set<Event.Type> DEFAULT_MONITORED_ACTIVITY = new HashSet<Event.Type>();
-    
     public static Map<World, State> tracked = new HashMap<World, State>();
     
     private World world;
-    private int inactivityLimit;
+    int inactivityLimit;
     private int safeRadiusSquared;
     private Set<String> ignoredAlways;
     private int forceCount;
@@ -104,7 +99,7 @@ public class State {
         this.messageEnterBed = messageEnterBed;
         this.messageMaxFrequency = messageMaxFrequency;
         this.messageTimestamp = messageTimestamp;
-        this.monitoredActivity = (monitoredActivity != null ? monitoredActivity : State.DEFAULT_MONITORED_ACTIVITY);
+        this.monitoredActivity = (monitoredActivity != null ? monitoredActivity : new HashSet<Event.Type>());
         
         State.tracked.put(world, this);
     }
@@ -222,7 +217,7 @@ public class State {
         // Check if sleep should be forced now.
         if (this.forceCount <= -1 && this.forcePercent <= -1) return;
         
-        if ((this.needForSleep() - (bedEnterer != null ? 1 : 0)) == 0)
+        if ((this.needForSleep(bedEnterer != null)) == 0)
             this.forceSleep(bedEnterer);
     }
     
@@ -303,7 +298,7 @@ public class State {
         }
 
         this.lastMessage.put(enterer, new GregorianCalendar());
-        String formatted = String.format(this.messageEnterBed, enterer.getDisplayName(), this.needForSleep() - 1);
+        String formatted = String.format(this.messageEnterBed, enterer.getDisplayName(), this.needForSleep(true));
         Main.messageManager.send(this.world, formatted, MessageLevel.EVENT, this.messageTimestamp);
     }
     
@@ -383,18 +378,19 @@ public class State {
     /**
      * Description of status of sleep cycle.
      * 
-     * @param bedEntered description is being generated before bed entered event completes
+     * @param isMidEnter true if this is being calculated before a
+     *        PLAYER_BED_ENTER event has completed
      * @return text description of status
      */
-    private String description(boolean bedEntered) {
+    private String description(boolean isMidEnter) {
         // Example output:
         // "Sleep needs +4; 3 in bed out of 7 possible = 42.9% (need 100.0%)";
         // "Sleep needs +2; 3 in bed (need 5) out of 7 possible = 42.9% (need 50.0%)";
         // "Sleep needs +2; 3 in bed (need 5) out of 7 possible = 42.9%";
         // "Sleep needs +1; 3 in bed out of 7 possible = 42.9% (need 50%)";
         // "Sleep needs no more; 5 in bed (need 5) out of 7 possible = 71.4% (need 50.0%)";
-        int need = this.needForSleep() - (bedEntered ? 1 : 0);
-        int count = this.inBed().size() + (bedEntered ? 1 : 0);
+        int need = this.needForSleep(isMidEnter);
+        int count = this.inBed().size() + (isMidEnter ? 1 : 0);
         int possible = this.possibleSleepers();
         int requiredPercent = (this.forcePercent >= 0 ? this.forcePercent : 100);
         int currentPercent = Math.round((float) count / (possible != 0 ? possible : 1) * 100);
@@ -409,9 +405,11 @@ public class State {
     /**
      * Number of players still needed to enter bed for sleep.
      * 
-     * @return number of players still needed
+     * @param isMidEnter true if this is being calculated before a
+     *        PLAYER_BED_ENTER event has completed
+     * @return number of players still needed, 0 if no more is needed
      */
-    public int needForSleep() {
+    public int needForSleep(boolean isMidEnter) {
         int possible = this.possibleSleepers();
         int inBed = this.inBed().size();
         
@@ -428,13 +426,15 @@ public class State {
         if (this.forceCount <= -1 && this.forcePercent >= 0)
             need = needPercent;
         
-        // Both minimum count and minimum percent needed.
+        // Both minimum count and minimum percent needed, highest is required to meet both.
         if (this.forceCount >= 0 && this.forcePercent >= 0)
             need = (needCount > needPercent ? needCount : needPercent);
         
-        // Always need at least 1 player in bed to start a sleep cycle.
-        // 1 will be subtracted from this value later for a bed enterer.
-        return (need > 1 ? need : 1);
+        // Compensate for player entering bed since they will be officially sleeping very shortly.
+        if (isMidEnter) need--;
+        
+        // Can't have less than no one.
+        return (need > 0 ? need : 0);
     }
     
     /**
