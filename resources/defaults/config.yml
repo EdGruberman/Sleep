@@ -15,8 +15,3 @@ activity:
     - PLAYER_TOGGLE_SNEAK
     - PLAYER_ITEM_HELD
     - PLAYER_JOIN
-event:
-    PLAYER_TELEPORT:
-        priority: Normal
-    CREATURE_SPAWN:
-        priority: Normal

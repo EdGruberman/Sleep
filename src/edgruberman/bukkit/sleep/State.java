@@ -345,8 +345,8 @@ public class State {
             if (!player.isSleeping())
                 if (this.isIgnoredAlways(player)
                         || !this.isActive(player)
-                        || player.hasPermission("edgruberman.bukkit.sleep.ignore")
-                        || player.hasPermission("edgruberman.bukkit.sleep.ignore." + this.world.getName()))
+                        || player.hasPermission("sleep.ignore")
+                        || player.hasPermission("sleep.ignore." + this.world.getName()))
                     ignored.add(player);
         
         return ignored;

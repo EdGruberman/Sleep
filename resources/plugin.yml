@@ -44,8 +44,6 @@ permissions:
         default: op
         children:
             sleep.sleep: true
-    sleep.sleep.ignore:
+    sleep.ignore:
         description: Player will always be ignored for sleep.
         default: false
-        children:
-            sleep.sleep: true
