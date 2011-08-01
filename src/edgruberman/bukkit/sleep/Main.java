@@ -34,10 +34,10 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
     Set<String> excluded = new HashSet<String>();
     
     public void onLoad() {
-        Main.configurationFile = new ConfigurationFile(this);
-        
         Main.messageManager = new MessageManager(this);
         Main.messageManager.log("Version " + this.getDescription().getVersion());
+        
+        Main.configurationFile = new ConfigurationFile(this);
     }
     
     public void onEnable() {
