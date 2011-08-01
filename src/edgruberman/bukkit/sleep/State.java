@@ -177,9 +177,13 @@ public class State {
             for (Player player : Main.defaultNether.getPlayers())
                 this.ignoreSleep(player, true, "Default Nether");
         
-        // Configure away and always ignored to be considered sleeping.
-        for (Player player : this.ignoredPlayers())
-            this.ignoreSleep(player, true, "Inactive or Always Ignored");
+        // Configure always ignored players to ignore sleep.
+        for (Player player : this.ignored())
+            this.ignoreSleep(player, true, "Always Ignored");
+        
+        // Configure inactive players to ignore sleep.
+        for (Player player : this.inactive())
+            this.ignoreSleep(player, true, "Inactive");
         
         if (Main.messageManager.isLevel(Channel.Type.LOG, MessageLevel.FINE))
             Main.messageManager.log("[" + this.world.getName() + "] " + this.description(), MessageLevel.FINE);
@@ -187,7 +191,7 @@ public class State {
         // Check if sleep should be forced now.
         if (this.forceCount <= -1 && this.forcePercent <= -1) return;
         
-        if ((this.needForSleep()) == 0)
+        if (this.needForSleep() == 0)
             this.forceSleep();
     }
     
@@ -295,45 +299,6 @@ public class State {
     }
     
     /**
-     * Compile a list of players that should ignore sleep status checks from
-     * either always being ignored or inactivity. 
-     * 
-     * @return players that should ignore sleep status checks
-     */
-    private Set<Player> ignoredPlayers() {
-        Set<Player> ignored = new HashSet<Player>();
-        
-        for (Player player : this.world.getPlayers())
-            if (!player.isSleeping())
-                if (this.isIgnoredAlways(player)
-                        || !this.isActive(player)
-                        || player.hasPermission("sleep.ignore")
-                        || player.hasPermission("sleep.ignore." + this.world.getName()))
-                    ignored.add(player);
-        
-        return ignored;
-    }
-    
-    /**
-     * Determine if player has any recent activity.
-     * 
-     * @param player player to check activity on
-     * @return true if player has been active recently; otherwise false
-     */
-    public boolean isActive(Player player) {
-        if (this.inactivityLimit <= -1) return true;
-        
-        if (!this.lastActivity.containsKey(player)) return false;
-        
-        Calendar oldestActive = new GregorianCalendar();
-        oldestActive.add(Calendar.SECOND, -this.inactivityLimit);
-        if (this.lastActivity.get(player).before(oldestActive))
-            return false;
-        
-        return true;
-    }
-    
-    /**
      * Description of status of sleep cycle.
      * 
      * @return text description of status
@@ -349,7 +314,7 @@ public class State {
         int count = this.inBed().size() + this.enteringBed.size();
         int possible = this.possibleSleepers();
         int requiredPercent = (this.forcePercent >= 0 ? this.forcePercent : 100);
-        int currentPercent = Math.round((float) count / (possible != 0 ? possible : 1) * 100);
+        int currentPercent = Math.round((float) count / (possible >= 0 ? possible : 1) * 100);
         
         return "Sleep needs " + (need > 0 ? "+" + need : "no more") + ";"
             + " " + count + " in bed" + (this.forceCount >= 0 ? " (need " + this.forceCount + ")" : "")
@@ -394,13 +359,71 @@ public class State {
     }
     
     /**
-     * Count of possible players considered for determining if minimum percent
-     * of sleepers has been met to force sleep.
+     * Count of possible players considered for sleep.
      * 
-     * @return count of active and not always ignored players in this world
+     * @return count of active and not always ignored, not already in bed
      */
     private int possibleSleepers() {
-        return world.getPlayers().size() - this.ignoredPlayers().size();
+        Set<Player> inBed = this.inBed();
+        
+        Set<Player> ignored = this.ignored();
+        ignored.removeAll(inBed);
+        
+        Set<Player> inactive = this.inactive();
+        inactive.removeAll(inBed);
+        
+        return world.getPlayers().size() - ignored.size() - inactive.size();
+    }
+    
+    /**
+     * Compile a list of current players that are always ignored for sleep.
+     * 
+     * @return players that always ignore sleep
+     */
+    private Set<Player> ignored() {
+        Set<Player> ignored = new HashSet<Player>();
+        
+        for (Player player : this.world.getPlayers())
+            if (this.isIgnoredAlways(player)
+                    || player.hasPermission("sleep.ignore")
+                    || player.hasPermission("sleep.ignore." + this.world.getName()))
+                ignored.add(player);
+        
+        return ignored;
+    }
+    
+    /**
+     * Compile a list of current players that are inactive.
+     * 
+     * @return players that are considered inactive
+     */
+    private Set<Player> inactive() {
+        Set<Player> inactive = new HashSet<Player>();
+        
+        for (Player player : this.world.getPlayers())
+            if (!this.isActive(player))
+                inactive.add(player);
+        
+        return inactive;
+    }
+    
+    /**
+     * Determine if player has any recent activity.
+     * 
+     * @param player player to check activity on
+     * @return true if player has been active recently; otherwise false
+     */
+    public boolean isActive(Player player) {
+        if (this.inactivityLimit <= -1) return true;
+        
+        if (!this.lastActivity.containsKey(player)) return false;
+        
+        Calendar oldestActive = new GregorianCalendar();
+        oldestActive.add(Calendar.SECOND, -this.inactivityLimit);
+        if (this.lastActivity.get(player).before(oldestActive))
+            return false;
+        
+        return true;
     }
     
     /**
