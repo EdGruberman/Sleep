@@ -36,7 +36,7 @@ public class ActivityManager {
         // Determine which events are monitored by at least one world.
         Set<Event.Type> monitored = new HashSet<Event.Type>();
         for (State state : State.tracked.values())
-            if (state.inactivityLimit > 0) monitored.addAll(state.getMonitoredActivity());
+            if (state.inactivityLimit > 0) monitored.addAll(state.monitoredActivity);
         
         // Filter out events already registered.
         monitored.removeAll(ActivityManager.registered);

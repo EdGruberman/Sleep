@@ -3,7 +3,6 @@ package edgruberman.bukkit.sleep;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.bukkit.World.Environment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.Event.Priority;
@@ -48,13 +47,14 @@ final class PlayerListener extends org.bukkit.event.player.PlayerListener {
         // Ignore for untracked world sleep states.
         if (!State.tracked.containsKey(event.getPlayer().getWorld())) return;
         
-        // "There's no sleeping in the nether!"
-        if (event.getPlayer().getWorld().getEnvironment().equals(Environment.NETHER)) return;
-        
         Main.messageManager.log(event.getPlayer().getName() + " entered bed in [" + event.getPlayer().getWorld().getName() + "]", MessageLevel.FINE);
         State state = State.tracked.get(event.getPlayer().getWorld());
+        state.enteringBed.add(event.getPlayer());
+        
         state.broadcastEnter(event.getPlayer());
-        state.lull(event.getPlayer());
+        state.lull();
+        
+        state.enteringBed.remove(event.getPlayer());
     }
     
     @Override

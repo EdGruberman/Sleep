@@ -1,7 +1,6 @@
 package edgruberman.bukkit.sleep;
 
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -69,6 +68,8 @@ public class State {
     
     public static Map<World, State> tracked = new HashMap<World, State>();
     
+    Set<Player> enteringBed = new HashSet<Player>();
+    
     private World world;
     int inactivityLimit;
     private int safeRadiusSquared;
@@ -78,7 +79,7 @@ public class State {
     private String messageEnterBed;
     private int messageMaxFrequency;
     private boolean messageTimestamp;
-    private Set<Event.Type> monitoredActivity;
+    Set<Event.Type> monitoredActivity;
     
     private Map<Player, Calendar> lastActivity = new HashMap<Player, Calendar>();
     private Map<Player, Calendar> lastMessage = new HashMap<Player, Calendar>();
@@ -105,25 +106,6 @@ public class State {
     }
     
     /**
-     * Events monitored for player activity in this world.
-     * 
-     * @return event types monitored
-     */
-    Set<Event.Type> getMonitoredActivity() {
-        return Collections.unmodifiableSet(this.monitoredActivity);
-    }
-    
-    /**
-     * Squared distance from a player ignoring sleep that a sleep related spawn
-     * should be cancelled within.
-     * 
-     * @return square of safe distance
-     */
-    int getSafeRadiusSquared() {
-        return this.safeRadiusSquared;
-    }
-    
-    /**
      * Record current time as last activity for player and configure player
      * to not ignore sleeping.
      * (This could be called on high frequency events such as PLAYER_MOVE.)
@@ -132,24 +114,24 @@ public class State {
      * @param type event type that caused this activity update for player
      */
     void updateActivity(final Player player, final Event.Type type) {
-        // Only register monitored activity.
+        // Only record monitored activity.
         if (!this.monitoredActivity.contains(type)) return;
         
         this.lastActivity.put(player, new GregorianCalendar());
         
-        // Only need to change current ignore status if currently ignoring. 
+        // Activity should not remove ignore status if not currently ignoring. 
         if (!player.isSleepingIgnored()) return;
         
-        // Do not change ignore status for players in the default nether.
+        // Activity should not remove ignore status for players in the default nether.
         if (player.getWorld().equals(Main.defaultNether)) return;
         
-        // Do not change ignore status when forcing sleep.
+        // Activity should not remove ignore status when forcing sleep.
         if (this.forcingSleep) return;
         
-        // Do not change ignore status for always ignored players.
+        // Activity should not remove ignore status for always ignored players.
         if (this.isIgnoredAlways(player)) return;
         
-        Main.messageManager.log("Activity recorded for " + player.getName() + " (Event: " + type.toString() + ")", MessageLevel.FINE);
+        Main.messageManager.log("Activity detected for " + player.getName() + " (Event: " + type.toString() + ")", MessageLevel.FINE);
         
         this.ignoreSleep(player, false, "Monitored Activity");
     }
@@ -186,22 +168,10 @@ public class State {
     /**
      * Configure all players in the default nether, inactive players in this
      * world, and always ignored players in this world to ignore sleep. If all
-     * players in the world are then either in bed or ignoring sleep, a natural
-     * sleep cycle should automatically commence.
+     * other players in the world are then either in bed or ignoring sleep, a
+     * natural sleep cycle should automatically commence.
      */
     public void lull() {
-        this.lull(null);
-    }
-    
-    /**
-     * Configure all players in the default nether, inactive players in this
-     * world, and always ignored players in this world to ignore sleep. If all
-     * players in the world are then either in bed or ignoring sleep, a natural
-     * sleep cycle should automatically commence.
-     * 
-     * @param bedEnterer player entering bed (but not completely in bed yet)
-     */
-    void lull(final Player bedEnterer) {
         // Ignore players in default nether world.
         if (Main.defaultNether != null)
             for (Player player : Main.defaultNether.getPlayers())
@@ -209,31 +179,28 @@ public class State {
         
         // Configure away and always ignored to be considered sleeping.
         for (Player player : this.ignoredPlayers())
-            if (!player.equals(bedEnterer)) this.ignoreSleep(player, true, "Inactive or Always Ignored");
+            this.ignoreSleep(player, true, "Inactive or Always Ignored");
         
         if (Main.messageManager.isLevel(Channel.Type.LOG, MessageLevel.FINE))
-            Main.messageManager.log("[" + this.world.getName() + "] " + this.description(bedEnterer != null), MessageLevel.FINE);
+            Main.messageManager.log("[" + this.world.getName() + "] " + this.description(), MessageLevel.FINE);
         
         // Check if sleep should be forced now.
         if (this.forceCount <= -1 && this.forcePercent <= -1) return;
         
-        if ((this.needForSleep(bedEnterer != null)) == 0)
-            this.forceSleep(bedEnterer);
+        if ((this.needForSleep()) == 0)
+            this.forceSleep();
     }
     
     /**
-     * Force sleep and set sleeping ignored for players not already in bed or
-     * ignoring sleep.
-     * 
-     * @param ignore player to leave status alone on
+     * Set sleeping ignored for players not already in bed, or entering
+     * bed, or ignoring sleep.
      */
-    private void forceSleep(Player ignore) {
-        this.forcingSleep = true;
-        for (Player player : world.getPlayers()) {
-            if (player.isSleeping() || player.isSleepingIgnored() || player.equals(ignore)) continue;
-            
+    private void forceSleep() {
+        for (Player player : world.getPlayers())
             this.ignoreSleep(player, true, "Forcing Sleep");
-        }
+        
+        // Indicate forced sleep for this world to ensure activity does not negate ignore status.
+        this.forcingSleep = true;
     }
     
     /**
@@ -298,7 +265,7 @@ public class State {
         }
 
         this.lastMessage.put(enterer, new GregorianCalendar());
-        String formatted = String.format(this.messageEnterBed, enterer.getDisplayName(), this.needForSleep(true));
+        String formatted = String.format(this.messageEnterBed, enterer.getDisplayName(), this.needForSleep());
         Main.messageManager.send(this.world, formatted, MessageLevel.EVENT, this.messageTimestamp);
     }
     
@@ -315,8 +282,8 @@ public class State {
         // Don't modify players already set as expected.
         if (player.isSleepingIgnored() == ignore) return;
         
-        // Don't ignore players actually in bed.
-        if (ignore && player.isSleeping()) return;
+        // Don't ignore players actually in bed or in process of entering bed.
+        if (ignore && (player.isSleeping() || this.enteringBed.contains(player))) return;
         
         Main.messageManager.log(
                 "Setting " + player.getName() + " in [" + player.getWorld().getName() + "]"
@@ -372,25 +339,14 @@ public class State {
      * @return text description of status
      */
     public String description() {
-        return this.description(false);
-    }
-    
-    /**
-     * Description of status of sleep cycle.
-     * 
-     * @param isMidEnter true if this is being calculated before a
-     *        PLAYER_BED_ENTER event has completed
-     * @return text description of status
-     */
-    private String description(boolean isMidEnter) {
         // Example output:
         // "Sleep needs +4; 3 in bed out of 7 possible = 42.9% (need 100.0%)";
         // "Sleep needs +2; 3 in bed (need 5) out of 7 possible = 42.9% (need 50.0%)";
         // "Sleep needs +2; 3 in bed (need 5) out of 7 possible = 42.9%";
         // "Sleep needs +1; 3 in bed out of 7 possible = 42.9% (need 50%)";
         // "Sleep needs no more; 5 in bed (need 5) out of 7 possible = 71.4% (need 50.0%)";
-        int need = this.needForSleep(isMidEnter);
-        int count = this.inBed().size() + (isMidEnter ? 1 : 0);
+        int need = this.needForSleep();
+        int count = this.inBed().size() + this.enteringBed.size();
         int possible = this.possibleSleepers();
         int requiredPercent = (this.forcePercent >= 0 ? this.forcePercent : 100);
         int currentPercent = Math.round((float) count / (possible != 0 ? possible : 1) * 100);
@@ -405,13 +361,11 @@ public class State {
     /**
      * Number of players still needed to enter bed for sleep.
      * 
-     * @param isMidEnter true if this is being calculated before a
-     *        PLAYER_BED_ENTER event has completed
      * @return number of players still needed, 0 if no more is needed
      */
-    public int needForSleep(boolean isMidEnter) {
+    public int needForSleep() {
         int possible = this.possibleSleepers();
-        int inBed = this.inBed().size();
+        int inBed = this.inBed().size() + this.enteringBed.size();
         
         // Default, all possible except those already in bed.
         int need = (possible - inBed);
@@ -430,11 +384,13 @@ public class State {
         if (this.forceCount >= 0 && this.forcePercent >= 0)
             need = (needCount > needPercent ? needCount : needPercent);
         
-        // Compensate for player entering bed since they will be officially sleeping very shortly.
-        if (isMidEnter) need--;
-        
         // Can't have less than no one.
-        return (need > 0 ? need : 0);
+        if (need < 0) need = 0;
+        
+        // Always need at least 1 person actually in bed.
+        if (inBed == 0 && need == 0) need = 1;
+        
+        return need;
     }
     
     /**

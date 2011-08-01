@@ -28,7 +28,7 @@ class StatusAction extends Action {
         }
         
         State state = State.tracked.get(world);
-        int need = state.needForSleep(false);
+        int need = state.needForSleep();
         String message = "Need" + (need == 0 ? " no" : " at least " + need) + " more player" + (need == 1 ? "" : "s") + " in bed to sleep.";
         Main.messageManager.respond(context.sender, message, MessageLevel.STATUS, false);
         state.lull();
