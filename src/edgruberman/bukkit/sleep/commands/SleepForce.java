@@ -34,7 +34,7 @@ class SleepForce extends Action {
                 return;
             }
             
-            Main.messageManager.respond(context.sender, "Forced safe sleep in [" + world.getName() + "]", MessageLevel.STATUS);
+            Main.messageManager.respond(context.sender, "Forced safe sleep in [" + world.getName() + "]", MessageLevel.STATUS, false);
             
             // Force world time to next morning to avoid nightmares if safe is requested.
             world.setTime(0);
@@ -42,7 +42,12 @@ class SleepForce extends Action {
             return;
         }
         
-        Main.messageManager.respond(context.sender, "Forced sleep in [" + world.getName() + "]...", MessageLevel.STATUS);
+        if (state.inBed.size() == 0) {
+            Main.messageManager.respond(context.sender, "Need at least 1 person in bed to force sleep.", MessageLevel.SEVERE, false);
+            return;
+        }
+        
+        Main.messageManager.respond(context.sender, "Forced sleep in [" + world.getName() + "]...", MessageLevel.STATUS, false);
         state.forceSleep();
     }
     

@@ -31,7 +31,7 @@ class SleepStatus extends Action {
         int need = state.needForSleep();
         String message = "Need" + (need == 0 ? " no" : " at least " + need) + " more player" + (need == 1 ? "" : "s") + " in bed to sleep.";
         Main.messageManager.respond(context.sender, message, MessageLevel.STATUS, false);
-        state.lull();
+        if (state.inBed.size() >= 1) state.lull();
     }
     
     private World parseWorld(final Context context) {
