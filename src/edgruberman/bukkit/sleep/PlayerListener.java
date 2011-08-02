@@ -70,7 +70,7 @@ final class PlayerListener extends org.bukkit.event.player.PlayerListener {
         
         // Otherwise this is assumed to be a "real" action.
         Main.messageManager.log(event.getPlayer().getName() + " left bed in [" + event.getPlayer().getWorld().getName() + "]", MessageLevel.FINE);
-        state.exitBed(event.getPlayer());
+        state.leaveBed(event.getPlayer());
     }
     
     @Override

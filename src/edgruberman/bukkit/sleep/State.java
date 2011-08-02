@@ -115,7 +115,7 @@ public class State {
         this.lull();
     }
     
-    void exitBed(final Player exiter) {
+    void leaveBed(final Player exiter) {
         this.inBed.remove(exiter);
         if (this.inBed.size() == 0) this.awaken();
     }
@@ -239,28 +239,6 @@ public class State {
         for (Player player : Main.defaultNether.getPlayers())
             this.ignoreSleep(player, false, "Awakening Default Nether");
     }
-    
-//    /**
-//     * Determine if spawn is within unsafe distance from an ignored player
-//     * during a sleep cycle.
-//     * 
-//     * @param spawningAt location of creature spawning
-//     * @return true if spawn is too close to any player ignoring sleep
-//     */
-//    boolean isIgnoredSleepSpawn(final Location spawningAt) {
-//        for (Player player : spawningAt.getWorld().getPlayers()) {
-//            // Only check for players currently ignoring sleep.
-//            if (!player.isSleepingIgnored()) continue;
-//            
-//            // Check if distance from player is within the safety radius that should not allow the spawn.
-//            if (player.getLocation().distanceSquared(spawningAt) <= State.SLEEP_SPAWN_MAXIMUM_DISTANCE_SQUARED) {
-//                Main.messageManager.log(player.getName() + " is being targetted with a nightmare.", MessageLevel.FINER);
-//                return true;
-//            }
-//        }
-//        
-//        return false;
-//    }
     
     /**
      * Determine player the sleep spawn is spawning as a result of.
