@@ -1,4 +1,4 @@
-package edgruberman.bukkit.sleep;
+package edgruberman.bukkit.sleep.activity;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -20,6 +20,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerInventoryEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerListener;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
@@ -28,12 +29,12 @@ import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
 
-final class PlayerActivity extends org.bukkit.event.player.PlayerListener implements ActivityMonitor {
+class PlayerActivity extends PlayerListener implements ActivityMonitor {
     
     /**
      * Events this listener recognizes and can monitor player activity for.
      */
-    static final Set<Event.Type> SUPPORTS = new HashSet<Event.Type>(Arrays.asList(
+    private static final Set<Event.Type> SUPPORTS = new HashSet<Event.Type>(Arrays.asList(
             Event.Type.PLAYER_ANIMATION
           , Event.Type.PLAYER_BED_ENTER
           , Event.Type.PLAYER_BED_LEAVE

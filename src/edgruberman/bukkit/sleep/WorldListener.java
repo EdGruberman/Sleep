@@ -2,7 +2,7 @@ package edgruberman.bukkit.sleep;
 
 import org.bukkit.event.world.WorldLoadEvent;
 
-public class WorldListener extends org.bukkit.event.world.WorldListener {
+final class WorldListener extends org.bukkit.event.world.WorldListener {
     
     private Main main;
     

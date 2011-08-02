@@ -1,4 +1,4 @@
-package edgruberman.bukkit.sleep;
+package edgruberman.bukkit.sleep.activity;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -11,14 +11,15 @@ import org.bukkit.event.vehicle.VehicleDamageEvent;
 import org.bukkit.event.vehicle.VehicleDestroyEvent;
 import org.bukkit.event.vehicle.VehicleEnterEvent;
 import org.bukkit.event.vehicle.VehicleExitEvent;
+import org.bukkit.event.vehicle.VehicleListener;
 import org.bukkit.event.vehicle.VehicleMoveEvent;
 
-public final class VehicleActivity extends org.bukkit.event.vehicle.VehicleListener implements ActivityMonitor {
+final class VehicleActivity extends VehicleListener implements ActivityMonitor {
     
     /**
      * Events this listener recognizes and can monitor player activity for.
      */
-    static final Set<Event.Type> SUPPORTS = new HashSet<Event.Type>(Arrays.asList(
+    private static final Set<Event.Type> SUPPORTS = new HashSet<Event.Type>(Arrays.asList(
               Event.Type.VEHICLE_DAMAGE
             , Event.Type.VEHICLE_DESTROY
             , Event.Type.VEHICLE_ENTER

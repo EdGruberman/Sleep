@@ -1,12 +1,12 @@
 package edgruberman.bukkit.sleep.commands;
 
 import edgruberman.bukkit.messagemanager.MessageLevel;
-import edgruberman.bukkit.sleep.ActivityManager;
 import edgruberman.bukkit.sleep.Main;
+import edgruberman.bukkit.sleep.activity.ActivityManager;
 
-class ReloadAction extends Action {
+class SleepReload extends Action {
     
-    ReloadAction(final Command owner) {
+    SleepReload(final Command owner) {
         super("reload", owner);
     }
     

@@ -1,4 +1,4 @@
-package edgruberman.bukkit.sleep;
+package edgruberman.bukkit.sleep.activity;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -9,18 +9,19 @@ import org.bukkit.event.Event;
 import org.bukkit.event.Event.Type;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityListener;
 import org.bukkit.event.entity.EntityRegainHealthEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.painting.PaintingBreakByEntityEvent;
 import org.bukkit.event.painting.PaintingBreakEvent;
 import org.bukkit.event.painting.PaintingPlaceEvent;
 
-public final class EntityActivity extends org.bukkit.event.entity.EntityListener implements ActivityMonitor {
+final class EntityActivity extends EntityListener implements ActivityMonitor {
     
     /**
      * Events this listener recognizes and can monitor player activity for.
      */
-    static final Set<Event.Type> SUPPORTS = new HashSet<Event.Type>(Arrays.asList(
+    private static final Set<Event.Type> SUPPORTS = new HashSet<Event.Type>(Arrays.asList(
               Event.Type.ENTITY_DAMAGE
             , Event.Type.ENTITY_REGAIN_HEALTH
             , Event.Type.PAINTING_PLACE

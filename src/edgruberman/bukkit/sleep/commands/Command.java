@@ -37,7 +37,7 @@ class Command  {
         return new Context(this, sender, command, label, args);
     }
     
-    protected boolean isAllowed(CommandSender sender) {
+    protected boolean isAllowed(final CommandSender sender) {
         return sender.hasPermission(Main.PERMISSION_PREFIX + "." + this.command.getLabel());
     }
     

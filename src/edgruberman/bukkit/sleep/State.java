@@ -28,13 +28,6 @@ public class State {
     static final int DEFAULT_INACTIVITY_LIMIT = -1;
     
     /**
-     * Distance in blocks as a radius from an ignored player in which sleep
-     * related mob spawns are not allowed. (-1 will disable this feature and
-     * never prevent a sleep related spawn.)
-     */
-    static final int DEFAULT_SAFE_RADIUS = -1;
-    
-    /**
      * Minimum number of players needed in bed for sleep to be forced. (-1 will
      * disable this feature.)
      */
@@ -66,26 +59,33 @@ public class State {
      */
     static final boolean DEFAULT_MESSAGE_TIMESTAMP = false;
     
+    /**
+     * Maximum distance (blocks/meters) squared from a sleeping player a monster will
+     * attempt to spawn as a result of a sleep cycle.
+     */
+    private static final double SLEEP_SPAWN_MAXIMUM_DISTANCE_SQUARED = Math.pow(1.5, 2) + Math.pow(1.5, 2) + Math.pow(1.5, 2);
+    
+    // Factory/Manager
     public static Map<World, State> tracked = new HashMap<World, State>();
     
-    Set<Player> enteringBed = new HashSet<Player>();
-    
+    // Configuration
     private World world;
-    int inactivityLimit;
-    private int safeRadiusSquared;
+    public int inactivityLimit;
     private Set<String> ignoredAlways;
     private int forceCount;
     private int forcePercent;
     private String messageEnterBed;
     private int messageMaxFrequency;
     private boolean messageTimestamp;
-    Set<Event.Type> monitoredActivity;
+    public Set<Event.Type> monitoredActivity;
     
+    // Current Status
     private Map<Player, Calendar> lastActivity = new HashMap<Player, Calendar>();
     private Map<Player, Calendar> lastMessage = new HashMap<Player, Calendar>();
+    public Set<Player> inBed = new HashSet<Player>();
     private boolean forcingSleep = false;
     
-    State(final World world, final int inactivityLimit, final int safeRadius, final Set<String> ignoredAlways
+    State(final World world, final int inactivityLimit, final Set<String> ignoredAlways
             , final int forceCount, final int forcePercent, final String messageEnterBed, final int messageMaxFrequency
             , final boolean messageTimestamp, final Set<Event.Type> monitoredActivity) {
         if (world == null)
@@ -93,7 +93,6 @@ public class State {
         
         this.world = world;
         this.inactivityLimit = inactivityLimit;
-        this.safeRadiusSquared = (int) Math.pow(safeRadius, 2);
         this.ignoredAlways = (ignoredAlways != null ? ignoredAlways : new HashSet<String>());
         this.forceCount = forceCount;
         this.forcePercent = forcePercent;
@@ -105,6 +104,26 @@ public class State {
         State.tracked.put(world, this);
     }
     
+    void joinWorld(final Player joiner) {
+        this.updateActivity(joiner, Event.Type.PLAYER_JOIN);
+    }
+    
+    void enterBed(final Player enterer) {
+        this.inBed.add(enterer);
+        this.ignoreSleep(enterer, false, "Entered Bed");
+        this.broadcastEnter(enterer);
+        this.lull();
+    }
+    
+    void exitBed(final Player exiter) {
+        this.inBed.remove(exiter);
+        if (this.inBed.size() == 0) this.awaken();
+    }
+    
+    void leaveWorld(final Player leaver) {
+        this.removeActivity(leaver);
+    }
+    
     /**
      * Record current time as last activity for player and configure player
      * to not ignore sleeping.
@@ -113,7 +132,7 @@ public class State {
      * @param player player to record this as last activity for
      * @param type event type that caused this activity update for player
      */
-    void updateActivity(final Player player, final Event.Type type) {
+    public void updateActivity(final Player player, final Event.Type type) {
         // Only record monitored activity.
         if (!this.monitoredActivity.contains(type)) return;
         
@@ -141,7 +160,7 @@ public class State {
      * 
      * @param player Player to be removed from monitoring.
      */
-    void removeActivity(final Player player) {
+    private void removeActivity(final Player player) {
         this.lastActivity.remove(player);
     }
     
@@ -199,7 +218,7 @@ public class State {
      * Set sleeping ignored for players not already in bed, or entering
      * bed, or ignoring sleep.
      */
-    private void forceSleep() {
+    public void forceSleep() {
         for (Player player : world.getPlayers())
             this.ignoreSleep(player, true, "Forcing Sleep");
         
@@ -221,35 +240,56 @@ public class State {
             this.ignoreSleep(player, false, "Awakening Default Nether");
     }
     
-    /**
-     * Determine if spawn is within unsafe distance from an ignored player
-     * during a sleep cycle.
-     * 
-     * @param spawningAt location of creature spawning
-     * @return true if spawn is too close to any player ignoring sleep
-     */
-    boolean isIgnoredSleepSpawn(final Location spawningAt) {
-        for (Player player : spawningAt.getWorld().getPlayers()) {
-            // Only check for players involved in a current sleep cycle.
-            if (!player.isSleepingIgnored()) continue;
-            
-            // Check if distance from player is within the safety radius that should not allow the spawn.
-            if (player.getLocation().distanceSquared(spawningAt) <= this.safeRadiusSquared) return true;
-        }
-        
-        return false;
-    }
+//    /**
+//     * Determine if spawn is within unsafe distance from an ignored player
+//     * during a sleep cycle.
+//     * 
+//     * @param spawningAt location of creature spawning
+//     * @return true if spawn is too close to any player ignoring sleep
+//     */
+//    boolean isIgnoredSleepSpawn(final Location spawningAt) {
+//        for (Player player : spawningAt.getWorld().getPlayers()) {
+//            // Only check for players currently ignoring sleep.
+//            if (!player.isSleepingIgnored()) continue;
+//            
+//            // Check if distance from player is within the safety radius that should not allow the spawn.
+//            if (player.getLocation().distanceSquared(spawningAt) <= State.SLEEP_SPAWN_MAXIMUM_DISTANCE_SQUARED) {
+//                Main.messageManager.log(player.getName() + " is being targetted with a nightmare.", MessageLevel.FINER);
+//                return true;
+//            }
+//        }
+//        
+//        return false;
+//    }
     
     /**
-     * Determines if at least one player is in a bed.
+     * Determine player the sleep spawn is spawning as a result of.
      * 
-     * @return true if at least 1 player is in bed; false otherwise
+     * @param spawningAt location sleep spawn will occurring
+     * @return player causing sleep spawn to occur
      */
-    boolean isAnyoneInBed() {
-        for (Player player : this.world.getPlayers())
-            if (player.isSleeping()) return true;
+    Player findSleepSpawnTarget(final Location spawningAt) {
+        // Check for first player found within sleep spawn possible target distance.
+        for (Player player : spawningAt.getWorld().getPlayers()) {
+            // Do not assume player if they are not currently sleeping or ignoring sleep.
+            if (!player.isSleeping() && !player.isSleepingIgnored()) continue;
+            
+            if (player.getLocation().distanceSquared(spawningAt) <= State.SLEEP_SPAWN_MAXIMUM_DISTANCE_SQUARED)
+                return player;
+        }
         
-        return false;
+        // Assign closest player if for some reason we didn't find a player already.
+        Player target = null;
+        Double closest = null;
+        Double distanceSquared = null;
+        for (Player player : spawningAt.getWorld().getPlayers()) {
+            distanceSquared = player.getLocation().distanceSquared(spawningAt);
+            if (closest == null || distanceSquared < closest) {
+                closest = distanceSquared;
+                target = player;
+            }
+        }
+        return target;
     }
     
     /**
@@ -258,7 +298,7 @@ public class State {
      * 
      * @param enterer player that entered bed
      */
-    void broadcastEnter(final Player enterer) {
+    private void broadcastEnter(final Player enterer) {
         if (this.messageEnterBed == null || this.messageEnterBed.length() == 0) return;
         
         if (this.lastMessage.containsKey(enterer)) {
@@ -286,15 +326,14 @@ public class State {
         // Don't modify players already set as expected.
         if (player.isSleepingIgnored() == ignore) return;
         
-        // Don't ignore players actually in bed or in process of entering bed.
-        if (ignore && (player.isSleeping() || this.enteringBed.contains(player))) return;
+        // Don't ignore players in bed.
+        if (ignore && this.inBed.contains(player)) return;
         
         Main.messageManager.log(
                 "Setting " + player.getName() + " in [" + player.getWorld().getName() + "]"
                     + " to" + (ignore ? "" : " not") + " ignore sleep. (" + reason + ")"
                 , MessageLevel.FINE
         );
-        
         player.setSleepingIgnored(ignore);
     }
     
@@ -311,7 +350,7 @@ public class State {
         // "Sleep needs +1; 3 in bed out of 7 possible = 42.9% (need 50%)";
         // "Sleep needs no more; 5 in bed (need 5) out of 7 possible = 71.4% (need 50.0%)";
         int need = this.needForSleep();
-        int count = this.inBed().size() + this.enteringBed.size();
+        int count = this.inBed.size();
         int possible = this.possibleSleepers();
         int requiredPercent = (this.forcePercent >= 0 ? this.forcePercent : 100);
         int currentPercent = Math.round((float) count / (possible >= 0 ? possible : 1) * 100);
@@ -330,7 +369,7 @@ public class State {
      */
     public int needForSleep() {
         int possible = this.possibleSleepers();
-        int inBed = this.inBed().size() + this.enteringBed.size();
+        int inBed = this.inBed.size();
         
         // Default, all possible except those already in bed.
         int need = (possible - inBed);
@@ -361,18 +400,17 @@ public class State {
     /**
      * Count of possible players considered for sleep.
      * 
-     * @return count of active and not always ignored, not already in bed
+     * @return count of active, not always ignored, and not already in bed
      */
     private int possibleSleepers() {
-        Set<Player> inBed = this.inBed();
-        
         Set<Player> ignored = this.ignored();
-        ignored.removeAll(inBed);
+        ignored.removeAll(this.inBed);
         
         Set<Player> inactive = this.inactive();
-        inactive.removeAll(inBed);
+        inactive.removeAll(this.inBed);
         
-        return world.getPlayers().size() - ignored.size() - inactive.size();
+        int possible = world.getPlayers().size() - ignored.size() - inactive.size();
+        return (possible > 0 ? possible : 0);
     }
     
     /**
@@ -424,20 +462,5 @@ public class State {
             return false;
         
         return true;
-    }
-    
-    /**
-     * Players in bed.
-     * 
-     * @return players in bed
-     */
-    public Set<Player> inBed() {
-        Set<Player> inBed = new HashSet<Player>();
-        
-        for (Player player : this.world.getPlayers())
-            if (player.isSleeping())
-                inBed.add(player);
-
-        return inBed;
     }
 }

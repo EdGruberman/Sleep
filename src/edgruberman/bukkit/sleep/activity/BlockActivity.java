@@ -1,4 +1,4 @@
-package edgruberman.bukkit.sleep;
+package edgruberman.bukkit.sleep.activity;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -9,14 +9,15 @@ import org.bukkit.event.Event.Type;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockDamageEvent;
 import org.bukkit.event.block.BlockIgniteEvent;
+import org.bukkit.event.block.BlockListener;
 import org.bukkit.event.block.BlockPlaceEvent;
 
-public final class BlockActivity extends org.bukkit.event.block.BlockListener implements ActivityMonitor {
+final class BlockActivity extends BlockListener implements ActivityMonitor {
     
     /**
      * Events this listener recognizes and can monitor player activity for.
      */
-    static final Set<Event.Type> SUPPORTS = new HashSet<Event.Type>(Arrays.asList(
+    private static final Set<Event.Type> SUPPORTS = new HashSet<Event.Type>(Arrays.asList(
               Event.Type.BLOCK_BREAK
             , Event.Type.BLOCK_DAMAGE
             , Event.Type.BLOCK_IGNITE

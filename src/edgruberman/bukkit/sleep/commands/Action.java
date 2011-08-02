@@ -23,6 +23,6 @@ abstract class Action {
     protected boolean isAllowed(final CommandSender sender) {
         return sender.hasPermission(Main.PERMISSION_PREFIX + "." + this.command.command.getLabel() + "." + this.name);
     }
- 
+    
     abstract void execute(final Context context);
 }

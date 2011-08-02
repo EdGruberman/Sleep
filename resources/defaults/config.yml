@@ -1,5 +1,4 @@
 inactivityLimit: 300
-safeRadius: 3
 force:
     count: null
     percent: null

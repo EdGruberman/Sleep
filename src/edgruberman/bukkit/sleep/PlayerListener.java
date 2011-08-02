@@ -1,43 +1,49 @@
 package edgruberman.bukkit.sleep;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
-import org.bukkit.event.Event.Priority;
 import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerBedLeaveEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 
 import edgruberman.bukkit.messagemanager.MessageLevel;
 
 final class PlayerListener extends org.bukkit.event.player.PlayerListener {
     
-    /**
-     * When a sleep cycle completes, players ignoring sleep are still returned
-     * to their last bed location. This plugin cancels that teleport event for
-     * such circumstances and this variable establishes what priority that
-     * cancellation occurs at by default.
-     */
-    static final Event.Priority DEFAULT_PLAYER_TELEPORT = Priority.Normal;
-    
-    private final Main main;
-    private final Set<Player> ignoreBedTeleport = new HashSet<Player>();
-    
-    public PlayerListener(final Main main, final Event.Priority priorityPlayerTeleport) {
-        this.main = main;
-        
-        PluginManager pluginManager = this.main.getServer().getPluginManager();
+    public PlayerListener(final Plugin plugin) {
+        PluginManager pm = plugin.getServer().getPluginManager();
 
-        // Core events needed for plugin to operate.
-        pluginManager.registerEvent(Event.Type.PLAYER_TELEPORT , this
-                , (priorityPlayerTeleport != null ? priorityPlayerTeleport : PlayerListener.DEFAULT_PLAYER_TELEPORT), this.main);
-        pluginManager.registerEvent(Event.Type.PLAYER_BED_ENTER, this, Event.Priority.Monitor, this.main);
-        pluginManager.registerEvent(Event.Type.PLAYER_BED_LEAVE, this, Event.Priority.Monitor, this.main);
-        pluginManager.registerEvent(Event.Type.PLAYER_QUIT     , this, Event.Priority.Monitor, this.main);
+        pm.registerEvent(Event.Type.PLAYER_JOIN     , this, Event.Priority.Monitor, plugin);
+        pm.registerEvent(Event.Type.PLAYER_TELEPORT , this, Event.Priority.Monitor, plugin);
+        pm.registerEvent(Event.Type.PLAYER_BED_ENTER, this, Event.Priority.Monitor, plugin);
+        pm.registerEvent(Event.Type.PLAYER_BED_LEAVE, this, Event.Priority.Monitor, plugin);
+        pm.registerEvent(Event.Type.PLAYER_QUIT     , this, Event.Priority.Monitor, plugin);
+    }
+    
+    @Override
+    public void onPlayerJoin(final PlayerJoinEvent event) {
+        // Ignore for untracked world sleep states.
+        State state = State.tracked.get(event.getPlayer().getWorld());
+        if (state == null) return;
+        
+        state.joinWorld(event.getPlayer());
+    }
+    
+    @Override
+    public void onPlayerTeleport(final PlayerTeleportEvent event) {
+        if (event.isCancelled()) return;
+        
+        // Notify tracked sleep states of player moving between them.
+        if (!event.getFrom().getWorld().equals(event.getTo().getWorld())) {
+            State from = State.tracked.get(event.getFrom().getWorld());
+            if (from != null) from.leaveWorld(event.getPlayer());
+            
+            State to = State.tracked.get(event.getTo().getWorld());
+            if (to != null) to.joinWorld(event.getPlayer());
+        }
     }
     
     @Override
@@ -49,53 +55,27 @@ final class PlayerListener extends org.bukkit.event.player.PlayerListener {
         
         Main.messageManager.log(event.getPlayer().getName() + " entered bed in [" + event.getPlayer().getWorld().getName() + "]", MessageLevel.FINE);
         State state = State.tracked.get(event.getPlayer().getWorld());
-        state.enteringBed.add(event.getPlayer());
-        
-        state.broadcastEnter(event.getPlayer());
-        state.lull();
-        
-        state.enteringBed.remove(event.getPlayer());
+        state.enterBed(event.getPlayer());
     }
     
     @Override
     public void onPlayerBedLeave(final PlayerBedLeaveEvent event) {
         // Ignore for untracked world sleep states.
-        if (!State.tracked.containsKey(event.getPlayer().getWorld())) return;
-        
-        // When a sleep cycle completes, all players are put through a bed
-        // leave event, followed by a teleport to return them to their bed.
-        // If a player is ignoring sleep, this event should only be used to
-        // signal the next teleport the player experiences should be cancelled.
-        if (event.getPlayer().isSleepingIgnored()) {
-            this.ignoreBedTeleport.add(event.getPlayer());
-            return;
-        }
-        
-        // Otherwise this is assumed to be a player requested action and the
-        // tracked world should then be awakened if no one is left in bed.
-        Main.messageManager.log(event.getPlayer().getName() + " left bed in [" + event.getPlayer().getWorld().getName() + "]", MessageLevel.FINE);
         State state = State.tracked.get(event.getPlayer().getWorld());
-        if (!state.isAnyoneInBed()) state.awaken();
-    }
-    
-    @Override
-    public void onPlayerTeleport(final PlayerTeleportEvent event) {
-        if (event.isCancelled()) return;
+        if (state == null) return;
         
-        // Ignore for untracked world sleep states.
-        if (!State.tracked.containsKey(event.getPlayer().getWorld())) return;
+        // Ignore "fake" bed leaves.  When player is ignoring sleep, they are
+        // not in bed and therefore can not leave bed.
+        if (event.getPlayer().isSleepingIgnored()) return;
         
-        // Only cancel teleport if player just left bed while ignoring sleep.
-        if (!this.ignoreBedTeleport.contains(event.getPlayer())) return;
-        
-        Main.messageManager.log("Cancelling wakeup bed return teleport for " + event.getPlayer().getName() + " who is ignoring sleep.", MessageLevel.FINE);
-        this.ignoreBedTeleport.remove(event.getPlayer());
-        event.setCancelled(true);
+        // Otherwise this is assumed to be a "real" action.
+        Main.messageManager.log(event.getPlayer().getName() + " left bed in [" + event.getPlayer().getWorld().getName() + "]", MessageLevel.FINE);
+        state.exitBed(event.getPlayer());
     }
     
     @Override
     public void onPlayerQuit(final PlayerQuitEvent event) {
-        for (State state : State.tracked.values())
-            state.removeActivity(event.getPlayer());
+        State state = State.tracked.get(event.getPlayer().getWorld());
+        if (state != null) state.leaveWorld(event.getPlayer());
     }
 }

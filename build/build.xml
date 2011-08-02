@@ -30,7 +30,7 @@
         <delete dir="${dist}"/>
 
         <mkdir dir="${stage}/jar"/>
-        <javac srcdir="${src}" destdir="${stage}/jar" encoding="utf-8">
+        <javac srcdir="${src}" destdir="${stage}/jar" encoding="utf-8" debug="true">
             <classpath refid="classpath"/>
         </javac>
 

@@ -8,10 +8,10 @@ import edgruberman.bukkit.messagemanager.MessageLevel;
 import edgruberman.bukkit.sleep.Main;
 import edgruberman.bukkit.sleep.State;
 
-class DetailAction extends Action {
+class SleepWho extends Action {
     
-    DetailAction(final Command owner) {
-        super("detail", owner);
+    SleepWho(final Command owner) {
+        super("who", owner);
     }
     
     @Override
@@ -28,7 +28,18 @@ class DetailAction extends Action {
         }
         
         State state = State.tracked.get(world);
-        Main.messageManager.respond(context.sender, state.description(), MessageLevel.STATUS, false);
+        String message;
+        if (state.inBed.size() == 0) {
+            message = "No one is currently in bed.";
+        } else {
+            message = "Sleeping in [" + world.getName() + "]: ";
+            for (Player player : state.inBed)
+                message += player.getDisplayName() + (state.isActive(player) ? "" : "(Inactive)") + ", ";
+            
+            message = message.substring(0, message.length() - 2);
+        }
+        
+        Main.messageManager.respond(context.sender, message, MessageLevel.STATUS, false);
         state.lull();
     }
     

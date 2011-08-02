@@ -13,6 +13,7 @@ commands:
             /<command> who[ <World] - Display who is in bed in <World>.
             /<command> detail[ <World>] - Display sleep requirements in <World>.
             /<command> reload - Reload configuration files.
+            /<command> force[ safe][ <World>] - Force sleep in <World>. (No nightmares if safe.)
 permissions:
     sleep.sleep.info:
         description: Can use all the basic information actions of the sleep command.
@@ -44,6 +45,16 @@ permissions:
         default: op
         children:
             sleep.sleep: true
+    sleep.sleep.force:
+        description: Can use force action of sleep command.
+        default: op
+        children:
+            sleep.sleep: true
+    sleep.sleep.force.safe:
+        description: Can use safe option with force action of sleep command.
+        default: op
+        children:
+            sleep.sleep.force: true
     sleep.ignore:
         description: Player will always be ignored for sleep.
         default: false

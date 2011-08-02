@@ -11,7 +11,8 @@ import org.bukkit.util.config.Configuration;
 
 import edgruberman.bukkit.messagemanager.MessageLevel;
 import edgruberman.bukkit.messagemanager.MessageManager;
-import edgruberman.bukkit.sleep.commands.SleepCommand;
+import edgruberman.bukkit.sleep.activity.ActivityManager;
+import edgruberman.bukkit.sleep.commands.Sleep;
 
 public final class Main extends org.bukkit.plugin.java.JavaPlugin {
     
@@ -53,18 +54,21 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
         // Track sleep state for new worlds as appropriate.
         new WorldListener(this);
         
-        // Monitor mob spawns for players ignoring sleep.
+        // Cancel unsafe creature spawns for players ignoring sleep.
         Event.Priority priorityCreatureSpawn = Event.Priority.valueOf(Main.configurationFile.getConfiguration().getString("event.CREATURE_SPAWN.priority", EntityListener.DEFAULT_CREATURE_SPAWN.name()));
         Main.messageManager.log("Ignored Sleep Spawn Cancellation Priority: " + priorityCreatureSpawn, MessageLevel.CONFIG);
         new EntityListener(this, priorityCreatureSpawn);
         
+        // Cancel bed returns for players ignoring sleep.
+        Event.Priority priorityPlayerTeleport = Event.Priority.valueOf(Main.configurationFile.getConfiguration().getString("event.PLAYER_TELEPORT.priority", BedReturnCanceller.DEFAULT_PLAYER_TELEPORT.name()));
+        Main.messageManager.log("Ignored Sleep Bed Return Cancellation Priority: " + priorityPlayerTeleport, MessageLevel.CONFIG);
+        new BedReturnCanceller(this, priorityPlayerTeleport);
+        
         // Start required events listener.
-        Event.Priority priorityPlayerTeleport = Event.Priority.valueOf(Main.configurationFile.getConfiguration().getString("event.PLAYER_TELEPORT.priority", PlayerListener.DEFAULT_PLAYER_TELEPORT.name()));
-        Main.messageManager.log("Wakeup Bed Return Teleport Cancellation Priority: " + priorityPlayerTeleport, MessageLevel.CONFIG);
-        new PlayerListener(this, priorityPlayerTeleport);
+        new PlayerListener(this);
         
         // Register commands.
-        new SleepCommand(this);
+        new Sleep(this);
 
         Main.messageManager.log("Plugin Enabled");
     }
@@ -121,9 +125,6 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
         int inactivityLimit = this.loadInt(worldSpecific, pluginMain, "inactivityLimit", State.DEFAULT_INACTIVITY_LIMIT);
         Main.messageManager.log("Sleep state for [" + world.getName() + "] Inactivity Limit (seconds): " + inactivityLimit, MessageLevel.CONFIG);
         
-        int safeRadius = this.loadInt(worldSpecific, pluginMain, "safeRadius", State.DEFAULT_SAFE_RADIUS);
-        Main.messageManager.log("Sleep state for [" + world.getName() + "] Safe Radius (blocks): " + safeRadius, MessageLevel.CONFIG);
-        
         Set<String> ignoredAlways = new HashSet<String>(this.loadStringList(worldSpecific, pluginMain, "ignoredAlways", null));
         ignoredAlways.addAll(this.loadStringList(worldSpecific, pluginMain, "ignoredAlwaysAlso", null));
         Main.messageManager.log("Sleep state for [" + world.getName() + "] Always Ignored Players (Configuration File): " + ignoredAlways, MessageLevel.CONFIG);
@@ -153,7 +154,7 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
         Main.messageManager.log("Sleep state for [" + world.getName() + "] Monitored Activity: " + monitoredActivity.toString(), MessageLevel.CONFIG);
         
         // Register the world's sleep state as being tracked.
-        new State(world, inactivityLimit, safeRadius, ignoredAlways, forceCount, forcePercent
+        new State(world, inactivityLimit, ignoredAlways, forceCount, forcePercent
                 , messageEnterBed, messageMaxFrequency, messageTimestamp, monitoredActivity
         );
     }

@@ -1,4 +1,4 @@
-package edgruberman.bukkit.sleep;
+package edgruberman.bukkit.sleep.activity;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -10,15 +10,17 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 
 import edgruberman.bukkit.messagemanager.MessageLevel;
+import edgruberman.bukkit.sleep.Main;
+import edgruberman.bukkit.sleep.State;
 
-public class ActivityManager {
+public final class ActivityManager {
     
-    static Set<ActivityMonitor> monitors = new HashSet<ActivityMonitor>();
+    public static Set<ActivityMonitor> monitors = new HashSet<ActivityMonitor>();
     
     private static Plugin plugin;
     private static Set<Event.Type> registered = new HashSet<Event.Type>();
     
-    ActivityManager(final Plugin plugin) {
+    public ActivityManager(final Plugin plugin) {
         ActivityManager.plugin = plugin;
         ActivityManager.monitors.add(new BlockActivity());
         ActivityManager.monitors.add(new EntityActivity());
@@ -55,6 +57,13 @@ public class ActivityManager {
         }
     }
     
+    public static boolean isSupported(Event.Type type) {
+        for (ActivityMonitor monitor : ActivityManager.monitors)
+            if (monitor.supports().contains(type)) return true;
+        
+        return false;
+    }
+    
     /**
      * Update activity for player with associated world sleep state.
      * (This could be called on high frequency events such as PLAYER_MOVE.)
@@ -64,15 +73,9 @@ public class ActivityManager {
      */
     static void updateActivity(final Player player, final Event.Type type) {
         // Ignore for untracked world sleep states.
-        if (!State.tracked.containsKey(player.getWorld())) return;
+        State state = State.tracked.get(player.getWorld());
+        if (state == null) return;
         
-        State.tracked.get(player.getWorld()).updateActivity(player, type);
-    }
-    
-    static boolean isSupported(Event.Type type) {
-        for (ActivityMonitor monitor : ActivityManager.monitors)
-            if (monitor.supports().contains(type)) return true;
-        
-        return false;
+        state.updateActivity(player, type);
     }
 }
