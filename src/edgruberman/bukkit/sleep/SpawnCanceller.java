@@ -9,14 +9,18 @@ import org.bukkit.plugin.Plugin;
 
 import edgruberman.bukkit.messagemanager.MessageLevel;
 
+/**
+ * During a sleep cycle, hostile mobs are spawned if the AI can find a path
+ * from a dark enough area to let the creature spawn to within close enough
+ * to attack the player. When players are set to ignore sleep, they are not
+ * exempted from these checks.  This class manages the cancellation of such
+ * spawns. 
+ */
 final class SpawnCanceller extends org.bukkit.event.entity.EntityListener {
     
     /**
-     * During a sleep cycle, hostile mobs are spawned if the AI can find a path
-     * from a dark enough area to let the creature spawn to within close enough
-     * to attack the player. When players are set to ignore sleep, they are not
-     * exempted from these checks.  This priority sets the default priority at
-     * which such spawns targeting players ignoring sleep are cancelled.
+     * Default priority at which spawns targeting players ignoring sleep are
+     * cancelled.
      */
     static final Event.Priority DEFAULT_CREATURE_SPAWN = Priority.Normal;
     

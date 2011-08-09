@@ -83,7 +83,7 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
     }
     
     /**
-     * Load plugin's configuration file and start tracking sleep states.
+     * Load plugin's configuration file and reset sleep states for each world.
      */
     public void loadConfiguration() {
         Main.configurationFile.load();
@@ -156,6 +156,14 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
         }
     }
     
+    /**
+     * Load notification settings from configuration file.
+     * 
+     * @param type notification type to load
+     * @param override settings preferred over main
+     * @param main base settings
+     * @return notification defined according to configuration
+     */
     private static Notification loadNotification(final Notification.Type type, final Configuration override, final Configuration main) {
         String format = Main.loadString(override, main, "notifications." + type.name() + ".format", Notification.DEFAULT_FORMAT);
         if (format == null || format.length() == 0) return null;
@@ -166,18 +174,54 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
         return new Notification(type, format, maxFrequency, isTimestamped);
     }
     
+    /**
+     * Load integer from configuration file.
+     * 
+     * @param override settings preferred over main
+     * @param main base settings
+     * @param path node path in configuration value exists at
+     * @param codeDefault value to use if neither main nor override exist
+     * @return value read from configuration
+     */
     private static int loadInt(final Configuration override, final Configuration main, final String path, final int codeDefault) {
         return override.getInt(path, main.getInt(path, codeDefault));
     }
     
+    /**
+     * Load list of strings from configuration file.
+     * 
+     * @param override settings preferred over main
+     * @param main base settings
+     * @param path node path in configuration value exists at
+     * @param codeDefault value to use if neither main nor override exist
+     * @return value read from configuration
+     */
     private static List<String> loadStringList(final Configuration override, final Configuration main, final String path, final List<String> codeDefault) {
         return override.getStringList(path, main.getStringList(path, codeDefault));
     }
     
+    /**
+     * Load string from configuration file.
+     * 
+     * @param override settings preferred over main
+     * @param main base settings
+     * @param path node path in configuration value exists at
+     * @param codeDefault value to use if neither main nor override exist
+     * @return value read from configuration
+     */
     private static String loadString(final Configuration override, final Configuration main, final String path, final String codeDefault) {
         return override.getString(path, main.getString(path, codeDefault));
     }
     
+    /**
+     * Load boolean from configuration file.
+     * 
+     * @param override settings preferred over main
+     * @param main base settings
+     * @param path node path in configuration value exists at
+     * @param codeDefault value to use if neither main nor override exist
+     * @return value read from configuration
+     */
     private static boolean loadBoolean(final Configuration override, final Configuration main, final String path, final boolean codeDefault) {
         return override.getBoolean(path, main.getBoolean(path, codeDefault));
     }

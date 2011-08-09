@@ -95,14 +95,29 @@ public class State {
         State.tracked.put(world, this);
     }
     
+    /**
+     * Associate event message for this state.
+     * 
+     * @param notification message and settings to associate
+     */
     void addNotification(final Notification notification) {
         this.notifications.put(notification.type, notification);
     }
     
+    /**
+     * Process a player joining this world.
+     * 
+     * @param joiner player that joined this world
+     */
     void joinWorld(final Player joiner) {
         this.updateActivity(joiner, Event.Type.PLAYER_JOIN);
     }
     
+    /**
+     * Process a player entering a bed.
+     * 
+     * @param enterer player that entered bed
+     */
     void enterBed(final Player enterer) {
         this.inBed.add(enterer);
         this.ignoreSleep(enterer, false, "Entered Bed");
@@ -117,31 +132,53 @@ public class State {
         this.lull();
     }
     
+    /**
+     * Process a player awoken during sleep due to a close mob spawn.
+     * 
+     * @param victim target of mob
+     */
     void nightmare(final Player victim) {
         this.inBed.remove(victim);
         this.nightmares.add(victim);
         this.notify(Notification.Type.NIGHTMARE, victim, victim.getDisplayName(), this.needForSleep());
     }
     
-    void leaveBed(final Player exiter) {
-        this.inBed.remove(exiter);
+    /**
+     * Process a player leaving a bed.
+     * 
+     * @param leaver player who left bed
+     */
+    void leaveBed(final Player leaver) {
+        this.inBed.remove(leaver);
         
-        if (!this.isNight() && !this.nightmares.contains(exiter)) {
+        if (!this.isNight() && !this.nightmares.contains(leaver)) {
             // Avoid leave bed messages if entire world has finished sleeping and this is a normal awakening.
             // Also do not show leave bed message if nightmare message already displayed.
-            this.notify(Notification.Type.LEAVE_BED, exiter, exiter.getDisplayName(), this.needForSleep());
+            this.notify(Notification.Type.LEAVE_BED, leaver, leaver.getDisplayName(), this.needForSleep());
         }
         
-        this.nightmares.remove(exiter);
+        this.nightmares.remove(leaver);
         if (this.inBed.size() == 0) this.awaken();
     }
     
+    /**
+     * Process a player leaving this world.
+     * 
+     * @param leaver
+     */
     void leaveWorld(final Player leaver) {
         this.removeActivity(leaver);
         for (Notification notification : this.notifications.values())
             notification.lastGenerated.remove(leaver);
     }
     
+    /**
+     * Generate a notification for an event if it is defined.
+     * 
+     * @param type type to generate
+     * @param player player associated with event
+     * @param args parameters to substitute in message
+     */
     private void notify(final Notification.Type type, final Player player, final Object... args) {
         Notification notification = this.notifications.get(type);
         if (notification == null) return;
@@ -239,10 +276,21 @@ public class State {
             this.forceSleep();
     }
     
+    /**
+     * Manually force world to sleep with possible nightmares as normal.
+     * 
+     * @param requester player manually forcing sleep
+     */
     public void forceSleep(final Player requester) {
         this.forceSleep(requester, false);
     }
     
+    /**
+     * Manually force sleep for all players.
+     * 
+     * @param requester player manually forcing sleep
+     * @param isSafe true to avoid nightmares; false to let sleep process normally
+     */
     public void forceSleep(final Player requester, final boolean isSafe) {
         if (requester != null)
             this.notify(Notification.Type.FORCE_SLEEP, requester, requester.getDisplayName());
@@ -336,6 +384,11 @@ public class State {
         player.setSleepingIgnored(ignore);
     }
     
+    /**
+     * Determine if world time will let a player get in to bed.
+     * 
+     * @return true if time allows bed usage; otherwise false
+     */
     private boolean isNight() {
         long now = this.world.getTime();
         
@@ -344,6 +397,13 @@ public class State {
         return false;
     }
     
+    /**
+     * Determine if player has permission to automatically force sleep when
+     * using a bed.
+     * 
+     * @param player player to determine if has permission
+     * @return true if player has permission; otherwise false
+     */
     private boolean isAutoForcer(final Player player) {
         return player.hasPermission(Main.PERMISSION_PREFIX + ".force")
             || player.hasPermission(Main.PERMISSION_PREFIX + ".force." + player.getWorld().getName());

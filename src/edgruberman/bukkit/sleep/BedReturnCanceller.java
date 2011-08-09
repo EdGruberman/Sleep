@@ -14,13 +14,16 @@ import org.bukkit.plugin.PluginManager;
 
 import edgruberman.bukkit.messagemanager.MessageLevel;
 
+/**
+ * When a sleep cycle completes, players ignoring sleep are still returned
+ * to their last bed location. This plugin cancels that teleport event for
+ * such circumstances.
+ */
 final class BedReturnCanceller extends org.bukkit.event.player.PlayerListener {
     
     /**
-     * When a sleep cycle completes, players ignoring sleep are still returned
-     * to their last bed location. This plugin cancels that teleport event for
-     * such circumstances and this variable establishes what priority that
-     * cancellation occurs at by default.
+     * Default priority at which bed return teleports for players ignoring
+     * sleep are cancelled.
      */
     static final Event.Priority DEFAULT_PLAYER_TELEPORT = Priority.Normal;
     

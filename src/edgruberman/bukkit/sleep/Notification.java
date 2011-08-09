@@ -7,6 +7,9 @@ import org.bukkit.entity.Player;
 
 import edgruberman.bukkit.messagemanager.MessageLevel;
 
+/**
+ * Represents a message to display for an event.
+ */
 public final class Notification {
     
     /**
@@ -40,6 +43,12 @@ public final class Notification {
         this.isTimestamped = isTimestamped;
     }
     
+    /**
+     * Send message regarding this notification to player's world.
+     * 
+     * @param player player related to event
+     * @param args parameters to substitute in message
+     */
     void generate(final Player player, final Object... args) {
         if (!this.isAllowed(player)) return;
         
@@ -54,16 +63,30 @@ public final class Notification {
         Main.messageManager.send(player.getWorld(), message, MessageLevel.EVENT, this.isTimestamped);
     }
     
+    /**
+     * Describe this notification's settings. 
+     * 
+     * @return text describing settings
+     */
     String description() {
         return this.type.name() + " Notification: " + this.format
             + "; Frequency: " + this.maxFrequency + "; Timestamp: " + this.isTimestamped + ")";
     }
     
+    /**
+     * Determines if player has permission to generate this notification.
+     * 
+     * @param player player to determine if allowed
+     * @return true if player is allowed; otherwise false
+     */
     private boolean isAllowed(final Player player) {
         return player.hasPermission(Main.PERMISSION_PREFIX + ".notify." + this.type.name())
             || player.hasPermission(Main.PERMISSION_PREFIX + ".notify." + this.type.name() + "." + player.getWorld().getName());
     }
     
+    /**
+     * Recognized events that can generate notifications.
+     */
     public enum Type {
         ENTER_BED, LEAVE_BED, NIGHTMARE, FORCE_SLEEP
     }

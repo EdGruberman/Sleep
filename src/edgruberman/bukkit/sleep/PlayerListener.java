@@ -11,6 +11,9 @@ import org.bukkit.plugin.PluginManager;
 
 import edgruberman.bukkit.messagemanager.MessageLevel;
 
+/**
+ * Manages player associations in each world's sleep state.
+ */
 final class PlayerListener extends org.bukkit.event.player.PlayerListener {
     
     PlayerListener(final Plugin plugin) {

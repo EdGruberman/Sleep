@@ -6,6 +6,9 @@ import org.bukkit.event.world.WorldUnloadEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 
+/**
+ * Monitor for worlds to be tracked/untracked for sleep state.
+ */
 final class WorldListener extends org.bukkit.event.world.WorldListener {
     
     WorldListener(Plugin plugin) {
