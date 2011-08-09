@@ -26,7 +26,7 @@ final class BedReturnCanceller extends org.bukkit.event.player.PlayerListener {
     
     private final Set<Player> cancel = new HashSet<Player>();
     
-    public BedReturnCanceller(final Plugin plugin, final Event.Priority priorityPlayerTeleport) {
+    BedReturnCanceller(final Plugin plugin, final Event.Priority priorityPlayerTeleport) {
         PluginManager pm = plugin.getServer().getPluginManager();
         
         Event.Priority priority = priorityPlayerTeleport;

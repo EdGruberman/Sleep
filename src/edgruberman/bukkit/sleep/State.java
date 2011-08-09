@@ -1,7 +1,5 @@
 package edgruberman.bukkit.sleep;
 
-import java.util.Calendar;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -41,32 +39,28 @@ public class State {
     static final int DEFAULT_FORCE_PERCENT = -1;
     
     /**
-     * Message to broadcast to world when a player enters a bed. Format
-     * identifiers: %1$s = player display name; %2$d = how many more players
-     * needed in bed to cause a sleep cycle to commence (null or empty string
-     * will cause no message to appear.)
-     */
-    static final String DEFAULT_MESSAGE_ENTER_BED = null;
-    
-    /**
-     * Maximum frequency in seconds a message can be broadcast to a world per
-     * player. (-1 will remove any restrictions on message frequency.)
-     */
-    static final int DEFAULT_MESSAGE_MAX_FREQUENCY = -1;
-    
-    /**
-     * Indicates if messages should have a timestamp included when broadcast.
-     */
-    static final boolean DEFAULT_MESSAGE_TIMESTAMP = false;
-    
-    /**
-     * Maximum distance (blocks/meters) squared from a sleeping player a monster will
-     * attempt to spawn as a result of a sleep cycle.
+     * Maximum distance (blocks/meters) squared from a sleeping player a
+     * monster will attempt to spawn as a result of a sleep cycle. (Derived
+     * from original Minecraft code.)
      */
     private static final double SLEEP_SPAWN_MAXIMUM_DISTANCE_SQUARED = Math.pow(1.5, 2) + Math.pow(1.5, 2) + Math.pow(1.5, 2);
     
+    /**
+     * First world relative time (hours * 1000) associated with ability to
+     * enter bed. (Derived empirically.)
+     */
+    private static final long TIME_NIGHT_START = 12540;
+    
+    /**
+     * First world relative time (hours * 1000) associated with inability to
+     * enter bed. (Derived empirically.)
+     */
+    private static final long TIME_NIGHT_END = 23455;
+    
     // Factory/Manager
     public static Map<World, State> tracked = new HashMap<World, State>();
+    static World defaultNether;
+    static Set<String> excluded = new HashSet<String>();
     
     // Configuration
     private World world;
@@ -74,34 +68,35 @@ public class State {
     private Set<String> ignoredAlways;
     private int forceCount;
     private int forcePercent;
-    private String messageEnterBed;
-    private int messageMaxFrequency;
-    private boolean messageTimestamp;
     public Set<Event.Type> monitoredActivity;
+    private Map<Notification.Type, Notification> notifications = new HashMap<Notification.Type, Notification>();
     
-    // Current Status
-    private Map<Player, Calendar> lastActivity = new HashMap<Player, Calendar>();
-    private Map<Player, Calendar> lastMessage = new HashMap<Player, Calendar>();
+    // Status
+    private Map<Player, Long> activity = new HashMap<Player, Long>();
     public Set<Player> inBed = new HashSet<Player>();
+    Set<Player> nightmares = new HashSet<Player>();
     private boolean forcingSleep = false;
     
     State(final World world, final int inactivityLimit, final Set<String> ignoredAlways
-            , final int forceCount, final int forcePercent, final String messageEnterBed, final int messageMaxFrequency
-            , final boolean messageTimestamp, final Set<Event.Type> monitoredActivity) {
+            , final int forceCount, final int forcePercent, final Set<Event.Type> monitoredActivity) {
         if (world == null)
             throw new IllegalArgumentException("world can't be null");
+        
+        if (State.excluded.contains(world))
+            throw new IllegalArgumentException("excluded world");
         
         this.world = world;
         this.inactivityLimit = inactivityLimit;
         this.ignoredAlways = (ignoredAlways != null ? ignoredAlways : new HashSet<String>());
         this.forceCount = forceCount;
         this.forcePercent = forcePercent;
-        this.messageEnterBed = messageEnterBed;
-        this.messageMaxFrequency = messageMaxFrequency;
-        this.messageTimestamp = messageTimestamp;
         this.monitoredActivity = (monitoredActivity != null ? monitoredActivity : new HashSet<Event.Type>());
         
         State.tracked.put(world, this);
+    }
+    
+    void addNotification(final Notification notification) {
+        this.notifications.put(notification.type, notification);
     }
     
     void joinWorld(final Player joiner) {
@@ -111,17 +106,47 @@ public class State {
     void enterBed(final Player enterer) {
         this.inBed.add(enterer);
         this.ignoreSleep(enterer, false, "Entered Bed");
-        this.broadcastEnter(enterer);
+        
+        if (this.isAutoForcer(enterer)) {
+            this.notify(Notification.Type.FORCE_SLEEP, enterer, enterer.getDisplayName());
+            this.forceSleep();
+            return;
+        }
+        
+        this.notify(Notification.Type.ENTER_BED, enterer, enterer.getDisplayName(), this.needForSleep());
         this.lull();
+    }
+    
+    void nightmare(final Player victim) {
+        this.inBed.remove(victim);
+        this.nightmares.add(victim);
+        this.notify(Notification.Type.NIGHTMARE, victim, victim.getDisplayName(), this.needForSleep());
     }
     
     void leaveBed(final Player exiter) {
         this.inBed.remove(exiter);
+        
+        if (!this.isNight() && !this.nightmares.contains(exiter)) {
+            // Avoid leave bed messages if entire world has finished sleeping and this is a normal awakening.
+            // Also do not show leave bed message if nightmare message already displayed.
+            this.notify(Notification.Type.LEAVE_BED, exiter, exiter.getDisplayName(), this.needForSleep());
+        }
+        
+        this.nightmares.remove(exiter);
         if (this.inBed.size() == 0) this.awaken();
     }
     
     void leaveWorld(final Player leaver) {
         this.removeActivity(leaver);
+        for (Notification notification : this.notifications.values())
+            notification.lastGenerated.remove(leaver);
+    }
+    
+    private void notify(final Notification.Type type, final Player player, final Object... args) {
+        Notification notification = this.notifications.get(type);
+        if (notification == null) return;
+        
+        notification.generate(player, args);
     }
     
     /**
@@ -136,13 +161,13 @@ public class State {
         // Only record monitored activity.
         if (!this.monitoredActivity.contains(type)) return;
         
-        this.lastActivity.put(player, new GregorianCalendar());
+        this.activity.put(player, System.currentTimeMillis());
         
         // Activity should not remove ignore status if not currently ignoring. 
         if (!player.isSleepingIgnored()) return;
         
         // Activity should not remove ignore status for players in the default nether.
-        if (player.getWorld().equals(Main.defaultNether)) return;
+        if (player.getWorld().equals(State.defaultNether)) return;
         
         // Activity should not remove ignore status when forcing sleep.
         if (this.forcingSleep) return;
@@ -161,7 +186,7 @@ public class State {
      * @param player Player to be removed from monitoring.
      */
     private void removeActivity(final Player player) {
-        this.lastActivity.remove(player);
+        this.activity.remove(player);
     }
     
     /**
@@ -192,8 +217,8 @@ public class State {
      */
     public void lull() {
         // Ignore players in default nether world.
-        if (Main.defaultNether != null)
-            for (Player player : Main.defaultNether.getPlayers())
+        if (State.defaultNether != null)
+            for (Player player : State.defaultNether.getPlayers())
                 this.ignoreSleep(player, true, "Default Nether");
         
         // Configure always ignored players to ignore sleep.
@@ -214,11 +239,28 @@ public class State {
             this.forceSleep();
     }
     
+    public void forceSleep(final Player requester) {
+        this.forceSleep(requester, false);
+    }
+    
+    public void forceSleep(final Player requester, final boolean isSafe) {
+        if (requester != null)
+            this.notify(Notification.Type.FORCE_SLEEP, requester, requester.getDisplayName());
+        
+        if (isSafe) {
+            // Avoid nightmares by simply forcing time to next morning.
+            this.world.setTime(0);
+            return;
+        }
+        
+        this.forceSleep();
+    }
+    
     /**
      * Set sleeping ignored for players not already in bed, or entering
      * bed, or ignoring sleep.
      */
-    public void forceSleep() {
+    private void forceSleep() {
         for (Player player : world.getPlayers())
             this.ignoreSleep(player, true, "Forcing Sleep");
         
@@ -236,7 +278,7 @@ public class State {
         for (Player player : this.world.getPlayers())
             this.ignoreSleep(player, false, "Awakening World");
         
-        for (Player player : Main.defaultNether.getPlayers())
+        for (Player player : State.defaultNether.getPlayers())
             this.ignoreSleep(player, false, "Awakening Default Nether");
     }
     
@@ -271,27 +313,6 @@ public class State {
     }
     
     /**
-     * Broadcast a message to this world that a player has entered bed, if
-     * configured.
-     * 
-     * @param enterer player that entered bed
-     */
-    private void broadcastEnter(final Player enterer) {
-        if (this.messageEnterBed == null || this.messageEnterBed.length() == 0) return;
-        
-        if (this.lastMessage.containsKey(enterer)) {
-            Calendar latest = new GregorianCalendar();
-            latest.add(Calendar.SECOND, -this.messageMaxFrequency);
-            
-            if (this.lastMessage.get(enterer).after(latest)) return;
-        }
-
-        this.lastMessage.put(enterer, new GregorianCalendar());
-        String formatted = String.format(this.messageEnterBed, enterer.getDisplayName(), this.needForSleep());
-        Main.messageManager.send(this.world, formatted, MessageLevel.EVENT, this.messageTimestamp);
-    }
-    
-    /**
      * Set a player to temporarily ignore sleep status checks.
      * 
      * @param player player to set sleeping ignored status on
@@ -313,6 +334,19 @@ public class State {
                 , MessageLevel.FINE
         );
         player.setSleepingIgnored(ignore);
+    }
+    
+    private boolean isNight() {
+        long now = this.world.getTime();
+        
+        if ((State.TIME_NIGHT_START >= now) && (now < State.TIME_NIGHT_END)) return true;
+        
+        return false;
+    }
+    
+    private boolean isAutoForcer(final Player player) {
+        return player.hasPermission(Main.PERMISSION_PREFIX + ".force")
+            || player.hasPermission(Main.PERMISSION_PREFIX + ".force." + player.getWorld().getName());
     }
     
     /**
@@ -413,7 +447,7 @@ public class State {
      * 
      * @return players that are considered inactive
      */
-    private Set<Player> inactive() {
+    public Set<Player> inactive() {
         Set<Player> inactive = new HashSet<Player>();
         
         for (Player player : this.world.getPlayers())
@@ -432,12 +466,11 @@ public class State {
     public boolean isActive(Player player) {
         if (this.inactivityLimit <= -1) return true;
         
-        if (!this.lastActivity.containsKey(player)) return false;
+        Long last = this.activity.get(player);
+        if (last == null) return false;
         
-        Calendar oldestActive = new GregorianCalendar();
-        oldestActive.add(Calendar.SECOND, -this.inactivityLimit);
-        if (this.lastActivity.get(player).before(oldestActive))
-            return false;
+        long oldestActive = System.currentTimeMillis() - (this.inactivityLimit * 1000);
+        if (last < oldestActive) return false;
         
         return true;
     }

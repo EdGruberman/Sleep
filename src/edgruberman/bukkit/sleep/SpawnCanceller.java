@@ -9,7 +9,7 @@ import org.bukkit.plugin.Plugin;
 
 import edgruberman.bukkit.messagemanager.MessageLevel;
 
-final class EntityListener extends org.bukkit.event.entity.EntityListener {
+final class SpawnCanceller extends org.bukkit.event.entity.EntityListener {
     
     /**
      * During a sleep cycle, hostile mobs are spawned if the AI can find a path
@@ -20,9 +20,9 @@ final class EntityListener extends org.bukkit.event.entity.EntityListener {
      */
     static final Event.Priority DEFAULT_CREATURE_SPAWN = Priority.Normal;
     
-    public EntityListener(final Plugin plugin, final Event.Priority priorityCreatureSpawn) {
+    SpawnCanceller(final Plugin plugin, final Event.Priority priorityCreatureSpawn) {
         plugin.getServer().getPluginManager().registerEvent(Event.Type.CREATURE_SPAWN, this
-                , (priorityCreatureSpawn != null ? priorityCreatureSpawn : EntityListener.DEFAULT_CREATURE_SPAWN), plugin);
+                , (priorityCreatureSpawn != null ? priorityCreatureSpawn : SpawnCanceller.DEFAULT_CREATURE_SPAWN), plugin);
     }
     
     @Override
@@ -36,17 +36,22 @@ final class EntityListener extends org.bukkit.event.entity.EntityListener {
         State state = State.tracked.get(event.getLocation().getWorld());
         if (state == null) return;
         
-        // Allow for players not ignoring sleep.
         Player target = state.findSleepSpawnTarget(event.getLocation());
-        if (!target.isSleepingIgnored()) return;
+        if (!target.isSleepingIgnored()) {
+            state.nightmare(target);
+            
+            // Allow for players not ignoring sleep.
+            return;
+        }
         
         Main.messageManager.log(
-                "Cancelling ignored sleep spawn of " + event.getCreatureType()
-                    + " in [" + event.getLocation().getWorld().getName() + "] "
-                    + " targeting " + target.getName() + " at"
+                "Cancelling ignored sleep spawn"
+                    + " in [" + event.getLocation().getWorld().getName() + "]"
+                    + " of " + event.getCreatureType() + " at"
                     + " x: " + event.getLocation().getBlockX()
                     + " y: " + event.getLocation().getBlockY()
                     + " z: " + event.getLocation().getBlockZ()
+                    + " targeting " + target.getName()
                 , MessageLevel.FINER
         );
         event.setCancelled(true);

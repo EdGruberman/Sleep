@@ -28,17 +28,18 @@ class SleepForce extends Action {
             return;
         }
         
+        Player player = null;
+        if (context.sender instanceof Player)
+            player = (Player) context.sender;
+        
         if (this.isSafe(context)) {
             if (!context.sender.hasPermission(Main.PERMISSION_PREFIX + "." + this.command.command.getLabel() + "." + this.name + ".safe")) {
                 Main.messageManager.respond(context.sender, "You are not allowed to use the safe operation of the " + this.name + " action on the " + this.command.command.getLabel() + " command.", MessageLevel.RIGHTS, false);
                 return;
             }
             
-            Main.messageManager.respond(context.sender, "Forced safe sleep in [" + world.getName() + "]", MessageLevel.STATUS, false);
-            
-            // Force world time to next morning to avoid nightmares if safe is requested.
-            world.setTime(0);
-            
+            Main.messageManager.respond(context.sender, "Forcing safe sleep in [" + world.getName() + "]", MessageLevel.STATUS, false);
+            state.forceSleep(player, true);
             return;
         }
         
@@ -47,8 +48,8 @@ class SleepForce extends Action {
             return;
         }
         
-        Main.messageManager.respond(context.sender, "Forced sleep in [" + world.getName() + "]...", MessageLevel.STATUS, false);
-        state.forceSleep();
+        Main.messageManager.respond(context.sender, "Forcing sleep in [" + world.getName() + "]...", MessageLevel.STATUS, false);
+        state.forceSleep(player);
     }
     
     private World parseWorld(final Context context) {

@@ -13,7 +13,7 @@ import edgruberman.bukkit.messagemanager.MessageLevel;
 
 final class PlayerListener extends org.bukkit.event.player.PlayerListener {
     
-    public PlayerListener(final Plugin plugin) {
+    PlayerListener(final Plugin plugin) {
         PluginManager pm = plugin.getServer().getPluginManager();
 
         pm.registerEvent(Event.Type.PLAYER_JOIN     , this, Event.Priority.Monitor, plugin);
@@ -47,14 +47,23 @@ final class PlayerListener extends org.bukkit.event.player.PlayerListener {
     }
     
     @Override
+    public void onPlayerQuit(final PlayerQuitEvent event) {
+        // Ignore for untracked world sleep states.
+        State state = State.tracked.get(event.getPlayer().getWorld());
+        if (state == null) return;
+        
+        state.leaveWorld(event.getPlayer());
+    }
+    
+    @Override
     public void onPlayerBedEnter(final PlayerBedEnterEvent event) {
         if (event.isCancelled()) return;
         
         // Ignore for untracked world sleep states.
-        if (!State.tracked.containsKey(event.getPlayer().getWorld())) return;
+        State state = State.tracked.get(event.getPlayer().getWorld());
+        if (state == null) return;
         
         Main.messageManager.log(event.getPlayer().getName() + " entered bed in [" + event.getPlayer().getWorld().getName() + "]", MessageLevel.FINE);
-        State state = State.tracked.get(event.getPlayer().getWorld());
         state.enterBed(event.getPlayer());
     }
     
@@ -71,11 +80,5 @@ final class PlayerListener extends org.bukkit.event.player.PlayerListener {
         // Otherwise this is assumed to be a "real" action.
         Main.messageManager.log(event.getPlayer().getName() + " left bed in [" + event.getPlayer().getWorld().getName() + "]", MessageLevel.FINE);
         state.leaveBed(event.getPlayer());
-    }
-    
-    @Override
-    public void onPlayerQuit(final PlayerQuitEvent event) {
-        State state = State.tracked.get(event.getPlayer().getWorld());
-        if (state != null) state.leaveWorld(event.getPlayer());
     }
 }

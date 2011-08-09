@@ -7,6 +7,7 @@ import java.util.Set;
 import org.bukkit.World;
 import org.bukkit.World.Environment;
 import org.bukkit.event.Event;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.util.config.Configuration;
 
 import edgruberman.bukkit.messagemanager.MessageLevel;
@@ -29,16 +30,16 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
 
     public static MessageManager messageManager;
     
-    static ConfigurationFile configurationFile;
-    static World defaultNether;
-    
-    Set<String> excluded = new HashSet<String>();
+    private static ConfigurationFile configurationFile;
+    private static Plugin plugin;
     
     public void onLoad() {
         Main.messageManager = new MessageManager(this);
         Main.messageManager.log("Version " + this.getDescription().getVersion());
         
         Main.configurationFile = new ConfigurationFile(this);
+        
+        Main.plugin = this;
     }
     
     public void onEnable() {
@@ -55,9 +56,9 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
         new WorldListener(this);
         
         // Cancel unsafe creature spawns for players ignoring sleep.
-        Event.Priority priorityCreatureSpawn = Event.Priority.valueOf(Main.configurationFile.getConfiguration().getString("event.CREATURE_SPAWN.priority", EntityListener.DEFAULT_CREATURE_SPAWN.name()));
+        Event.Priority priorityCreatureSpawn = Event.Priority.valueOf(Main.configurationFile.getConfiguration().getString("event.CREATURE_SPAWN.priority", SpawnCanceller.DEFAULT_CREATURE_SPAWN.name()));
         Main.messageManager.log("Ignored Sleep Spawn Cancellation Priority: " + priorityCreatureSpawn, MessageLevel.CONFIG);
-        new EntityListener(this, priorityCreatureSpawn);
+        new SpawnCanceller(this, priorityCreatureSpawn);
         
         // Cancel bed returns for players ignoring sleep.
         Event.Priority priorityPlayerTeleport = Event.Priority.valueOf(Main.configurationFile.getConfiguration().getString("event.PLAYER_TELEPORT.priority", BedReturnCanceller.DEFAULT_PLAYER_TELEPORT.name()));
@@ -76,7 +77,7 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
     public void onDisable() {
         ActivityManager.monitors.clear();
         State.tracked.clear();
-        Main.defaultNether = null;
+        State.defaultNether = null;
         
         Main.messageManager.log("Plugin Disabled");
     }
@@ -87,17 +88,17 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
     public void loadConfiguration() {
         Main.configurationFile.load();
         
-        Main.defaultNether = this.findDefaultNether();
-        Main.messageManager.log("Default Nether: " + (Main.defaultNether != null ? Main.defaultNether.getName() : "<Not found>"), MessageLevel.CONFIG);
+        State.defaultNether = this.findDefaultNether();
+        Main.messageManager.log("Default Nether: " + (State.defaultNether != null ? State.defaultNether.getName() : "<Not found>"), MessageLevel.CONFIG);
         
-        this.excluded.clear();
-        this.excluded.addAll(Main.configurationFile.getConfiguration().getStringList("excluded", null));
-        Main.messageManager.log("Excluded Worlds: " + excluded, MessageLevel.CONFIG);
+        State.excluded.clear();
+        State.excluded.addAll(Main.configurationFile.getConfiguration().getStringList("excluded", null));
+        Main.messageManager.log("Excluded Worlds: " + State.excluded, MessageLevel.CONFIG);
 
         // Track sleep state for each loaded world.
         State.tracked.clear();
         for (int i = 0; i < this.getServer().getWorlds().size(); i += 1)
-            this.trackState(this.getServer().getWorlds().get(i));
+            Main.loadState(this.getServer().getWorlds().get(i));
     }
     
     /**
@@ -106,9 +107,9 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
      * 
      * @param world world to track sleep state for
      */
-    public void trackState(World world) {
+    static void loadState(final World world) {
         // Cancel this function for explicitly excluded worlds and the default nether.
-        if (this.excluded.contains(world.getName()) || world.equals(Main.defaultNether)) {
+        if (State.excluded.contains(world.getName()) || world.equals(State.defaultNether)) {
             Main.messageManager.log("Sleep state for [" + world.getName() + "] will not be tracked.", MessageLevel.CONFIG);
             return;
         }
@@ -119,33 +120,24 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
         // Load configuration values using defaults defined in code, overridden
         // by defaults in the configuration file, overridden by world specific
         // settings in the Worlds folder.
-        Configuration pluginMain = this.getConfiguration();
-        Configuration worldSpecific = (new ConfigurationFile(this, WORLD_SPECIFICS + "/" + world.getName() + ".yml")).getConfiguration();
+        Configuration pluginMain = Main.configurationFile.getConfiguration();
+        Configuration worldSpecific = (new ConfigurationFile(Main.plugin, WORLD_SPECIFICS + "/" + world.getName() + ".yml")).getConfiguration();
         
-        int inactivityLimit = this.loadInt(worldSpecific, pluginMain, "inactivityLimit", State.DEFAULT_INACTIVITY_LIMIT);
+        int inactivityLimit = Main.loadInt(worldSpecific, pluginMain, "inactivityLimit", State.DEFAULT_INACTIVITY_LIMIT);
         Main.messageManager.log("Sleep state for [" + world.getName() + "] Inactivity Limit (seconds): " + inactivityLimit, MessageLevel.CONFIG);
         
-        Set<String> ignoredAlways = new HashSet<String>(this.loadStringList(worldSpecific, pluginMain, "ignoredAlways", null));
-        ignoredAlways.addAll(this.loadStringList(worldSpecific, pluginMain, "ignoredAlwaysAlso", null));
+        Set<String> ignoredAlways = new HashSet<String>(Main.loadStringList(worldSpecific, pluginMain, "ignoredAlways", null));
+        ignoredAlways.addAll(Main.loadStringList(worldSpecific, pluginMain, "ignoredAlwaysAlso", null));
         Main.messageManager.log("Sleep state for [" + world.getName() + "] Always Ignored Players (Configuration File): " + ignoredAlways, MessageLevel.CONFIG);
         
-        int forceCount = this.loadInt(worldSpecific, pluginMain, "force.count", State.DEFAULT_FORCE_COUNT);
+        int forceCount = Main.loadInt(worldSpecific, pluginMain, "force.count", State.DEFAULT_FORCE_COUNT);
         Main.messageManager.log("Sleep state for [" + world.getName() + "] Forced Sleep Minimum Count: " + forceCount, MessageLevel.CONFIG);
         
-        int forcePercent = this.loadInt(worldSpecific, pluginMain, "force.percent", State.DEFAULT_FORCE_PERCENT); 
+        int forcePercent = Main.loadInt(worldSpecific, pluginMain, "force.percent", State.DEFAULT_FORCE_PERCENT); 
         Main.messageManager.log("Sleep state for [" + world.getName() + "] Forced Sleep Minimum Percent: " + forcePercent, MessageLevel.CONFIG);
         
-        String messageEnterBed = this.loadString(worldSpecific, pluginMain, "message.enterBed", State.DEFAULT_MESSAGE_ENTER_BED); 
-        Main.messageManager.log("Sleep state for [" + world.getName() + "] Enter Bed Message: " + messageEnterBed, MessageLevel.CONFIG);
-        
-        int messageMaxFrequency = this.loadInt(worldSpecific, pluginMain, "message.maxFrequency", State.DEFAULT_MESSAGE_MAX_FREQUENCY); 
-        Main.messageManager.log("Sleep state for [" + world.getName() + "] Maximum Message Frequency: " + messageMaxFrequency, MessageLevel.CONFIG);
-        
-        boolean messageTimestamp = this.loadBoolean(worldSpecific, pluginMain, "message.timestamp", State.DEFAULT_MESSAGE_TIMESTAMP); 
-        Main.messageManager.log("Sleep state for [" + world.getName() + "] Message Timestamp: " + messageTimestamp, MessageLevel.CONFIG);
-        
         Set<Event.Type> monitoredActivity = new HashSet<Event.Type>();
-        for (String type : this.loadStringList(worldSpecific, pluginMain, "activity", null))
+        for (String type : Main.loadStringList(worldSpecific, pluginMain, "activity", null))
             if (ActivityManager.isSupported(Event.Type.valueOf(type))) {
                 monitoredActivity.add(Event.Type.valueOf(type));
             } else {
@@ -153,25 +145,40 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
             }
         Main.messageManager.log("Sleep state for [" + world.getName() + "] Monitored Activity: " + monitoredActivity.toString(), MessageLevel.CONFIG);
         
-        // Register the world's sleep state as being tracked.
-        new State(world, inactivityLimit, ignoredAlways, forceCount, forcePercent
-                , messageEnterBed, messageMaxFrequency, messageTimestamp, monitoredActivity
-        );
+        State state = new State(world, inactivityLimit, ignoredAlways, forceCount, forcePercent, monitoredActivity);
+        
+        for (Notification.Type type : Notification.Type.values()) {
+            Notification notification = Main.loadNotification(type, worldSpecific, pluginMain);
+            if (notification != null) {
+                Main.messageManager.log("Sleep state for [" + world.getName() + "] " + notification.description(), MessageLevel.CONFIG);
+                state.addNotification(notification);
+            }
+        }
     }
     
-    private int loadInt(final Configuration override, final Configuration main, final String path, final int codeDefault) {
+    private static Notification loadNotification(final Notification.Type type, final Configuration override, final Configuration main) {
+        String format = Main.loadString(override, main, "notifications." + type.name() + ".format", Notification.DEFAULT_FORMAT);
+        if (format == null || format.length() == 0) return null;
+        
+        int maxFrequency = Main.loadInt(override, main, "notifications." + type.name() + ".maxFrequency", Notification.DEFAULT_MAX_FREQUENCY);
+        boolean isTimestamped = Main.loadBoolean(override, main, "notifications." + type.name() + ".timestamp", Notification.DEFAULT_TIMESTAMP);
+        
+        return new Notification(type, format, maxFrequency, isTimestamped);
+    }
+    
+    private static int loadInt(final Configuration override, final Configuration main, final String path, final int codeDefault) {
         return override.getInt(path, main.getInt(path, codeDefault));
     }
     
-    private List<String> loadStringList(final Configuration override, final Configuration main, final String path, final List<String> codeDefault) {
+    private static List<String> loadStringList(final Configuration override, final Configuration main, final String path, final List<String> codeDefault) {
         return override.getStringList(path, main.getStringList(path, codeDefault));
     }
     
-    private String loadString(final Configuration override, final Configuration main, final String path, final String codeDefault) {
+    private static String loadString(final Configuration override, final Configuration main, final String path, final String codeDefault) {
         return override.getString(path, main.getString(path, codeDefault));
     }
     
-    private boolean loadBoolean(final Configuration override, final Configuration main, final String path, final boolean codeDefault) {
+    private static boolean loadBoolean(final Configuration override, final Configuration main, final String path, final boolean codeDefault) {
         return override.getBoolean(path, main.getBoolean(path, codeDefault));
     }
     

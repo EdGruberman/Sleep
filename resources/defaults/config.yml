@@ -1,11 +1,24 @@
 inactivityLimit: 300
 force:
-    count: null
-    percent: null
-message:
-    enterBed: null
-    maxFrequency: 10
-    timestamp: false
+    count: -1
+    percent: -1
+notifications:
+    ENTER_BED:
+        format: ''
+        maxFrequency: 10
+        timestamp: false
+    LEAVE_BED:
+        format: ''
+        maxFrequency: 10
+        timestamp: false
+    NIGHTMARE:
+        format: ''
+        maxFrequency: 10
+        timestamp: false
+    FORCE_SLEEP:
+        format: '%1$s has forced sleep.'
+        maxFrequency: -1
+        timestamp: false
 activity:
     - PLAYER_MOVE
     - PLAYER_CHAT

@@ -1,5 +1,7 @@
 package edgruberman.bukkit.sleep.commands;
 
+import java.util.Set;
+
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -34,7 +36,12 @@ class SleepWho extends Action {
         } else {
             message = "Sleeping in [" + world.getName() + "]: ";
             for (Player player : state.inBed)
-                message += player.getDisplayName() + (state.isActive(player) ? "" : "(Inactive)") + ", ";
+                message += player.getDisplayName()+ ", ";
+            
+            Set<Player> inactive = state.inactive();
+            inactive.removeAll(state.inBed);
+            for (Player player : inactive)
+                message += player.getDisplayName() + "(Inactive), ";
             
             message = message.substring(0, message.length() - 2);
         }
