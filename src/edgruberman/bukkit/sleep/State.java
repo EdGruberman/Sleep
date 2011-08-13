@@ -273,8 +273,10 @@ public class State {
         // Check if sleep should be forced now.
         if (this.forceCount <= -1 && this.forcePercent <= -1) return;
         
-        if (this.needForSleep() == 0)
+        if (this.needForSleep() == 0) {
+            this.notify(Notification.Type.FORCE_SLEEP, null, "Server");
             this.forceSleep();
+        }
     }
     
     /**
@@ -311,11 +313,11 @@ public class State {
      * bed, or ignoring sleep.
      */
     private void forceSleep() {
-        for (Player player : this.world.getPlayers())
-            this.ignoreSleep(player, true, "Forcing Sleep");
-        
         // Indicate forced sleep for this world to ensure activity does not negate ignore status.
         this.forcingSleep = true;
+        
+        for (Player player : this.world.getPlayers())
+            this.ignoreSleep(player, true, "Forcing Sleep");
     }
     
     /**

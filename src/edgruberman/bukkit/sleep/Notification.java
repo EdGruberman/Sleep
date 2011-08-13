@@ -49,11 +49,12 @@ public final class Notification {
      * Send message regarding this notification.
      * 
      * @param world world to send message to
-     * @param sender event originator
+     * @param sender event originator, null for code logic
      * @param args parameters to substitute in message
      */
     void generate(final World world, final CommandSender sender, final Object... args) {
-        if (!this.isAllowed(sender)) return;
+        if (sender != null)
+            if (!this.isAllowed(sender)) return;
         
         Player player = null;
         if (sender instanceof Player) player = (Player) sender;
