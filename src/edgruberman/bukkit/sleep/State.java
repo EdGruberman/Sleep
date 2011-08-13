@@ -329,7 +329,7 @@ public class State {
         if (State.defaultNether == null) return;
         
         for (Player player : State.defaultNether.getPlayers())
-            this.ignoreSleep(player, false, "Awakening Default Nether");
+            this.ignoreSleep(player, false, "Awakening Default Nether for [" + this.world.getName() + "]");
     }
     
     /**
