@@ -3,6 +3,8 @@ package edgruberman.bukkit.sleep;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.bukkit.World;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import edgruberman.bukkit.messagemanager.MessageLevel;
@@ -44,15 +46,19 @@ public final class Notification {
     }
     
     /**
-     * Send message regarding this notification to player's world.
+     * Send message regarding this notification.
      * 
-     * @param player player related to event
+     * @param world world to send message to
+     * @param sender event originator
      * @param args parameters to substitute in message
      */
-    void generate(final Player player, final Object... args) {
-        if (!this.isAllowed(player)) return;
+    void generate(final World world, final CommandSender sender, final Object... args) {
+        if (!this.isAllowed(sender)) return;
         
-        if (this.maxFrequency > -1) {
+        Player player = null;
+        if (sender instanceof Player) player = (Player) sender;
+        if (player != null && this.maxFrequency > -1) {
+            // Prevent message if too frequent.
             if (!this.lastGenerated.containsKey(player)) this.lastGenerated.put(player, 0L);
             if (System.currentTimeMillis() < (this.lastGenerated.get(player) + (this.maxFrequency * 1000))) return;
             
@@ -60,7 +66,7 @@ public final class Notification {
         }
         
         String message = String.format(this.format, args);
-        Main.messageManager.send(player.getWorld(), message, MessageLevel.EVENT, this.isTimestamped);
+        Main.messageManager.send(world, message, MessageLevel.EVENT, this.isTimestamped);
     }
     
     /**
@@ -74,14 +80,21 @@ public final class Notification {
     }
     
     /**
-     * Determines if player has permission to generate this notification.
+     * Determines if permission is held to generate this notification.
      * 
-     * @param player player to determine if allowed
+     * @param sender command sender to determine if allowed
      * @return true if player is allowed; otherwise false
      */
-    private boolean isAllowed(final Player player) {
-        return player.hasPermission(Main.PERMISSION_PREFIX + ".notify." + this.type.name())
-            || player.hasPermission(Main.PERMISSION_PREFIX + ".notify." + this.type.name() + "." + player.getWorld().getName());
+    private boolean isAllowed(final CommandSender sender) {
+        if (sender.hasPermission(Main.PERMISSION_PREFIX + ".notify." + this.type.name()))
+            return true;
+        
+        if (!(sender instanceof Player))
+            return false;
+        
+        // Check if player has permission for current world.
+        Player player = (Player) sender;
+        return player.hasPermission(Main.PERMISSION_PREFIX + ".notify." + this.type.name() + "." + player.getWorld().getName());
     }
     
     /**

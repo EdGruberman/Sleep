@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 
@@ -176,14 +177,14 @@ public class State {
      * Generate a notification for an event if it is defined.
      * 
      * @param type type to generate
-     * @param player player associated with event
+     * @param sender event originator
      * @param args parameters to substitute in message
      */
-    private void notify(final Notification.Type type, final Player player, final Object... args) {
+    private void notify(final Notification.Type type, final CommandSender sender, final Object... args) {
         Notification notification = this.notifications.get(type);
         if (notification == null) return;
         
-        notification.generate(player, args);
+        notification.generate(this.world, sender, args);
     }
     
     /**
@@ -279,21 +280,22 @@ public class State {
     /**
      * Manually force world to sleep with possible nightmares as normal.
      * 
-     * @param requester player manually forcing sleep
+     * @param sender source that is manually forcing sleep
      */
-    public void forceSleep(final Player requester) {
-        this.forceSleep(requester, false);
+    public void forceSleep(final CommandSender sender) {
+        this.forceSleep(sender, false);
     }
     
     /**
      * Manually force sleep for all players.
      * 
-     * @param requester player manually forcing sleep
+     * @param sender source that is manually forcing sleep
      * @param isSafe true to avoid nightmares; false to let sleep process normally
      */
-    public void forceSleep(final Player requester, final boolean isSafe) {
-        if (requester != null)
-            this.notify(Notification.Type.FORCE_SLEEP, requester, requester.getDisplayName());
+    public void forceSleep(final CommandSender sender, final boolean isSafe) {
+        String name = "CONSOLE";
+        if (sender instanceof Player) name = ((Player) sender).getDisplayName();
+        this.notify(Notification.Type.FORCE_SLEEP, sender, name);
         
         if (isSafe) {
             // Avoid nightmares by simply forcing time to next morning.
@@ -309,7 +311,7 @@ public class State {
      * bed, or ignoring sleep.
      */
     private void forceSleep() {
-        for (Player player : world.getPlayers())
+        for (Player player : this.world.getPlayers())
             this.ignoreSleep(player, true, "Forcing Sleep");
         
         // Indicate forced sleep for this world to ensure activity does not negate ignore status.
