@@ -102,6 +102,6 @@ public final class Notification {
      * Recognized events that can generate notifications.
      */
     public enum Type {
-        ENTER_BED, LEAVE_BED, NIGHTMARE, FORCE_SLEEP
+        ENTER_BED, LEAVE_BED, NIGHTMARE, FORCE_SLEEP, FORCE_SAFE
     }
 }

@@ -76,7 +76,7 @@ public class State {
     private Map<Player, Long> activity = new HashMap<Player, Long>();
     public Set<Player> inBed = new HashSet<Player>();
     Set<Player> nightmares = new HashSet<Player>();
-    private boolean forcingSleep = false;
+    private boolean isForcingSleep = false;
     
     State(final World world, final int inactivityLimit, final Set<String> ignoredAlways
             , final int forceCount, final int forcePercent, final Set<Event.Type> monitoredActivity) {
@@ -150,6 +150,8 @@ public class State {
      * @param leaver player who left bed
      */
     void leaveBed(final Player leaver) {
+        this.isForcingSleep = false;
+        
         this.inBed.remove(leaver);
         
         if (!this.isNight() && !this.nightmares.contains(leaver)) {
@@ -208,7 +210,7 @@ public class State {
         if (player.getWorld().equals(State.defaultNether)) return;
         
         // Activity should not remove ignore status when forcing sleep.
-        if (this.forcingSleep) return;
+        if (this.isForcingSleep) return;
         
         // Activity should not remove ignore status for always ignored players.
         if (this.isIgnoredAlways(player)) return;
@@ -295,9 +297,14 @@ public class State {
      * @param isSafe true to avoid nightmares; false to let sleep process normally
      */
     public void forceSleep(final CommandSender sender, final boolean isSafe) {
-        String name = "CONSOLE";
-        if (sender instanceof Player) name = ((Player) sender).getDisplayName();
-        this.notify(Notification.Type.FORCE_SLEEP, sender, name);
+        if (!this.isForcingSleep) {
+            String name = "CONSOLE";
+            if (sender instanceof Player) name = ((Player) sender).getDisplayName();
+            
+            Notification.Type type = Notification.Type.FORCE_SLEEP;
+            if (isSafe) type = Notification.Type.FORCE_SAFE;
+            this.notify(type, sender, name);
+        }
         
         if (isSafe) {
             // Avoid nightmares by simply forcing time to next morning.
@@ -314,7 +321,7 @@ public class State {
      */
     private void forceSleep() {
         // Indicate forced sleep for this world to ensure activity does not negate ignore status.
-        this.forcingSleep = true;
+        this.isForcingSleep = true;
         
         for (Player player : this.world.getPlayers())
             this.ignoreSleep(player, true, "Forcing Sleep");
@@ -325,7 +332,7 @@ public class State {
      * ignore sleep.
      */
     void awaken() {
-        this.forcingSleep = false;
+        this.isForcingSleep = false;
         
         for (Player player : this.world.getPlayers())
             this.ignoreSleep(player, false, "Awakening World");
