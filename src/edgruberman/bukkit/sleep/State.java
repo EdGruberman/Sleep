@@ -438,7 +438,7 @@ public class State {
         int count = this.inBed.size();
         int possible = this.possibleSleepers();
         int requiredPercent = (this.forcePercent >= 0 ? this.forcePercent : 100);
-        int currentPercent = Math.round((float) count / (possible >= 0 ? possible : 1) * 100);
+        int currentPercent = (int) Math.floor((float) count / (possible >= 0 ? possible : 1) * 100);
         
         return "Sleep needs " + (need > 0 ? "+" + need : "no more") + ";"
             + " " + count + " in bed" + (this.forceCount >= 0 ? " (need " + this.forceCount + ")" : "")
