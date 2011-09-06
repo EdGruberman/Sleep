@@ -150,9 +150,9 @@ public class State {
      * @param leaver player who left bed
      */
     void leaveBed(final Player leaver) {
-        this.isForcingSleep = false;
+        if (!this.inBed.remove(leaver)) return;
         
-        this.inBed.remove(leaver);
+        this.isForcingSleep = false;
         
         if (!this.isNight() && !this.nightmares.contains(leaver)) {
             // Avoid leave bed messages if entire world has finished sleeping and this is a normal awakening.
@@ -170,6 +170,7 @@ public class State {
      * @param leaver
      */
     void leaveWorld(final Player leaver) {
+        this.leaveBed(leaver);
         this.removeActivity(leaver);
         for (Notification notification : this.notifications.values())
             notification.lastGenerated.remove(leaver);

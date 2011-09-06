@@ -30,7 +30,7 @@ public final class Sleep extends Command implements org.bukkit.command.CommandEx
         }
         
         if (context.action == null) {
-            Main.messageManager.respond(context.sender, "Unrecognized action \"" + context.action.name + "\" of the " + label + " command.", MessageLevel.WARNING, false);
+            Main.messageManager.respond(context.sender, "Unrecognized action for the " + label + " command.", MessageLevel.WARNING, false);
             return true;
         }
         
