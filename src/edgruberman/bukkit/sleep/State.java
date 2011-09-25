@@ -85,6 +85,9 @@ public class State {
         this.forcePercent = forcePercent;
         this.monitoredActivity = (monitoredActivity != null ? monitoredActivity : new HashSet<Event.Type>());
         
+        for (Player player : world.getPlayers())
+            if (player.isSleeping()) this.inBed.add(player);
+        
         State.tracked.put(world, this);
     }
     
