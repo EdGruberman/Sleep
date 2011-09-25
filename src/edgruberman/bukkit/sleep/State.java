@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -38,13 +37,6 @@ public class State {
      * feature.)
      */
     static final int DEFAULT_FORCE_PERCENT = -1;
-    
-    /**
-     * Maximum distance (blocks/meters) squared from a sleeping player a
-     * monster will attempt to spawn as a result of a sleep cycle. (Derived
-     * from original Minecraft code.)
-     */
-    private static final double SLEEP_SPAWN_MAXIMUM_DISTANCE_SQUARED = Math.pow(1.5, 2) + Math.pow(1.5, 2) + Math.pow(1.5, 2);
     
     /**
      * First world relative time (hours * 1000) associated with ability to
@@ -342,36 +334,6 @@ public class State {
         
         for (Player player : State.defaultNether.getPlayers())
             this.ignoreSleep(player, false, "Awakening Default Nether for [" + this.world.getName() + "]");
-    }
-    
-    /**
-     * Determine player the sleep spawn is spawning as a result of.
-     * 
-     * @param spawningAt location sleep spawn will occurring
-     * @return player causing sleep spawn to occur
-     */
-    Player findSleepSpawnTarget(final Location spawningAt) {
-        // Check for first player found within sleep spawn possible target distance.
-        for (Player player : spawningAt.getWorld().getPlayers()) {
-            // Do not assume player if they are not currently sleeping or ignoring sleep.
-            if (!player.isSleeping() && !player.isSleepingIgnored()) continue;
-            
-            if (player.getLocation().distanceSquared(spawningAt) <= State.SLEEP_SPAWN_MAXIMUM_DISTANCE_SQUARED)
-                return player;
-        }
-        
-        // Assign closest player if for some reason we didn't find a player already.
-        Player target = null;
-        Double closest = null;
-        Double distanceSquared = null;
-        for (Player player : spawningAt.getWorld().getPlayers()) {
-            distanceSquared = player.getLocation().distanceSquared(spawningAt);
-            if (closest == null || distanceSquared < closest) {
-                closest = distanceSquared;
-                target = player;
-            }
-        }
-        return target;
     }
     
     /**

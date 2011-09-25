@@ -55,15 +55,8 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
         // Track sleep state for new worlds as appropriate.
         new WorldListener(this);
         
-        // Cancel unsafe creature spawns for players ignoring sleep.
-        Event.Priority priorityCreatureSpawn = Event.Priority.valueOf(Main.configurationFile.getConfiguration().getString("event.CREATURE_SPAWN.priority", SpawnCanceller.DEFAULT_CREATURE_SPAWN.name()));
-        Main.messageManager.log("Ignored Sleep Spawn Cancellation Priority: " + priorityCreatureSpawn, MessageLevel.CONFIG);
-        new SpawnCanceller(this, priorityCreatureSpawn);
-        
-        // Cancel bed returns for players ignoring sleep.
-        Event.Priority priorityPlayerTeleport = Event.Priority.valueOf(Main.configurationFile.getConfiguration().getString("event.PLAYER_TELEPORT.priority", BedReturnCanceller.DEFAULT_PLAYER_TELEPORT.name()));
-        Main.messageManager.log("Ignored Sleep Bed Return Cancellation Priority: " + priorityPlayerTeleport, MessageLevel.CONFIG);
-        new BedReturnCanceller(this, priorityPlayerTeleport);
+        // Monitor for creature spawns caused by sleep.
+        new NightmareTracker(this);
         
         // Start required events listener.
         new PlayerListener(this);

@@ -76,11 +76,15 @@ final class PlayerListener extends org.bukkit.event.player.PlayerListener {
         State state = State.tracked.get(event.getPlayer().getWorld());
         if (state == null) return;
         
-        // Ignore "fake" bed leaves.  When player is ignoring sleep, they are
-        // not in bed and therefore can not leave bed.
-        if (event.getPlayer().isSleepingIgnored()) return;
+        // Determine if nightmare.
+        // A CreatureSpawnEvent occurs for SpawnReason.BED just before a PlayerBedLeaveEvent and before any other processing.
+        if (NightmareTracker.lastBedSpawn != null) {
+            Main.messageManager.log(event.getPlayer().getName() + " is having a nightmare in [" + event.getPlayer().getWorld().getName() + "]", MessageLevel.FINE);
+            state.nightmare(event.getPlayer());
+            NightmareTracker.lastBedSpawn = null;
+            return;
+        }
         
-        // Otherwise this is assumed to be a "real" action.
         Main.messageManager.log(event.getPlayer().getName() + " left bed in [" + event.getPlayer().getWorld().getName() + "]", MessageLevel.FINE);
         state.leaveBed(event.getPlayer());
     }
