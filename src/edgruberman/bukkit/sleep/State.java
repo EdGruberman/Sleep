@@ -124,7 +124,7 @@ public class State {
             return;
         }
         
-        this.notify(Notification.Type.ENTER_BED, enterer, enterer.getDisplayName(), this.needForSleep(), this.inBed.size());
+        this.notify(Notification.Type.ENTER_BED, enterer, enterer.getDisplayName(), this.needForSleep(), this.inBed.size(), this.possibleSleepers());
         this.lull();
     }
     
@@ -136,7 +136,7 @@ public class State {
     void nightmare(final Player victim) {
         this.inBed.remove(victim);
         this.nightmares.add(victim);
-        this.notify(Notification.Type.NIGHTMARE, victim, victim.getDisplayName(), this.needForSleep(), this.inBed.size());
+        this.notify(Notification.Type.NIGHTMARE, victim, victim.getDisplayName(), this.needForSleep(), this.inBed.size(), this.possibleSleepers());
     }
     
     /**
@@ -152,7 +152,7 @@ public class State {
         if (!this.isNight() && !this.nightmares.contains(leaver)) {
             // Avoid leave bed messages if entire world has finished sleeping and this is a normal awakening.
             // Also do not show leave bed message if nightmare message already displayed.
-            this.notify(Notification.Type.LEAVE_BED, leaver, leaver.getDisplayName(), this.needForSleep(), this.inBed.size());
+            this.notify(Notification.Type.LEAVE_BED, leaver, leaver.getDisplayName(), this.needForSleep(), this.inBed.size(), this.possibleSleepers());
         }
         
         this.nightmares.remove(leaver);

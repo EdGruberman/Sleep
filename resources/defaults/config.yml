@@ -19,6 +19,10 @@ notifications:
         format: '%1$s has forced sleep.'
         maxFrequency: -1
         timestamp: false
+    FORCE_SAFE:
+        format: '%1$s has forced safe sleep.'
+        maxFrequency: -1
+        timestamp: false
 activity:
     - PLAYER_MOVE
     - PLAYER_CHAT
