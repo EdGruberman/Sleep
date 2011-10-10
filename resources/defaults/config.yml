@@ -1,4 +1,4 @@
-inactivityLimit: 300
+inactivityLimit: 60
 force:
     count: -1
     percent: -1
