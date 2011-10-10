@@ -16,7 +16,7 @@ import edgruberman.bukkit.messagemanager.channels.Channel;
 /**
  * Sleep state management for a specific world. 
  */
-public class State {
+public final class State {
     
     /**
      * Time in seconds a player must not have any recorded activity in order to

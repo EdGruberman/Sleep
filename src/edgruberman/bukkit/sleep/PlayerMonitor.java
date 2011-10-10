@@ -4,6 +4,7 @@ import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerBedLeaveEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerListener;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.plugin.Plugin;
@@ -14,11 +15,11 @@ import edgruberman.bukkit.messagemanager.MessageLevel;
 /**
  * Manages player associations in each world's sleep state.
  */
-final class PlayerListener extends org.bukkit.event.player.PlayerListener {
+final class PlayerMonitor extends PlayerListener {
     
-    PlayerListener(final Plugin plugin) {
+    PlayerMonitor(final Plugin plugin) {
         PluginManager pm = plugin.getServer().getPluginManager();
-
+        
         pm.registerEvent(Event.Type.PLAYER_JOIN     , this, Event.Priority.Monitor, plugin);
         pm.registerEvent(Event.Type.PLAYER_TELEPORT , this, Event.Priority.Monitor, plugin);
         pm.registerEvent(Event.Type.PLAYER_BED_ENTER, this, Event.Priority.Monitor, plugin);

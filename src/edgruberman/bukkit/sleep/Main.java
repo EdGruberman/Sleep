@@ -8,6 +8,7 @@ import org.bukkit.World;
 import org.bukkit.World.Environment;
 import org.bukkit.event.Event;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.config.Configuration;
 
 import edgruberman.bukkit.messagemanager.MessageLevel;
@@ -15,7 +16,7 @@ import edgruberman.bukkit.messagemanager.MessageManager;
 import edgruberman.bukkit.sleep.activity.ActivityManager;
 import edgruberman.bukkit.sleep.commands.Sleep;
 
-public final class Main extends org.bukkit.plugin.java.JavaPlugin {
+public final class Main extends JavaPlugin {
     
     /**
      * Prefix for all permissions used in this plugin.
@@ -39,31 +40,32 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
         
         Main.configurationFile = new ConfigurationFile(this);
         
+        // Static loading of world specific configuration files requires reference to owning plugin.
         Main.plugin = this;
+        
+        // Prepare list of supported activity monitors.
+        new ActivityManager(this);
     }
     
     public void onEnable() {
-        // Prepare optional activity monitors.
-        new ActivityManager(this);
-        
         // Load configuration file and load initial sleep states.
         this.loadConfiguration();
         
-        // Start monitoring for activity if configured to do so.
+        // Start monitoring for activities listed in configuration.
         ActivityManager.registerEvents();
         
         // Track sleep state for new worlds as appropriate.
-        new WorldListener(this);
+        new StateLoader(this);
         
         // Monitor for creature spawns caused by sleep.
         new NightmareTracker(this);
         
-        // Start required events listener.
-        new PlayerListener(this);
+        // Start monitoring events related to players sleeping.
+        new PlayerMonitor(this);
         
         // Register commands.
         new Sleep(this);
-
+        
         Main.messageManager.log("Plugin Enabled");
     }
     
@@ -88,10 +90,7 @@ public final class Main extends org.bukkit.plugin.java.JavaPlugin {
         State.excluded.addAll(Main.configurationFile.getConfiguration().getStringList("excluded", null));
         Main.messageManager.log("Excluded Worlds: " + State.excluded, MessageLevel.CONFIG);
 
-        // Track sleep state for each loaded world.
-        State.tracked.clear();
-        for (int i = 0; i < this.getServer().getWorlds().size(); i += 1)
-            Main.loadState(this.getServer().getWorlds().get(i));
+        StateLoader.reset();
     }
     
     /**
