@@ -33,7 +33,7 @@ final class PlayerMonitor extends PlayerListener {
         State state = State.tracked.get(event.getPlayer().getWorld());
         if (state == null) return;
         
-        state.joinWorld(event.getPlayer());
+        state.worldJoined(event.getPlayer());
     }
     
     @Override
@@ -43,10 +43,10 @@ final class PlayerMonitor extends PlayerListener {
         // Notify tracked sleep states of player moving between them.
         if (!event.getFrom().getWorld().equals(event.getTo().getWorld())) {
             State from = State.tracked.get(event.getFrom().getWorld());
-            if (from != null) from.leaveWorld(event.getPlayer());
+            if (from != null) from.worldLeft(event.getPlayer());
             
             State to = State.tracked.get(event.getTo().getWorld());
-            if (to != null) to.joinWorld(event.getPlayer());
+            if (to != null) to.worldJoined(event.getPlayer());
         }
     }
     
@@ -56,7 +56,7 @@ final class PlayerMonitor extends PlayerListener {
         State state = State.tracked.get(event.getPlayer().getWorld());
         if (state == null) return;
         
-        state.leaveWorld(event.getPlayer());
+        state.worldLeft(event.getPlayer());
     }
     
     @Override
@@ -68,7 +68,7 @@ final class PlayerMonitor extends PlayerListener {
         if (state == null) return;
         
         Main.messageManager.log(event.getPlayer().getName() + " entered bed in [" + event.getPlayer().getWorld().getName() + "]", MessageLevel.FINE);
-        state.enterBed(event.getPlayer());
+        state.bedEntered(event.getPlayer());
     }
     
     @Override
@@ -79,14 +79,13 @@ final class PlayerMonitor extends PlayerListener {
         
         // Determine if nightmare.
         // A CreatureSpawnEvent occurs for SpawnReason.BED just before a PlayerBedLeaveEvent and before any other processing.
-        if (NightmareTracker.lastBedSpawn != null) {
+        boolean nightmare = (NightmareTracker.lastBedSpawn != null);
+        if (nightmare) {
             Main.messageManager.log(event.getPlayer().getName() + " is having a nightmare in [" + event.getPlayer().getWorld().getName() + "]", MessageLevel.FINE);
-            state.nightmare(event.getPlayer());
             NightmareTracker.lastBedSpawn = null;
-            return;
         }
         
         Main.messageManager.log(event.getPlayer().getName() + " left bed in [" + event.getPlayer().getWorld().getName() + "]", MessageLevel.FINE);
-        state.leaveBed(event.getPlayer());
+        state.bedLeft(event.getPlayer(), nightmare);
     }
 }

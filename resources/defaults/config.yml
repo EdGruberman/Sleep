@@ -1,3 +1,4 @@
+safe: false
 inactivityLimit: 60
 force:
     count: -1
@@ -16,11 +17,19 @@ notifications:
         maxFrequency: 10
         timestamp: false
     FORCE_SLEEP:
-        format: '%1$s has forced sleep.'
+        format: '%1$s is forcing sleep...'
         maxFrequency: -1
         timestamp: false
     FORCE_SAFE:
-        format: '%1$s has forced safe sleep.'
+        format: '%1$s is forcing safe sleep...'
+        maxFrequency: -1
+        timestamp: false
+    FORCE_CONFIGURATION:
+        format: 'Server is forcing sleep...'
+        maxFrequency: -1
+        timestamp: false
+    FORCE_CONFIGURATION_SAFE:
+        format: 'Server is forcing safe sleep...'
         maxFrequency: -1
         timestamp: false
 activity:

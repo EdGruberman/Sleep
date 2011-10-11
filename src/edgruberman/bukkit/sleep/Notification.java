@@ -12,7 +12,7 @@ import edgruberman.bukkit.messagemanager.MessageLevel;
 /**
  * Represents a message to display for an event.
  */
-public final class Notification {
+final class Notification {
     
     /**
      * Message to broadcast to world when a player event occurs (null or
@@ -46,13 +46,16 @@ public final class Notification {
     }
     
     /**
-     * Send message regarding this notification.
+     * Send message regarding this notification. Limit players from sending
+     * more than defined maximum frequency.  Console and code logic is not
+     * limited.
      * 
      * @param world world to send message to
      * @param sender event originator, null for code logic
      * @param args parameters to substitute in message
      */
     void generate(final World world, final CommandSender sender, final Object... args) {
+        // Always allow code logic to generate notification, but check permission for command senders
         if (sender != null)
             if (!this.isAllowed(sender)) return;
         
@@ -87,13 +90,14 @@ public final class Notification {
      * @return true if player is allowed; otherwise false
      */
     private boolean isAllowed(final CommandSender sender) {
+        // Check if sender has general permission for this notification.
         if (sender.hasPermission(Main.PERMISSION_PREFIX + ".notify." + this.type.name()))
             return true;
         
         if (!(sender instanceof Player))
             return false;
         
-        // Check if player has permission for current world.
+        // Check if player has permission for this notification for current world.
         Player player = (Player) sender;
         return player.hasPermission(Main.PERMISSION_PREFIX + ".notify." + this.type.name() + "." + player.getWorld().getName());
     }
@@ -102,6 +106,6 @@ public final class Notification {
      * Recognized events that can generate notifications.
      */
     public enum Type {
-        ENTER_BED, LEAVE_BED, NIGHTMARE, FORCE_SLEEP, FORCE_SAFE
+        ENTER_BED, LEAVE_BED, NIGHTMARE, FORCE_SLEEP, FORCE_SAFE, FORCE_CONFIGURATION, FORCE_CONFIGURATION_SAFE
     }
 }

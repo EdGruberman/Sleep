@@ -14,8 +14,6 @@ import org.bukkit.plugin.PluginManager;
 final class StateLoader extends WorldListener {
     
     StateLoader(Plugin plugin) {
-        StateLoader.reset();
-        
         PluginManager pm = plugin.getServer().getPluginManager();
         pm.registerEvent(Event.Type.WORLD_LOAD, this, Event.Priority.Monitor, plugin);
         pm.registerEvent(Event.Type.WORLD_UNLOAD, this, Event.Priority.Monitor, plugin);

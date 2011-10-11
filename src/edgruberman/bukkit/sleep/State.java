@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -17,6 +18,12 @@ import edgruberman.bukkit.messagemanager.channels.Channel;
  * Sleep state management for a specific world. 
  */
 public final class State {
+    
+    /**
+     * True to allow Minecraft to generate sleep related monster spawns without
+     * any restrictions.  False to disable any monster spawns related to sleep.
+     */
+    static final boolean DEFAULT_NIGHTMARES = true;
     
     /**
      * Time in seconds a player must not have any recorded activity in order to
@@ -50,13 +57,20 @@ public final class State {
      */
     private static final long TIME_NIGHT_END = 23455;
     
+    /**
+     * Number of ticks to wait before deep sleep will engage.
+     * Minecraft considers deep sleep to be 100 ticks in bed.
+     */
+    private static final long TICKS_BEFORE_DEEP_SLEEP = 90;
+    
     // Factory/Manager
     public static Map<World, State> tracked = new HashMap<World, State>();
     static World defaultNether;
     static Set<String> excluded = new HashSet<String>();
     
     // Configuration
-    private World world;
+    World world;
+    private boolean safe;
     public int inactivityLimit;
     private Set<String> ignoredAlways;
     private int forceCount;
@@ -67,10 +81,10 @@ public final class State {
     // Status
     private Map<Player, Long> activity = new HashMap<Player, Long>();
     public Set<Player> inBed = new HashSet<Player>();
-    Set<Player> nightmares = new HashSet<Player>();
     private boolean isForcingSleep = false;
+    Integer safeSleepTask = null;
     
-    State(final World world, final int inactivityLimit, final Set<String> ignoredAlways
+    State(final World world, final boolean safe, final int inactivityLimit, final Set<String> ignoredAlways
             , final int forceCount, final int forcePercent, final Set<Event.Type> monitoredActivity) {
         if (world == null)
             throw new IllegalArgumentException("world can't be null");
@@ -79,6 +93,7 @@ public final class State {
             throw new IllegalArgumentException("excluded world");
         
         this.world = world;
+        this.safe = safe;
         this.inactivityLimit = inactivityLimit;
         this.ignoredAlways = (ignoredAlways != null ? ignoredAlways : new HashSet<String>());
         this.forceCount = forceCount;
@@ -105,7 +120,7 @@ public final class State {
      * 
      * @param joiner player that joined this world
      */
-    void joinWorld(final Player joiner) {
+    void worldJoined(final Player joiner) {
         this.updateActivity(joiner, Event.Type.PLAYER_JOIN);
     }
     
@@ -114,13 +129,13 @@ public final class State {
      * 
      * @param enterer player that entered bed
      */
-    void enterBed(final Player enterer) {
+    void bedEntered(final Player enterer) {
         this.inBed.add(enterer);
         this.ignoreSleep(enterer, false, "Entered Bed");
         
         if (this.isAutoForcer(enterer)) {
-            this.notify(Notification.Type.FORCE_SLEEP, enterer, enterer.getDisplayName());
-            this.forceSleep();
+            // Force sleep with world defined safety.
+            this.forceSleep(enterer);
             return;
         }
         
@@ -129,34 +144,37 @@ public final class State {
     }
     
     /**
-     * Process a player awoken during sleep due to a close mob spawn.
-     * 
-     * @param victim target of mob
-     */
-    void nightmare(final Player victim) {
-        this.inBed.remove(victim);
-        this.nightmares.add(victim);
-        this.notify(Notification.Type.NIGHTMARE, victim, victim.getDisplayName(), this.needForSleep(), this.inBed.size(), this.possibleSleepers());
-    }
-    
-    /**
      * Process a player leaving a bed.
      * 
      * @param leaver player who left bed
+     * @param nightmare true if player is leaving due to a nightmare
      */
-    void leaveBed(final Player leaver) {
+    void bedLeft(final Player leaver, final boolean nightmare) {
         if (!this.inBed.remove(leaver)) return;
         
-        this.isForcingSleep = false;
-        
-        if (!this.isNight() && !this.nightmares.contains(leaver)) {
-            // Avoid leave bed messages if entire world has finished sleeping and this is a normal awakening.
-            // Also do not show leave bed message if nightmare message already displayed.
+        if (nightmare) {
+            this.notify(Notification.Type.NIGHTMARE, leaver, leaver.getDisplayName(), this.needForSleep(), this.inBed.size(), this.possibleSleepers());
+        } else if (this.isNight()) {
+            // Avoid leave bed messages if entire world has finished sleeping and this is a normal awakening in the morning.
             this.notify(Notification.Type.LEAVE_BED, leaver, leaver.getDisplayName(), this.needForSleep(), this.inBed.size(), this.possibleSleepers());
         }
         
-        this.nightmares.remove(leaver);
-        if (this.inBed.size() == 0) this.awaken();
+        int need = this.needForSleep();
+        if (need > 0) this.isForcingSleep = false;
+        if ((this.safeSleepTask != null) && (need > 0)) Bukkit.getServer().getScheduler().cancelTask(this.safeSleepTask);
+        
+        // Only stop ignoring players if no one is left in bed.
+        if (this.inBed.size() != 0) return;
+        
+        // Configure players in this world to no longer ignore sleep.
+        for (Player player : this.world.getPlayers())
+            this.ignoreSleep(player, false, "Awakening World");
+        
+        if (State.defaultNether == null) return;
+        
+        // Configure players in the default nether to no longer ignore sleep.
+        for (Player player : State.defaultNether.getPlayers())
+            this.ignoreSleep(player, false, "Awakening Default Nether for [" + this.world.getName() + "]");
     }
     
     /**
@@ -164,8 +182,8 @@ public final class State {
      * 
      * @param leaver
      */
-    void leaveWorld(final Player leaver) {
-        this.leaveBed(leaver);
+    void worldLeft(final Player leaver) {
+        this.bedLeft(leaver, false);
         this.removeActivity(leaver);
         for (Notification notification : this.notifications.values())
             notification.lastGenerated.remove(leaver);
@@ -175,7 +193,7 @@ public final class State {
      * Generate a notification for an event if it is defined.
      * 
      * @param type type to generate
-     * @param sender event originator
+     * @param sender event originator, null for code logic; frequency tracking
      * @param args parameters to substitute in message
      */
     private void notify(final Notification.Type type, final CommandSender sender, final Object... args) {
@@ -268,75 +286,73 @@ public final class State {
         if (Main.messageManager.isLevel(Channel.Type.LOG, MessageLevel.FINE))
             Main.messageManager.log("[" + this.world.getName() + "] " + this.description(), MessageLevel.FINE);
         
-        // Check if sleep should be forced now.
-        if (this.forceCount <= -1 && this.forcePercent <= -1) return;
+        if (this.forceCount <= -1 && this.forcePercent <= -1 && !this.safe) return;
         
-        if (this.needForSleep() == 0) {
-            this.notify(Notification.Type.FORCE_SLEEP, null, "Server");
-            this.forceSleep();
-        }
+        // Check if sleep should be forced now.
+        if (this.needForSleep() == 0) this.forceSleep();
     }
     
     /**
-     * Manually force world to sleep with possible nightmares as normal.
+     * Force sleep to occur for this world. Safety is determined by config.
+     */
+    private void forceSleep() {
+        this.forceSleep(null, this.safe, false);
+    }
+    
+    /**
+     * Manually force world to sleep and allow Minecraft core code to manage
+     * possible nightmares as normal.
      * 
-     * @param sender source that is manually forcing sleep
+     * @param sender source that is manually forcing sleep; null for config
      */
     public void forceSleep(final CommandSender sender) {
-        this.forceSleep(sender, false);
+        this.forceSleep(sender, this.safe, false);
     }
     
     /**
      * Manually force sleep for all players.
      * 
-     * @param sender source that is manually forcing sleep
-     * @param isSafe true to avoid nightmares; false to let sleep process normally
+     * @param sender source that is manually forcing sleep; null for config
+     * @param isSafe true to avoid nightmares; false to let Minecraft manage sleep normally
      */
-    public void forceSleep(final CommandSender sender, final boolean isSafe) {
-        if (!this.isForcingSleep) {
-            String name = "CONSOLE";
-            if (sender instanceof Player) name = ((Player) sender).getDisplayName();
-            
-            Notification.Type type = Notification.Type.FORCE_SLEEP;
-            if (isSafe) type = Notification.Type.FORCE_SAFE;
-            this.notify(type, sender, name);
-        }
-        
-        if (isSafe) {
-            // Avoid nightmares by simply forcing time to next morning.
-            this.world.setTime(0);
-            return;
-        }
-        
-        this.forceSleep();
-    }
-    
-    /**
-     * Set sleeping ignored for players not already in bed, or entering
-     * bed, or ignoring sleep.
-     */
-    private void forceSleep() {
+    public void forceSleep(final CommandSender sender, final boolean isSafe, final boolean isNow) {
         // Indicate forced sleep for this world to ensure activity does not negate ignore status.
         this.isForcingSleep = true;
         
+        // Schedule task to check on skipping nightmares only once after last player needed has entered bed.
+        // Avoid duplicate forced safe sleep notifications.
+        if (isSafe && this.safeSleepTask != null) return;
+        
+        // Generate notification.
+        Notification.Type type = null;
+        String name = null;
+        if (sender != null) {
+            name = sender.getName();
+            if (sender instanceof Player) name = ((Player) sender).getDisplayName();
+            
+            type = Notification.Type.FORCE_SLEEP;
+            if (isSafe) type = Notification.Type.FORCE_SAFE;
+        } else {
+            type = Notification.Type.FORCE_CONFIGURATION;
+            if (isSafe) type = Notification.Type.FORCE_CONFIGURATION_SAFE;
+        }
+        this.notify(type, sender, name, this.needForSleep(), this.inBed.size(), this.possibleSleepers());
+        
+        if (isSafe) {
+            if (isNow) {
+                this.world.setTime(0);
+                return;
+            }
+            
+            // Safe sleep doesn't require anyone to ignore sleep, set a timer to force time to morning shortly instead.
+            this.safeSleepTask = Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(Main.plugin, new SleepingPill(this), State.TICKS_BEFORE_DEEP_SLEEP);
+            return;
+        }
+        
+        // Set sleeping ignored for players not already in bed, or entering
+        // bed, or ignoring sleep to allow Minecraft to manage nightmares.
         for (Player player : this.world.getPlayers())
             this.ignoreSleep(player, true, "Forcing Sleep");
-    }
-    
-    /**
-     * Configure players in this world and the default nether to no longer
-     * ignore sleep.
-     */
-    void awaken() {
-        this.isForcingSleep = false;
-        
-        for (Player player : this.world.getPlayers())
-            this.ignoreSleep(player, false, "Awakening World");
-        
-        if (State.defaultNether == null) return;
-        
-        for (Player player : State.defaultNether.getPlayers())
-            this.ignoreSleep(player, false, "Awakening Default Nether for [" + this.world.getName() + "]");
     }
     
     /**
@@ -371,7 +387,7 @@ public final class State {
     private boolean isNight() {
         long now = this.world.getTime();
         
-        if ((State.TIME_NIGHT_START >= now) && (now < State.TIME_NIGHT_END)) return true;
+        if ((State.TIME_NIGHT_START <= now) && (now < State.TIME_NIGHT_END)) return true;
         
         return false;
     }
