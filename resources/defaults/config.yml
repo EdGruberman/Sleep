@@ -1,3 +1,4 @@
+sleep: true
 safe: false
 inactivityLimit: 60
 force:

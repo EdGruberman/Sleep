@@ -20,10 +20,15 @@ import edgruberman.bukkit.messagemanager.channels.Channel;
 public final class State {
     
     /**
-     * True to allow Minecraft to generate sleep related monster spawns without
-     * any restrictions.  False to disable any monster spawns related to sleep.
+     * True to allow players to cause sleep to occur. False to prevent sleep.
      */
-    static final boolean DEFAULT_NIGHTMARES = true;
+    static final boolean DEFAULT_SLEEP = true;
+    
+    /**
+     * False to allow Minecraft to generate sleep related monster spawns without
+     * any restrictions. True to disable any monster spawns related to sleep.
+     */
+    static final boolean DEFAULT_SAFE = false;
     
     /**
      * Time in seconds a player must not have any recorded activity in order to
@@ -70,7 +75,8 @@ public final class State {
     
     // Configuration
     World world;
-    private boolean safe;
+    private boolean isSleepEnabled;
+    private boolean isSleepSafe;
     public int inactivityLimit;
     private Set<String> ignoredAlways;
     private int forceCount;
@@ -84,7 +90,7 @@ public final class State {
     private boolean isForcingSleep = false;
     Integer safeSleepTask = null;
     
-    State(final World world, final boolean safe, final int inactivityLimit, final Set<String> ignoredAlways
+    State(final World world, final boolean sleep, final boolean safe, final int inactivityLimit, final Set<String> ignoredAlways
             , final int forceCount, final int forcePercent, final Set<Event.Type> monitoredActivity) {
         if (world == null)
             throw new IllegalArgumentException("world can't be null");
@@ -93,7 +99,8 @@ public final class State {
             throw new IllegalArgumentException("excluded world");
         
         this.world = world;
-        this.safe = safe;
+        this.isSleepEnabled = sleep;
+        this.isSleepSafe = safe;
         this.inactivityLimit = inactivityLimit;
         this.ignoredAlways = (ignoredAlways != null ? ignoredAlways : new HashSet<String>());
         this.forceCount = forceCount;
@@ -140,6 +147,12 @@ public final class State {
         }
         
         this.notify(Notification.Type.ENTER_BED, enterer, enterer.getDisplayName(), this.needForSleep(), this.inBed.size(), this.possibleSleepers());
+        
+        if (!this.isSleepEnabled) {
+            Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(Main.plugin, new Insomnia(enterer), State.TICKS_BEFORE_DEEP_SLEEP);
+            return;
+        }
+        
         this.lull();
     }
     
@@ -286,17 +299,17 @@ public final class State {
         if (Main.messageManager.isLevel(Channel.Type.LOG, MessageLevel.FINE))
             Main.messageManager.log("[" + this.world.getName() + "] " + this.description(), MessageLevel.FINE);
         
-        if (this.forceCount <= -1 && this.forcePercent <= -1 && !this.safe) return;
+        if (this.forceCount <= -1 && this.forcePercent <= -1 && !this.isSleepSafe) return;
         
-        // Check if sleep should be forced now.
-        if (this.needForSleep() == 0) this.forceSleep();
+        // Force sleep if no more needed and not everyone is in bed.
+        if ((this.needForSleep() == 0) && (this.inBed.size() != this.possibleSleepers())) this.forceSleep();
     }
     
     /**
      * Force sleep to occur for this world. Safety is determined by config.
      */
     private void forceSleep() {
-        this.forceSleep(null, this.safe, false);
+        this.forceSleep(null, this.isSleepSafe, false);
     }
     
     /**
@@ -306,7 +319,7 @@ public final class State {
      * @param sender source that is manually forcing sleep; null for config
      */
     public void forceSleep(final CommandSender sender) {
-        this.forceSleep(sender, this.safe, false);
+        this.forceSleep(sender, this.isSleepSafe, false);
     }
     
     /**
@@ -356,7 +369,7 @@ public final class State {
     }
     
     /**
-     * Set a player to temporarily ignore sleep status checks.
+     * Set whether or not a player ignores sleep status checks.
      * 
      * @param player player to set sleeping ignored status on
      * @param ignore true to set player to ignore sleeping; false otherwise

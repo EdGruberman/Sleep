@@ -3,7 +3,7 @@ package edgruberman.bukkit.sleep;
 import edgruberman.bukkit.messagemanager.MessageLevel;
 
 /**
- * Prevents nightmares if used.
+ * Prevents nightmares.
  */
 final class SleepingPill implements Runnable {
     

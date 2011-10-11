@@ -115,8 +115,11 @@ public final class Main extends JavaPlugin {
         Configuration pluginMain = Main.configurationFile.getConfiguration();
         Configuration worldSpecific = (new ConfigurationFile(Main.plugin, WORLD_SPECIFICS + "/" + world.getName() + ".yml")).getConfiguration();
         
-        boolean safe = Main.loadBoolean(worldSpecific, pluginMain, "safe", State.DEFAULT_NIGHTMARES);
-        Main.messageManager.log("Sleep state for [" + world.getName() + "] Safe: " + safe, MessageLevel.CONFIG);
+        boolean sleep = Main.loadBoolean(worldSpecific, pluginMain, "sleep", State.DEFAULT_SLEEP);
+        Main.messageManager.log("Sleep state for [" + world.getName() + "] Sleep Enabled: " + sleep, MessageLevel.CONFIG);
+        
+        boolean safe = Main.loadBoolean(worldSpecific, pluginMain, "safe", State.DEFAULT_SAFE);
+        Main.messageManager.log("Sleep state for [" + world.getName() + "] Safe (No nightmares): " + safe, MessageLevel.CONFIG);
         
         int inactivityLimit = Main.loadInt(worldSpecific, pluginMain, "inactivityLimit", State.DEFAULT_INACTIVITY_LIMIT);
         Main.messageManager.log("Sleep state for [" + world.getName() + "] Inactivity Limit (seconds): " + inactivityLimit, MessageLevel.CONFIG);
@@ -140,7 +143,7 @@ public final class Main extends JavaPlugin {
             }
         Main.messageManager.log("Sleep state for [" + world.getName() + "] Monitored Activity: " + monitoredActivity.toString(), MessageLevel.CONFIG);
         
-        State state = new State(world, safe, inactivityLimit, ignoredAlways, forceCount, forcePercent, monitoredActivity);
+        State state = new State(world, sleep, safe, inactivityLimit, ignoredAlways, forceCount, forcePercent, monitoredActivity);
         
         for (Notification.Type type : Notification.Type.values()) {
             Notification notification = Main.loadNotification(type, worldSpecific, pluginMain);
