@@ -432,11 +432,11 @@ public final class State {
         int need = this.needForSleep();
         int count = this.inBed.size();
         int possible = this.possibleSleepers();
-        int requiredPercent = (this.forcePercent >= 0 ? this.forcePercent : 100);
-        int currentPercent = (int) Math.floor((float) count / (possible >= 0 ? possible : 1) * 100);
+        int requiredPercent = (((this.forcePercent > 0) && (this.forcePercent < 100)) ? this.forcePercent : 100);
+        int currentPercent = (int) Math.floor((double) count / (possible > 0 ? possible : 1) * 100);
         
         return "Sleep needs " + (need > 0 ? "+" + need : "no more") + ";"
-            + " " + count + " in bed" + (this.forceCount >= 0 ? " (need " + this.forceCount + ")" : "")
+            + " " + count + " in bed" + (this.forceCount > 0 ? " (need " + this.forceCount + ")" : "")
             + " out of " + possible + " possible"
             + " = " + currentPercent + "%" + (requiredPercent > 0 ? " (need " + requiredPercent + "%)" : "")
         ;
@@ -451,25 +451,21 @@ public final class State {
         int possible = this.possibleSleepers();
         int inBed = this.inBed.size();
         
-        // Default, all possible except those already in bed.
-        int need = (possible - inBed);
+        // Need 100% of possible if percent not specified.
+        double forcePercent = (((this.forcePercent > 0) && (this.forcePercent < 100)) ? this.forcePercent : 100);
+        int needPercent = (int) Math.ceil(forcePercent / 100 * possible);
         
-        // Minimum count of players in bed needed.
-        int needCount = this.forceCount - inBed;
-        if (this.forceCount >= 0 && this.forcePercent <= -1)
-            need = needCount;
+        // Use all possible if count not specified.
+        int needCount = (this.forceCount > 0 ? this.forceCount : possible);
         
-        // Minimum percent of players in bed needed.
-        int needPercent = (int) Math.ceil((float) this.forcePercent / 100 * possible) - inBed;
-        if (this.forceCount <= -1 && this.forcePercent >= 0)
-            need = needPercent;
+        // Need lowest count to satisfy either count or percent.
+        int need = Math.min(needCount, needPercent) - inBed;
         
-        // Both minimum count and minimum percent needed, highest is required to meet both.
-        if (this.forceCount >= 0 && this.forcePercent >= 0)
-            need = (needCount > needPercent ? needCount : needPercent);
-        
-        // Can't have less than no one.
+        // Can't need less than no one.
         if (need < 0) need = 0;
+        
+        // Can't need more than who is possible.
+        if (need > possible) need = possible;
         
         // Always need at least 1 person actually in bed.
         if (inBed == 0 && need == 0) need = 1;
