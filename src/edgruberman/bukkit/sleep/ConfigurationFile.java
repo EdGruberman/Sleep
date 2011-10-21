@@ -1,17 +1,11 @@
 package edgruberman.bukkit.sleep;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
-import java.net.URL;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
 
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.util.config.Configuration;
 
 import edgruberman.bukkit.messagemanager.MessageLevel;
 
@@ -46,10 +40,10 @@ public final class ConfigurationFile {
     
     private final Plugin owner;
     private final File file;
-    private final URL defaults;
-    private final Configuration configuration;
+    private final String defaults;
+    private FileConfiguration config;
     private int maxSaveFrequency;
-    private Calendar lastSave = null;
+    private Long lastSaveAttempt = null;
     private Integer taskSave = null;
     
     /**
@@ -112,38 +106,25 @@ public final class ConfigurationFile {
         this.owner = owner;
         
         this.file = new File(this.owner.getDataFolder(), (file != null ? file : ConfigurationFile.PLUGIN_FILE));
-        this.defaults = this.owner.getClass().getResource((defaults != null ? defaults : ConfigurationFile.DEFAULTS + this.file.getName()));
+        this.defaults = (defaults != null ? defaults : ConfigurationFile.DEFAULTS + this.file.getName());
         this.maxSaveFrequency = maxSaveFrequency;
-        if (this.file.getName().equals(ConfigurationFile.PLUGIN_FILE)) {
-            this.configuration = this.owner.getConfiguration();
-        } else {
-            this.configuration = new Configuration(this.file);
-        }
-        
         this.load();
     }
     
     /**
-     * Loads the configuration file from owning plugin's data folder.  This
-     * method will create the file from the default supplied in the JAR if 
-     * the file does not exist and the default is supplied.
+     * Loads the configuration file from owning plugin's data folder.
      */
     void load() {
-        if (!this.file.exists() && this.defaults != null) {
-            try {
-                ConfigurationFile.extract(this.defaults, this.file);
-            
-            } catch (FileNotFoundException e) {
-                System.err.println("[" + this.owner.getDescription().getName() + "] Unable to create configuration file \"" + this.file.getPath() + "\".");
-                e.printStackTrace();
-                
-            } catch (IOException e) {
-                System.err.println("[" + this.owner.getDescription().getName() + "] Unable to extract default configuration file from \"" + this.defaults.getFile() + "\".");
-                e.printStackTrace();
-            }
-        }
+        this.config = YamlConfiguration.loadConfiguration(this.file);
         
-        this.configuration.load();
+        // Load defaults if supplied in JAR and file does not already exist.
+        if (!this.file.exists() && this.defaults != null) {
+            this.config.setDefaults(YamlConfiguration.loadConfiguration(this.owner.getResource(this.defaults)));
+            this.config.options().copyDefaults(true);
+            this.save();
+            
+            this.config = YamlConfiguration.loadConfiguration(this.file);
+        }
     }
     
     int getMaxSaveFrequency() {
@@ -154,8 +135,8 @@ public final class ConfigurationFile {
         this.maxSaveFrequency = frequency;
     }
     
-    Configuration getConfiguration() {
-        return this.configuration;
+    FileConfiguration getConfig() {
+        return this.config;
     }
     
     /**
@@ -176,10 +157,10 @@ public final class ConfigurationFile {
      */
     void save(final boolean immediately) {
         if (!immediately) {
-            // Determine how long since last save.
+            // Determine how long since last save attempt.
             long sinceLastSave = this.maxSaveFrequency;
-            if (this.lastSave != null)
-                sinceLastSave = (System.currentTimeMillis() - this.lastSave.getTimeInMillis()) / 1000;
+            if (this.lastSaveAttempt != null)
+                sinceLastSave = (System.currentTimeMillis() - this.lastSaveAttempt) / 1000;
             
             // Schedule a cache flush to run if last save was less than maximum save frequency.
             if (sinceLastSave < this.maxSaveFrequency) {
@@ -201,34 +182,17 @@ public final class ConfigurationFile {
             }
         }
         
-        this.configuration.save();
-        this.lastSave = new GregorianCalendar();
-        Main.messageManager.log("Configuration file " + this.file.getName() + " saved.", MessageLevel.FINEST);
-    }
-    
-    /**
-     * Extract a file from the JAR to the local file system.
-     * 
-     * @param source file in JAR
-     * @param destination file to save out to in file system
-     */
-    private static void extract(final URL source, final File destination) throws FileNotFoundException, IOException {
-        destination.getParentFile().mkdirs();
-        
-        InputStream in = null;
-        OutputStream out = null;
-        int len;
-        byte[] buf = new byte[4096];
-        
         try {
-            in = source.openStream();
-            out = new FileOutputStream(destination);
-            while ((len = in.read(buf)) > 0)
-                out.write(buf, 0, len);
+            this.config.save(this.file);
+            
+        } catch (IOException e) {
+            Main.messageManager.log("Unable to save configuration file: " + this.file, MessageLevel.SEVERE, e);
+            return;
             
         } finally {
-            if (in != null) in.close();
-            if (out != null) out.close();
+            this.lastSaveAttempt = System.currentTimeMillis();
         }
+        
+        Main.messageManager.log("Saved configuration file: " + this.file, MessageLevel.FINEST);
     }
 }

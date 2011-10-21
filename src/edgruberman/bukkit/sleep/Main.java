@@ -1,15 +1,16 @@
 package edgruberman.bukkit.sleep;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import org.bukkit.World;
 import org.bukkit.World.Environment;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.Event;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.util.config.Configuration;
 
 import edgruberman.bukkit.messagemanager.MessageLevel;
 import edgruberman.bukkit.messagemanager.MessageManager;
@@ -80,6 +81,7 @@ public final class Main extends JavaPlugin {
     /**
      * Load plugin's configuration file and reset sleep states for each world.
      */
+    @SuppressWarnings("unchecked")
     public void loadConfiguration() {
         Main.configurationFile.load();
         
@@ -87,7 +89,7 @@ public final class Main extends JavaPlugin {
         Main.messageManager.log("Default Nether: " + (State.defaultNether != null ? State.defaultNether.getName() : "<Not found>"), MessageLevel.CONFIG);
         
         State.excluded.clear();
-        State.excluded.addAll(Main.configurationFile.getConfiguration().getStringList("excluded", null));
+        State.excluded.addAll(Main.configurationFile.getConfig().getList("excluded", Collections.<String>emptyList()));
         Main.messageManager.log("Excluded Worlds: " + State.excluded, MessageLevel.CONFIG);
 
         StateLoader.reset();
@@ -112,8 +114,8 @@ public final class Main extends JavaPlugin {
         // Load configuration values using defaults defined in code, overridden
         // by defaults in the configuration file, overridden by world specific
         // settings in the Worlds folder.
-        Configuration pluginMain = Main.configurationFile.getConfiguration();
-        Configuration worldSpecific = (new ConfigurationFile(Main.plugin, WORLD_SPECIFICS + "/" + world.getName() + ".yml")).getConfiguration();
+        FileConfiguration pluginMain = Main.configurationFile.getConfig();
+        FileConfiguration worldSpecific = (new ConfigurationFile(Main.plugin, WORLD_SPECIFICS + "/" + world.getName() + ".yml")).getConfig();
         
         boolean sleep = Main.loadBoolean(worldSpecific, pluginMain, "sleep", State.DEFAULT_SLEEP);
         Main.messageManager.log("Sleep state for [" + world.getName() + "] Sleep Enabled: " + sleep, MessageLevel.CONFIG);
@@ -162,7 +164,7 @@ public final class Main extends JavaPlugin {
      * @param main base settings
      * @return notification defined according to configuration
      */
-    private static Notification loadNotification(final Notification.Type type, final Configuration override, final Configuration main) {
+    private static Notification loadNotification(final Notification.Type type, final FileConfiguration override, final FileConfiguration main) {
         String format = Main.loadString(override, main, "notifications." + type.name() + ".format", Notification.DEFAULT_FORMAT);
         if (format == null || format.length() == 0) return null;
         
@@ -181,7 +183,7 @@ public final class Main extends JavaPlugin {
      * @param codeDefault value to use if neither main nor override exist
      * @return value read from configuration
      */
-    private static int loadInt(final Configuration override, final Configuration main, final String path, final int codeDefault) {
+    private static int loadInt(final FileConfiguration override, final FileConfiguration main, final String path, final int codeDefault) {
         return override.getInt(path, main.getInt(path, codeDefault));
     }
     
@@ -194,8 +196,9 @@ public final class Main extends JavaPlugin {
      * @param codeDefault value to use if neither main nor override exist
      * @return value read from configuration
      */
-    private static List<String> loadStringList(final Configuration override, final Configuration main, final String path, final List<String> codeDefault) {
-        return override.getStringList(path, main.getStringList(path, codeDefault));
+    @SuppressWarnings("unchecked")
+    private static List<String> loadStringList(final FileConfiguration override, final FileConfiguration main, final String path, final List<String> codeDefault) {
+        return override.getList(path, main.getList(path, codeDefault));
     }
     
     /**
@@ -207,7 +210,7 @@ public final class Main extends JavaPlugin {
      * @param codeDefault value to use if neither main nor override exist
      * @return value read from configuration
      */
-    private static String loadString(final Configuration override, final Configuration main, final String path, final String codeDefault) {
+    private static String loadString(final FileConfiguration override, final FileConfiguration main, final String path, final String codeDefault) {
         return override.getString(path, main.getString(path, codeDefault));
     }
     
@@ -220,7 +223,7 @@ public final class Main extends JavaPlugin {
      * @param codeDefault value to use if neither main nor override exist
      * @return value read from configuration
      */
-    private static boolean loadBoolean(final Configuration override, final Configuration main, final String path, final boolean codeDefault) {
+    private static boolean loadBoolean(final FileConfiguration override, final FileConfiguration main, final String path, final boolean codeDefault) {
         return override.getBoolean(path, main.getBoolean(path, codeDefault));
     }
     

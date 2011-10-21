@@ -174,7 +174,11 @@ public final class State {
         
         int need = this.needForSleep();
         if (need > 0) this.isForcingSleep = false;
-        if ((this.safeSleepTask != null) && (need > 0)) Bukkit.getServer().getScheduler().cancelTask(this.safeSleepTask);
+        if ((this.safeSleepTask != null) && (need > 0)) {
+            // Cancel forced safe sleep since more players are now needed again.
+            Bukkit.getServer().getScheduler().cancelTask(this.safeSleepTask);
+            this.safeSleepTask = null;
+        }
         
         // Only stop ignoring players if no one is left in bed.
         if (this.inBed.size() != 0) return;
@@ -327,6 +331,7 @@ public final class State {
      * 
      * @param sender source that is manually forcing sleep; null for config
      * @param isSafe true to avoid nightmares; false to let Minecraft manage sleep normally
+     * @param isNow true to set time immediately and not wait; false otherwise
      */
     public void forceSleep(final CommandSender sender, final boolean isSafe, final boolean isNow) {
         // Indicate forced sleep for this world to ensure activity does not negate ignore status.
@@ -424,21 +429,21 @@ public final class State {
      */
     public String description() {
         // Example output:
-        // "Sleep needs +4; 3 in bed out of 7 possible = 42.9% (need 100.0%)";
-        // "Sleep needs +2; 3 in bed (need 5) out of 7 possible = 42.9% (need 50.0%)";
-        // "Sleep needs +2; 3 in bed (need 5) out of 7 possible = 42.9%";
-        // "Sleep needs +1; 3 in bed out of 7 possible = 42.9% (need 50%)";
-        // "Sleep needs no more; 5 in bed (need 5) out of 7 possible = 71.4% (need 50.0%)";
+        // "Sleep needs +4; 3 in bed out of 7 possible = 42% (forced when 100%)";
+        // "Sleep needs +2; 3 in bed (forced when 5) out of 7 possible = 42% (forced when 50%)";
+        // "Sleep needs +2; 3 in bed (forced when 5) out of 7 possible = 42%";
+        // "Sleep needs +1; 3 in bed out of 7 possible = 42% (forced when 50%)";
+        // "Sleep needs no more; 5 in bed (need 5) out of 7 possible = 71% (forced when 50%)";
         int need = this.needForSleep();
         int count = this.inBed.size();
         int possible = this.possibleSleepers();
-        int requiredPercent = (((this.forcePercent > 0) && (this.forcePercent < 100)) ? this.forcePercent : 100);
+        int requiredPercent = (this.forcePercent <= 100 ? this.forcePercent : 100);
         int currentPercent = (int) Math.floor((double) count / (possible > 0 ? possible : 1) * 100);
         
         return "Sleep needs " + (need > 0 ? "+" + need : "no more") + ";"
-            + " " + count + " in bed" + (this.forceCount > 0 ? " (need " + this.forceCount + ")" : "")
+            + " " + count + " in bed" + (this.forceCount > 0 ? " (forced when " + this.forceCount + ")" : "")
             + " out of " + possible + " possible"
-            + " = " + currentPercent + "%" + (requiredPercent > 0 ? " (need " + requiredPercent + "%)" : "")
+            + " = " + currentPercent + "%" + (requiredPercent > 0 ? " (forced when " + requiredPercent + "%)" : "")
         ;
     }
     
