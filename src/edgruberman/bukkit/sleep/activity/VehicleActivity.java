@@ -39,7 +39,7 @@ final class VehicleActivity extends VehicleListener implements ActivityMonitor {
         if (!(event.getAttacker() instanceof Player)) return;
         
         Player player = (Player) event.getAttacker();
-        ActivityManager.updateActivity(player, event.getType());
+        ActivityManager.updateActivity(player, event);
     }
     
     @Override
@@ -49,7 +49,7 @@ final class VehicleActivity extends VehicleListener implements ActivityMonitor {
         if (!(event.getAttacker() instanceof Player)) return;
         
         Player player = (Player) event.getAttacker();
-        ActivityManager.updateActivity(player, event.getType());
+        ActivityManager.updateActivity(player, event);
     }
     
     @Override
@@ -59,7 +59,7 @@ final class VehicleActivity extends VehicleListener implements ActivityMonitor {
         if (!(event.getEntered() instanceof Player)) return;
         
         Player player = (Player) event.getEntered();
-        ActivityManager.updateActivity(player, event.getType());
+        ActivityManager.updateActivity(player, event);
     }
     
     @Override
@@ -69,7 +69,7 @@ final class VehicleActivity extends VehicleListener implements ActivityMonitor {
         if (!(event.getExited() instanceof Player)) return;
         
         Player player = (Player) event.getExited();
-        ActivityManager.updateActivity(player, event.getType());
+        ActivityManager.updateActivity(player, event);
     }
     
     @Override
@@ -77,6 +77,6 @@ final class VehicleActivity extends VehicleListener implements ActivityMonitor {
         if (!(event.getVehicle().getPassenger() instanceof Player)) return;
         
         Player player = (Player) event.getVehicle().getPassenger();
-        ActivityManager.updateActivity(player, event.getType());
+        ActivityManager.updateActivity(player, event);
     }
 }

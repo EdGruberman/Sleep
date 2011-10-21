@@ -51,7 +51,7 @@ final class EntityActivity extends EntityListener implements ActivityMonitor {
             return;
         }
         
-        ActivityManager.updateActivity(player, event.getType());
+        ActivityManager.updateActivity(player, event);
     }
     
     @Override
@@ -61,14 +61,14 @@ final class EntityActivity extends EntityListener implements ActivityMonitor {
         if (!(event.getEntity() instanceof Player)) return;
         
         Player player = (Player) event.getEntity();
-        ActivityManager.updateActivity(player, event.getType());
+        ActivityManager.updateActivity(player, event);
     }
     
     @Override
     public void onPaintingPlace(final PaintingPlaceEvent event) {
         if (event.isCancelled()) return;
         
-        ActivityManager.updateActivity(event.getPlayer(), event.getType());
+        ActivityManager.updateActivity(event.getPlayer(), event);
     }
     
     @Override
@@ -81,7 +81,7 @@ final class EntityActivity extends EntityListener implements ActivityMonitor {
         if (!(pbbee.getRemover() instanceof Player)) return;
         
         Player player = (Player) pbbee.getRemover();
-        ActivityManager.updateActivity(player, event.getType());
+        ActivityManager.updateActivity(player, event);
     }
     
     @Override
@@ -89,6 +89,6 @@ final class EntityActivity extends EntityListener implements ActivityMonitor {
         if (!(event.getEntity() instanceof Player)) return;
         
         Player player = (Player) event.getEntity();
-        ActivityManager.updateActivity(player, event.getType());
+        ActivityManager.updateActivity(player, event);
     }
 }

@@ -53,9 +53,6 @@ public final class Main extends JavaPlugin {
         // Load configuration file and load initial sleep states.
         this.loadConfiguration();
         
-        // Start monitoring for activities listed in configuration.
-        ActivityManager.registerEvents();
-        
         // Track sleep state for new worlds as appropriate.
         new StateLoader(this);
         
@@ -81,6 +78,7 @@ public final class Main extends JavaPlugin {
     
     /**
      * Load plugin's configuration file and reset sleep states for each world.
+     * This will cause new events to be registered as needed.
      */
     @SuppressWarnings("unchecked")
     public void loadConfiguration() {
@@ -92,8 +90,20 @@ public final class Main extends JavaPlugin {
         State.excluded.clear();
         State.excluded.addAll(Main.configurationFile.getConfig().getList("excluded", Collections.<String>emptyList()));
         Main.messageManager.log("Excluded Worlds: " + State.excluded, MessageLevel.CONFIG);
-
+        
         StateLoader.reset();
+        
+        // Determine which events are monitored by at least one world.
+        Set<Event.Type> monitored = new HashSet<Event.Type>();
+        Set<String> custom = new HashSet<String>();
+        for (State state : State.tracked.values())
+            if (state.inactivityLimit > 0) {
+                monitored.addAll(state.monitoredActivity);
+                custom.addAll(state.monitoredCustomActivity);
+            }
+        
+        // Ensure activities listed in configuration are monitored.
+        ActivityManager.registerEvents(monitored, custom);
     }
     
     /**
@@ -138,15 +148,34 @@ public final class Main extends JavaPlugin {
         Main.messageManager.log("Sleep state for [" + world.getName() + "] Forced Sleep Minimum Percent: " + forcePercent, MessageLevel.CONFIG);
         
         Set<Event.Type> monitoredActivity = new HashSet<Event.Type>();
-        for (String type : Main.loadStringList(worldSpecific, pluginMain, "activity", Collections.<String>emptyList()))
-            if (ActivityManager.isSupported(Event.Type.valueOf(type))) {
-                monitoredActivity.add(Event.Type.valueOf(type));
+        Set<String> monitoredCustomActivity = new HashSet<String>();
+        for (String event : Main.loadStringList(worldSpecific, pluginMain, "activity", Collections.<String>emptyList())) {
+            String type = event;
+            String name = null;
+            
+            if (event.contains(":")) {
+                type = "CUSTOM_EVENT";
+                name = event.substring(event.indexOf(":") + 1);
+                
+                if (!ActivityManager.isSupportedCustom(name)) {
+                    Main.messageManager.log("Custom event not supported for monitoring activity: " + name, MessageLevel.WARNING);
+                    continue;
+                }
+                
+                monitoredCustomActivity.add(name);
+            }
+            
+            if (ActivityManager.isSupported(Main.eventTypeValueOf(type))) {
+                monitoredActivity.add(Main.eventTypeValueOf(type));
             } else {
                 Main.messageManager.log("Event not supported for monitoring activity: " + type, MessageLevel.WARNING);
             }
+        }
         Main.messageManager.log("Sleep state for [" + world.getName() + "] Monitored Activity: " + monitoredActivity.toString(), MessageLevel.CONFIG);
+        if (monitoredCustomActivity.size() > 0)
+            Main.messageManager.log("Sleep state for [" + world.getName() + "] Monitored Custom Activity: " + monitoredCustomActivity.toString(), MessageLevel.CONFIG);
         
-        State state = new State(world, sleep, safe, inactivityLimit, ignoredAlways, forceCount, forcePercent, monitoredActivity);
+        State state = new State(world, sleep, safe, inactivityLimit, ignoredAlways, forceCount, forcePercent, monitoredActivity, monitoredCustomActivity);
         
         for (Notification.Type type : Notification.Type.values()) {
             Notification notification = Main.loadNotification(type, worldSpecific, pluginMain);
@@ -240,5 +269,20 @@ public final class Main extends JavaPlugin {
                 return this.getServer().getWorlds().get(i);
         
         return null;
+    }
+    
+    /**
+     * Parse Event.Type from string input.
+     * 
+     * @param name text to try and match Event.Type enum name
+     * @return matching Event.Type if found; null otherwise
+     */
+    private static Event.Type eventTypeValueOf(final String name) {
+        try {
+            return Event.Type.valueOf(name);
+            
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 }

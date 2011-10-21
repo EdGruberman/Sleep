@@ -20,11 +20,11 @@ final class PlayerMonitor extends PlayerListener {
     PlayerMonitor(final Plugin plugin) {
         PluginManager pm = plugin.getServer().getPluginManager();
         
-        pm.registerEvent(Event.Type.PLAYER_JOIN     , this, Event.Priority.Monitor, plugin);
-        pm.registerEvent(Event.Type.PLAYER_TELEPORT , this, Event.Priority.Monitor, plugin);
+        pm.registerEvent(Event.Type.PLAYER_JOIN, this, Event.Priority.Monitor, plugin);
+        pm.registerEvent(Event.Type.PLAYER_TELEPORT, this, Event.Priority.Monitor, plugin);
         pm.registerEvent(Event.Type.PLAYER_BED_ENTER, this, Event.Priority.Monitor, plugin);
         pm.registerEvent(Event.Type.PLAYER_BED_LEAVE, this, Event.Priority.Monitor, plugin);
-        pm.registerEvent(Event.Type.PLAYER_QUIT     , this, Event.Priority.Monitor, plugin);
+        pm.registerEvent(Event.Type.PLAYER_QUIT, this, Event.Priority.Monitor, plugin);
     }
     
     @Override

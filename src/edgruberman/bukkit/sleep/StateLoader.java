@@ -23,6 +23,7 @@ final class StateLoader extends WorldListener {
      * Reset sleep state for each world already loaded.
      */
     static void reset() {
+        // TODO move state manager functions into this class
         State.tracked.clear();
         for (int i = 0; i < Bukkit.getServer().getWorlds().size(); i += 1)
             Main.loadState(Bukkit.getServer().getWorlds().get(i));

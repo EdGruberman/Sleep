@@ -15,7 +15,7 @@ import edgruberman.bukkit.messagemanager.MessageLevel;
 import edgruberman.bukkit.messagemanager.channels.Channel;
 
 /**
- * Sleep state management for a specific world. 
+ * Sleep state for a specific world. 
  */
 public final class State {
     
@@ -81,7 +81,8 @@ public final class State {
     private Set<String> ignoredAlways;
     private int forceCount;
     private int forcePercent;
-    public Set<Event.Type> monitoredActivity;
+    Set<Event.Type> monitoredActivity;
+    Set<String> monitoredCustomActivity;
     private Map<Notification.Type, Notification> notifications = new HashMap<Notification.Type, Notification>();
     
     // Status
@@ -91,7 +92,7 @@ public final class State {
     Integer safeSleepTask = null;
     
     State(final World world, final boolean sleep, final boolean safe, final int inactivityLimit, final Set<String> ignoredAlways
-            , final int forceCount, final int forcePercent, final Set<Event.Type> monitoredActivity) {
+            , final int forceCount, final int forcePercent, final Set<Event.Type> monitoredActivity, final Set<String> monitoredCustomActivity) {
         if (world == null)
             throw new IllegalArgumentException("world can't be null");
         
@@ -106,6 +107,7 @@ public final class State {
         this.forceCount = forceCount;
         this.forcePercent = forcePercent;
         this.monitoredActivity = (monitoredActivity != null ? monitoredActivity : new HashSet<Event.Type>());
+        this.monitoredCustomActivity = (monitoredCustomActivity != null ? monitoredCustomActivity : new HashSet<String>());
         
         for (Player player : world.getPlayers())
             if (player.isSleeping()) this.inBed.add(player);
@@ -229,7 +231,7 @@ public final class State {
      * @param type event type that caused this activity update for player
      */
     public void updateActivity(final Player player, final Event.Type type) {
-        // Only record monitored activity.
+        // Only record activity this world monitors for.
         if (!this.monitoredActivity.contains(type)) return;
         
         this.activity.put(player, System.currentTimeMillis());

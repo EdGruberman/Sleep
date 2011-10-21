@@ -67,130 +67,130 @@ class PlayerActivity extends PlayerListener implements ActivityMonitor {
     public void onPlayerBedEnter(final PlayerBedEnterEvent event) {
         if (event.isCancelled()) return;
 
-        ActivityManager.updateActivity(event.getPlayer(), event.getType());
+        ActivityManager.updateActivity(event.getPlayer(), event);
     }
     
     @Override
     public void onPlayerBedLeave(final PlayerBedLeaveEvent event) {
-        ActivityManager.updateActivity(event.getPlayer(), event.getType());
+        ActivityManager.updateActivity(event.getPlayer(), event);
     }
     
     @Override
     public void onPlayerTeleport(final PlayerTeleportEvent event) {
         if (event.isCancelled()) return;
 
-        ActivityManager.updateActivity(event.getPlayer(), event.getType());
+        ActivityManager.updateActivity(event.getPlayer(), event);
     }
     
     @Override
     public void onPlayerJoin(final PlayerJoinEvent event) {
-        ActivityManager.updateActivity(event.getPlayer(), event.getType());
+        ActivityManager.updateActivity(event.getPlayer(), event);
     }
     
     @Override
     public void onPlayerMove(final PlayerMoveEvent event) {
         if (event.isCancelled()) return;
         
-        ActivityManager.updateActivity(event.getPlayer(), event.getType());
+        ActivityManager.updateActivity(event.getPlayer(), event);
     }
     
     @Override
     public void onPlayerInteract(final PlayerInteractEvent event) {
         if (event.isCancelled()) return;
         
-        ActivityManager.updateActivity(event.getPlayer(), event.getType());
+        ActivityManager.updateActivity(event.getPlayer(), event);
     }
     
     @Override
     public void onPlayerChat(final PlayerChatEvent event) {
         if (event.isCancelled()) return;
         
-        ActivityManager.updateActivity(event.getPlayer(), event.getType());
+        ActivityManager.updateActivity(event.getPlayer(), event);
     }
     
     @Override
     public void onPlayerDropItem(final PlayerDropItemEvent event) {
         if (event.isCancelled()) return;
         
-        ActivityManager.updateActivity(event.getPlayer(), event.getType());
+        ActivityManager.updateActivity(event.getPlayer(), event);
     }
     
     @Override
     public void onPlayerToggleSneak(final PlayerToggleSneakEvent event) {
         if (event.isCancelled()) return;
         
-        ActivityManager.updateActivity(event.getPlayer(), event.getType());
+        ActivityManager.updateActivity(event.getPlayer(), event);
     }
     
     @Override
     public void onItemHeldChange(final PlayerItemHeldEvent event) {
-        ActivityManager.updateActivity(event.getPlayer(), event.getType());
+        ActivityManager.updateActivity(event.getPlayer(), event);
     }
     
     @Override
     public void onPlayerAnimation(final PlayerAnimationEvent event) {
-        ActivityManager.updateActivity(event.getPlayer(), event.getType());
+        ActivityManager.updateActivity(event.getPlayer(), event);
     }
     
     @Override
     public void onPlayerBucketFill(final PlayerBucketFillEvent event) {
         if (event.isCancelled()) return;
 
-        ActivityManager.updateActivity(event.getPlayer(), event.getType());
+        ActivityManager.updateActivity(event.getPlayer(), event);
     }
     
     @Override
     public void onPlayerBucketEmpty(final PlayerBucketEmptyEvent event) {
         if (event.isCancelled()) return;
 
-        ActivityManager.updateActivity(event.getPlayer(), event.getType());
+        ActivityManager.updateActivity(event.getPlayer(), event);
     }
     
     @Override
     public void onPlayerEggThrow(final PlayerEggThrowEvent event) {
-        ActivityManager.updateActivity(event.getPlayer(), event.getType());
+        ActivityManager.updateActivity(event.getPlayer(), event);
     }
     
     @Override
     public void onPlayerFish(final PlayerFishEvent event) {
         if (event.isCancelled()) return;
 
-        ActivityManager.updateActivity(event.getPlayer(), event.getType());
+        ActivityManager.updateActivity(event.getPlayer(), event);
     }
     
     @Override
     public void onPlayerInteractEntity(final PlayerInteractEntityEvent event) {
         if (event.isCancelled()) return;
 
-        ActivityManager.updateActivity(event.getPlayer(), event.getType());
+        ActivityManager.updateActivity(event.getPlayer(), event);
     }
     
     @Override
     public void onInventoryOpen(final PlayerInventoryEvent event) {
-        ActivityManager.updateActivity(event.getPlayer(), event.getType());
+        ActivityManager.updateActivity(event.getPlayer(), event);
     }
     
     @Override
     public void onPlayerLogin(final PlayerLoginEvent event) {
-        ActivityManager.updateActivity(event.getPlayer(), event.getType());
+        ActivityManager.updateActivity(event.getPlayer(), event);
     }
     
     @Override
     public void onPlayerPickupItem(final PlayerPickupItemEvent event) {
         if (event.isCancelled()) return;
 
-        ActivityManager.updateActivity(event.getPlayer(), event.getType());
+        ActivityManager.updateActivity(event.getPlayer(), event);
     }
     
     @Override
     public void onPlayerPortal(final PlayerPortalEvent event) {
         if (event.isCancelled()) return;
 
-        ActivityManager.updateActivity(event.getPlayer(), event.getType());
+        ActivityManager.updateActivity(event.getPlayer(), event);
     }
     
     @Override
     public void onPlayerRespawn(final PlayerRespawnEvent event) {
-        ActivityManager.updateActivity(event.getPlayer(), event.getType());
+        ActivityManager.updateActivity(event.getPlayer(), event);
     }
 }

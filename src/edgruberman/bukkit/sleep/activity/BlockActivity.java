@@ -33,14 +33,14 @@ final class BlockActivity extends BlockListener implements ActivityMonitor {
     public void onBlockBreak(final BlockBreakEvent event) {
         if (event.isCancelled()) return;
 
-        ActivityManager.updateActivity(event.getPlayer(), event.getType());
+        ActivityManager.updateActivity(event.getPlayer(), event);
     }
     
     @Override
     public void onBlockDamage(final BlockDamageEvent event) {
         if (event.isCancelled()) return;
 
-        ActivityManager.updateActivity(event.getPlayer(), event.getType());
+        ActivityManager.updateActivity(event.getPlayer(), event);
     }
     
     @Override
@@ -49,13 +49,13 @@ final class BlockActivity extends BlockListener implements ActivityMonitor {
         
         if (event.getPlayer() == null) return;
         
-        ActivityManager.updateActivity(event.getPlayer(), event.getType());
+        ActivityManager.updateActivity(event.getPlayer(), event);
     }
     
     @Override
     public void onBlockPlace(final BlockPlaceEvent event) {
         if (event.isCancelled()) return;
         
-        ActivityManager.updateActivity(event.getPlayer(), event.getType());
+        ActivityManager.updateActivity(event.getPlayer(), event);
     }
 }

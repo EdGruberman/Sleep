@@ -1,8 +1,12 @@
 package edgruberman.bukkit.sleep.activity;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.Listener;
@@ -11,71 +15,88 @@ import org.bukkit.plugin.PluginManager;
 
 import edgruberman.bukkit.messagemanager.MessageLevel;
 import edgruberman.bukkit.sleep.Main;
-import edgruberman.bukkit.sleep.State;
 
 public final class ActivityManager {
     
     public static Set<ActivityMonitor> monitors = new HashSet<ActivityMonitor>();
+    public static Map<Player, Long> last = new HashMap<Player, Long>();
     
-    private static Plugin plugin;
+    private static Plugin owner;
     private static Set<Event.Type> registered = new HashSet<Event.Type>();
     
     public ActivityManager(final Plugin plugin) {
-        ActivityManager.plugin = plugin;
+        ActivityManager.owner = plugin;
         ActivityManager.monitors.add(new BlockActivity());
         ActivityManager.monitors.add(new EntityActivity());
         ActivityManager.monitors.add(new PlayerActivity());
         ActivityManager.monitors.add(new VehicleActivity());
+        ActivityManager.monitors.add(new CustomActivity());
+    }
+    
+    public static void registerEvents(Set<Event.Type> monitored) {
+        ActivityManager.registerEvents(monitored, Collections.<String>emptySet());
     }
     
     /**
-     * Register events monitored by at least one world, that this monitor
-     * supports, and have not already been registered by this monitor.
+     * Register events that are supported and have not already been registered.
+     * 
+     * @param requested events requested to be monitored if supported
+     * @param custom name of custom events to monitor if supported (null is allowed)
      */
-    public static void registerEvents() {
-        PluginManager pm = ActivityManager.plugin.getServer().getPluginManager();
-        
-        // Determine which events are monitored by at least one world.
-        Set<Event.Type> monitored = new HashSet<Event.Type>();
-        for (State state : State.tracked.values())
-            if (state.inactivityLimit > 0) monitored.addAll(state.monitoredActivity);
+    public static void registerEvents(final Set<Event.Type> requested, final Set<String> custom) {
+        PluginManager pm = ActivityManager.owner.getServer().getPluginManager();
         
         // Filter out events already registered.
-        monitored.removeAll(ActivityManager.registered);
+        requested.removeAll(ActivityManager.registered);
         
-        // Register events which are monitored by at least one world.
+        // Filter out custom event names not supported.
+        Set<String> supportedCustom = new HashSet<String>((custom != null ? custom : Collections.<String>emptySet()));
+        supportedCustom.retainAll(CustomActivity.SUPPORTED_CUSTOMS);
+        
         for (ActivityMonitor monitor : ActivityManager.monitors) {
-            // Register events this monitor supports.
-            Set<Event.Type> supported = new HashSet<Event.Type>(monitored);
+            // Register only events this monitor supports.
+            Set<Event.Type> supported = new HashSet<Event.Type>(requested);
             supported.retainAll(monitor.supports());
             
             for (Event.Type type : supported) {
-                pm.registerEvent(type, (Listener) monitor, Event.Priority.Monitor, ActivityManager.plugin);
+                // Do not register custom event listener if no supported custom events.
+                if ((type == Event.Type.CUSTOM_EVENT) && (supportedCustom.size() == 0)) continue;
+                
+                pm.registerEvent(type, (Listener) monitor, Event.Priority.Monitor, ActivityManager.owner);
                 ActivityManager.registered.add(type);
-                Main.messageManager.log("Registered " + type.name() + " event to monitor for player activity.", MessageLevel.FINER);
+                Main.messageManager.log("Registered event to monitor for player activity: " + type.name(), MessageLevel.FINER);
+                
+                if (type == Event.Type.CUSTOM_EVENT) {
+                    CustomActivity.registered.addAll(supportedCustom);
+                    Main.messageManager.log("Registered custom event names to monitor for player activity: " + CustomActivity.registered, MessageLevel.FINER);
+                }
+                
             }
         }
     }
     
-    public static boolean isSupported(Event.Type type) {
+    public static boolean isSupported(final Event.Type type) {
         for (ActivityMonitor monitor : ActivityManager.monitors)
             if (monitor.supports().contains(type)) return true;
         
         return false;
     }
     
+    public static boolean isSupportedCustom(final String name) {
+        return CustomActivity.SUPPORTED_CUSTOMS.contains(name);
+    }
+    
     /**
-     * Update activity for player with associated world sleep state.
+     * Record last activity for player.
      * (This could be called on high frequency events such as PLAYER_MOVE.)
      * 
      * @param player player to record this as last activity for
      * @param type event type that player engaged in
      */
-    static void updateActivity(final Player player, final Event.Type type) {
-        // Ignore for untracked world sleep states.
-        State state = State.tracked.get(player.getWorld());
-        if (state == null) return;
+    static void updateActivity(final Player player, final Event event) {
+        last.put(player, System.currentTimeMillis());
         
-        state.updateActivity(player, type);
+        Activity activity = new Activity(player, event.getType());
+        Bukkit.getServer().getPluginManager().callEvent(activity);
     }
 }
