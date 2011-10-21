@@ -2,6 +2,7 @@ package edgruberman.bukkit.sleep;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -112,19 +113,29 @@ public final class ConfigurationFile {
     }
     
     /**
-     * Loads the configuration file from owning plugin's data folder.
+     * Loads the configuration file from owning plugin's data folder.  If file
+     * exists, it will be expected to be properly configured.  If file does not
+     * exist and defaults are supplied in the JAR, the defaults will be used.
+     * Otherwise an empty configuration will be set.
      */
     void load() {
         this.config = YamlConfiguration.loadConfiguration(this.file);
+        if (this.file.exists()) return;
         
-        // Load defaults if supplied in JAR and file does not already exist.
-        if (!this.file.exists() && this.defaults != null) {
-            this.config.setDefaults(YamlConfiguration.loadConfiguration(this.owner.getResource(this.defaults)));
-            this.config.options().copyDefaults(true);
-            this.save();
-            
-            this.config = YamlConfiguration.loadConfiguration(this.file);
+        // Check if defaults are supplied in JAR
+        InputStream defaults = (this.defaults != null ? this.owner.getResource(this.defaults) : null);
+        if (defaults == null) {
+            // No file, no defaults, reset to empty configuration
+            this.config = new YamlConfiguration();
+            return;
         }
+
+        // Load defaults supplied in JAR
+        this.config.setDefaults(YamlConfiguration.loadConfiguration(defaults));
+        this.config.options().copyDefaults(true);
+        this.save();
+        
+        this.config = YamlConfiguration.loadConfiguration(this.file);
     }
     
     int getMaxSaveFrequency() {

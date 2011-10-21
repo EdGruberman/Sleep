@@ -1,5 +1,6 @@
 package edgruberman.bukkit.sleep;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -126,8 +127,8 @@ public final class Main extends JavaPlugin {
         int inactivityLimit = Main.loadInt(worldSpecific, pluginMain, "inactivityLimit", State.DEFAULT_INACTIVITY_LIMIT);
         Main.messageManager.log("Sleep state for [" + world.getName() + "] Inactivity Limit (seconds): " + inactivityLimit, MessageLevel.CONFIG);
         
-        Set<String> ignoredAlways = new HashSet<String>(Main.loadStringList(worldSpecific, pluginMain, "ignoredAlways", null));
-        ignoredAlways.addAll(Main.loadStringList(worldSpecific, pluginMain, "ignoredAlwaysAlso", null));
+        Set<String> ignoredAlways = new HashSet<String>(Main.loadStringList(worldSpecific, pluginMain, "ignoredAlways", new ArrayList<String>()));
+        ignoredAlways.addAll(Main.loadStringList(worldSpecific, pluginMain, "ignoredAlwaysAlso", new ArrayList<String>()));
         Main.messageManager.log("Sleep state for [" + world.getName() + "] Always Ignored Players (Configuration File): " + ignoredAlways, MessageLevel.CONFIG);
         
         int forceCount = Main.loadInt(worldSpecific, pluginMain, "force.count", State.DEFAULT_FORCE_COUNT);
@@ -137,7 +138,7 @@ public final class Main extends JavaPlugin {
         Main.messageManager.log("Sleep state for [" + world.getName() + "] Forced Sleep Minimum Percent: " + forcePercent, MessageLevel.CONFIG);
         
         Set<Event.Type> monitoredActivity = new HashSet<Event.Type>();
-        for (String type : Main.loadStringList(worldSpecific, pluginMain, "activity", null))
+        for (String type : Main.loadStringList(worldSpecific, pluginMain, "activity", Collections.<String>emptyList()))
             if (ActivityManager.isSupported(Event.Type.valueOf(type))) {
                 monitoredActivity.add(Event.Type.valueOf(type));
             } else {
