@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.World.Environment;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -32,9 +33,11 @@ public final class Main extends JavaPlugin {
     private static final String WORLD_SPECIFICS = "Worlds";
 
     public static MessageManager messageManager;
+
+    static Plugin plugin;
     
     private static ConfigurationFile configurationFile;
-    static Plugin plugin;
+    private static IdleMonitor idleMonitor = null;
     
     public void onLoad() {
         Main.messageManager = new MessageManager(this);
@@ -51,7 +54,7 @@ public final class Main extends JavaPlugin {
     
     public void onEnable() {
         // Load configuration file and load initial sleep states.
-        this.loadConfiguration();
+        Main.loadConfiguration();
         
         // Track sleep state for new worlds as appropriate.
         new StateLoader(this);
@@ -81,10 +84,10 @@ public final class Main extends JavaPlugin {
      * This will cause new events to be registered as needed.
      */
     @SuppressWarnings("unchecked")
-    public void loadConfiguration() {
+    public static void loadConfiguration() {
         Main.configurationFile.load();
         
-        State.defaultNether = this.findDefaultNether();
+        State.defaultNether = Main.findDefaultNether();
         Main.messageManager.log("Default Nether: " + (State.defaultNether != null ? State.defaultNether.getName() : "<Not found>"), MessageLevel.CONFIG);
         
         State.excluded.clear();
@@ -103,7 +106,10 @@ public final class Main extends JavaPlugin {
             }
         
         // Ensure activities listed in configuration are monitored.
-        ActivityManager.registerEvents(monitored, custom);
+        if (monitored.size() > 0) {
+            if (Main.idleMonitor == null) Main.idleMonitor = new IdleMonitor(Main.plugin);
+            ActivityManager.registerEvents(monitored, custom);
+        }
     }
     
     /**
@@ -134,9 +140,6 @@ public final class Main extends JavaPlugin {
         boolean safe = Main.loadBoolean(worldSpecific, pluginMain, "safe", State.DEFAULT_SAFE);
         Main.messageManager.log("Sleep state for [" + world.getName() + "] Safe (No nightmares): " + safe, MessageLevel.CONFIG);
         
-        int inactivityLimit = Main.loadInt(worldSpecific, pluginMain, "inactivityLimit", State.DEFAULT_INACTIVITY_LIMIT);
-        Main.messageManager.log("Sleep state for [" + world.getName() + "] Inactivity Limit (seconds): " + inactivityLimit, MessageLevel.CONFIG);
-        
         Set<String> ignoredAlways = new HashSet<String>(Main.loadStringList(worldSpecific, pluginMain, "ignoredAlways", new ArrayList<String>()));
         ignoredAlways.addAll(Main.loadStringList(worldSpecific, pluginMain, "ignoredAlwaysAlso", new ArrayList<String>()));
         Main.messageManager.log("Sleep state for [" + world.getName() + "] Always Ignored Players (Configuration File): " + ignoredAlways, MessageLevel.CONFIG);
@@ -147,33 +150,38 @@ public final class Main extends JavaPlugin {
         int forcePercent = Main.loadInt(worldSpecific, pluginMain, "force.percent", State.DEFAULT_FORCE_PERCENT); 
         Main.messageManager.log("Sleep state for [" + world.getName() + "] Forced Sleep Minimum Percent: " + forcePercent, MessageLevel.CONFIG);
         
+        int inactivityLimit = Main.loadInt(worldSpecific, pluginMain, "inactivityLimit", State.DEFAULT_INACTIVITY_LIMIT);
+        Main.messageManager.log("Sleep state for [" + world.getName() + "] Inactivity Limit (seconds): " + inactivityLimit, MessageLevel.CONFIG);
+        
         Set<Event.Type> monitoredActivity = new HashSet<Event.Type>();
         Set<String> monitoredCustomActivity = new HashSet<String>();
-        for (String event : Main.loadStringList(worldSpecific, pluginMain, "activity", Collections.<String>emptyList())) {
-            String type = event;
-            String name = null;
-            
-            if (event.contains(":")) {
-                type = "CUSTOM_EVENT";
-                name = event.substring(event.indexOf(":") + 1);
+        if (inactivityLimit > 0) {
+            for (String event : Main.loadStringList(worldSpecific, pluginMain, "activity", Collections.<String>emptyList())) {
+                String type = event;
+                String name = null;
                 
-                if (!ActivityManager.isSupportedCustom(name)) {
-                    Main.messageManager.log("Custom event not supported for monitoring activity: " + name, MessageLevel.WARNING);
-                    continue;
+                if (event.contains(":")) {
+                    type = "CUSTOM_EVENT";
+                    name = event.substring(event.indexOf(":") + 1);
+                    
+                    if (!ActivityManager.isSupportedCustom(name)) {
+                        Main.messageManager.log("Custom event not supported for monitoring activity: " + name, MessageLevel.WARNING);
+                        continue;
+                    }
+                    
+                    monitoredCustomActivity.add(name);
                 }
                 
-                monitoredCustomActivity.add(name);
+                if (ActivityManager.isSupported(Main.eventTypeValueOf(type))) {
+                    monitoredActivity.add(Main.eventTypeValueOf(type));
+                } else {
+                    Main.messageManager.log("Event not supported for monitoring activity: " + type, MessageLevel.WARNING);
+                }
             }
-            
-            if (ActivityManager.isSupported(Main.eventTypeValueOf(type))) {
-                monitoredActivity.add(Main.eventTypeValueOf(type));
-            } else {
-                Main.messageManager.log("Event not supported for monitoring activity: " + type, MessageLevel.WARNING);
-            }
+            Main.messageManager.log("Sleep state for [" + world.getName() + "] Monitored Activity: " + monitoredActivity.toString(), MessageLevel.CONFIG);
+            if (monitoredCustomActivity.size() > 0)
+                Main.messageManager.log("Sleep state for [" + world.getName() + "] Monitored Custom Activity: " + monitoredCustomActivity.toString(), MessageLevel.CONFIG);
         }
-        Main.messageManager.log("Sleep state for [" + world.getName() + "] Monitored Activity: " + monitoredActivity.toString(), MessageLevel.CONFIG);
-        if (monitoredCustomActivity.size() > 0)
-            Main.messageManager.log("Sleep state for [" + world.getName() + "] Monitored Custom Activity: " + monitoredCustomActivity.toString(), MessageLevel.CONFIG);
         
         State state = new State(world, sleep, safe, inactivityLimit, ignoredAlways, forceCount, forcePercent, monitoredActivity, monitoredCustomActivity);
         
@@ -262,11 +270,11 @@ public final class Main extends JavaPlugin {
      * 
      * @return world that is associated as default nether
      */
-    private World findDefaultNether() {
+    private static World findDefaultNether() {
         // Find first nether world which should be the nether world the server associates by default.
-        for (int i = 0; i < this.getServer().getWorlds().size(); ++i)
-            if (this.getServer().getWorlds().get(i).getEnvironment().equals(Environment.NETHER))
-                return this.getServer().getWorlds().get(i);
+        for (int i = 0; i < Bukkit.getServer().getWorlds().size(); ++i)
+            if (Bukkit.getServer().getWorlds().get(i).getEnvironment().equals(Environment.NETHER))
+                return Bukkit.getServer().getWorlds().get(i);
         
         return null;
     }
