@@ -132,7 +132,7 @@ public final class Main extends JavaPlugin {
         // by defaults in the configuration file, overridden by world specific
         // settings in the Worlds folder.
         FileConfiguration pluginMain = Main.configurationFile.getConfig();
-        FileConfiguration worldSpecific = (new ConfigurationFile(Main.plugin, WORLD_SPECIFICS + "/" + world.getName() + ".yml")).getConfig();
+        FileConfiguration worldSpecific = (new ConfigurationFile(Main.plugin, WORLD_SPECIFICS + "/" + world.getName() + "/config.yml")).getConfig();
         
         boolean sleep = Main.loadBoolean(worldSpecific, pluginMain, "sleep", State.DEFAULT_SLEEP);
         Main.messageManager.log("Sleep state for [" + world.getName() + "] Sleep Enabled: " + sleep, MessageLevel.CONFIG);
