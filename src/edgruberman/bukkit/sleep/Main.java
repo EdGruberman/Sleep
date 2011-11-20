@@ -43,8 +43,6 @@ public final class Main extends JavaPlugin {
         Main.messageManager = new MessageManager(this);
         Main.messageManager.log("Version " + this.getDescription().getVersion());
         
-        Main.configurationFile = new ConfigurationFile(this);
-        
         // Static loading of world specific configuration files requires reference to owning plugin.
         Main.plugin = this;
         
@@ -53,6 +51,8 @@ public final class Main extends JavaPlugin {
     }
     
     public void onEnable() {
+        Main.configurationFile = new ConfigurationFile(this);
+        
         // Load configuration file and load initial sleep states.
         Main.loadConfiguration();
         
@@ -132,7 +132,7 @@ public final class Main extends JavaPlugin {
         // by defaults in the configuration file, overridden by world specific
         // settings in the Worlds folder.
         FileConfiguration pluginMain = Main.configurationFile.getConfig();
-        FileConfiguration worldSpecific = (new ConfigurationFile(Main.plugin, WORLD_SPECIFICS + "/" + world.getName() + "/config.yml")).getConfig();
+        FileConfiguration worldSpecific = (new ConfigurationFile(Main.plugin, WORLD_SPECIFICS + "/" + world.getName() + "/config.yml", WORLD_SPECIFICS + "/" + world.getName() + "/config.yml")).getConfig();
         
         boolean sleep = Main.loadBoolean(worldSpecific, pluginMain, "sleep", State.DEFAULT_SLEEP);
         Main.messageManager.log("Sleep state for [" + world.getName() + "] Sleep Enabled: " + sleep, MessageLevel.CONFIG);
