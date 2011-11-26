@@ -43,6 +43,8 @@ public final class Main extends JavaPlugin {
         Main.messageManager = new MessageManager(this);
         Main.messageManager.log("Version " + this.getDescription().getVersion());
         
+        Main.configurationFile = new ConfigurationFile(this);
+        
         // Static loading of world specific configuration files requires reference to owning plugin.
         Main.plugin = this;
         
@@ -50,9 +52,7 @@ public final class Main extends JavaPlugin {
         new ActivityManager(this);
     }
     
-    public void onEnable() {
-        Main.configurationFile = new ConfigurationFile(this);
-        
+    public void onEnable() {        
         // Load configuration file and load initial sleep states.
         Main.loadConfiguration();
         

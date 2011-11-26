@@ -420,8 +420,7 @@ public final class State {
      * @return true if player has permission; otherwise false
      */
     private boolean isAutoForcer(final Player player) {
-        return player.hasPermission(Main.PERMISSION_PREFIX + ".force")
-            || player.hasPermission(Main.PERMISSION_PREFIX + ".force." + player.getWorld().getName());
+        return player.hasPermission(Main.PERMISSION_PREFIX + ".force");
     }
     
     /**
@@ -506,8 +505,7 @@ public final class State {
         
         for (Player player : this.world.getPlayers())
             if (this.isIgnoredAlways(player)
-                    || player.hasPermission("sleep.ignore")
-                    || player.hasPermission("sleep.ignore." + this.world.getName()))
+                    || player.hasPermission("sleep.ignore"))
                 ignored.add(player);
         
         return ignored;
