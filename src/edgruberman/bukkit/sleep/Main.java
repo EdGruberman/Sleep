@@ -91,6 +91,7 @@ public final class Main extends JavaPlugin {
         Main.messageManager.log("Default Nether: " + (State.defaultNether != null ? State.defaultNether.getName() : "<Not found>"), MessageLevel.CONFIG);
         
         State.excluded.clear();
+        if (State.defaultNether != null) State.excluded.add(State.defaultNether.getName());
         State.excluded.addAll(Main.configurationFile.getConfig().getList("excluded", Collections.<String>emptyList()));
         Main.messageManager.log("Excluded Worlds: " + State.excluded, MessageLevel.CONFIG);
         
@@ -119,8 +120,7 @@ public final class Main extends JavaPlugin {
      * @param world world to track sleep state for
      */
     static void loadState(final World world) {
-        // Cancel this function for explicitly excluded worlds and the default nether.
-        if (State.excluded.contains(world.getName()) || world.equals(State.defaultNether)) {
+        if (State.excluded.contains(world.getName())) {
             Main.messageManager.log("Sleep state for [" + world.getName() + "] will not be tracked.", MessageLevel.CONFIG);
             return;
         }
@@ -157,25 +157,15 @@ public final class Main extends JavaPlugin {
         Set<String> monitoredCustomActivity = new HashSet<String>();
         if (inactivityLimit > 0) {
             for (String event : Main.loadStringList(worldSpecific, pluginMain, "activity", Collections.<String>emptyList())) {
-                String type = event;
-                String name = null;
+                Event.Type type = Main.eventTypeValueOf(event.split(":")[0]);
+                String name = (event.contains(":") ? event.split(":")[1] : null);
                 
-                if (event.contains(":")) {
-                    type = "CUSTOM_EVENT";
-                    name = event.substring(event.indexOf(":") + 1);
-                    
-                    if (!ActivityManager.isSupportedCustom(name)) {
-                        Main.messageManager.log("Custom event not supported for monitoring activity: " + name, MessageLevel.WARNING);
-                        continue;
-                    }
-                    
+                if (type != Event.Type.CUSTOM_EVENT && ActivityManager.isSupported(type)) {
+                    monitoredActivity.add(type);
+                } else if (type == Event.Type.CUSTOM_EVENT && ActivityManager.isSupportedCustom(name)) {
                     monitoredCustomActivity.add(name);
-                }
-                
-                if (ActivityManager.isSupported(Main.eventTypeValueOf(type))) {
-                    monitoredActivity.add(Main.eventTypeValueOf(type));
                 } else {
-                    Main.messageManager.log("Event not supported for monitoring activity: " + type, MessageLevel.WARNING);
+                    Main.messageManager.log("Event not supported for monitoring activity: " + event, MessageLevel.WARNING);
                 }
             }
             Main.messageManager.log("Sleep state for [" + world.getName() + "] Monitored Activity: " + monitoredActivity.toString(), MessageLevel.CONFIG);

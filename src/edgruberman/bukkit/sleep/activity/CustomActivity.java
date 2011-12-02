@@ -9,8 +9,6 @@ import org.bukkit.event.CustomEventListener;
 import org.bukkit.event.Event;
 import org.bukkit.event.Event.Type;
 
-import edgruberman.bukkit.messageformatter.PlayerChat;
-
 final class CustomActivity extends CustomEventListener implements ActivityMonitor {
     
     /**
@@ -41,8 +39,8 @@ final class CustomActivity extends CustomEventListener implements ActivityMonito
         }
         
         if (event.getEventName().equals("MessageFormatter.PLAYER_CHAT")) {
-            PlayerChat chat = (PlayerChat) event;
-            ActivityManager.updateActivity(chat.getPlayer(), chat);
+            PlayerEvent playerEvent = new edgruberman.bukkit.sleep.activity.MessageFormatter.PlayerChat(event);
+            ActivityManager.updateActivity(playerEvent.player, event);
         }
     }
 }

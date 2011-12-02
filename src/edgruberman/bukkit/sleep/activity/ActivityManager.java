@@ -30,7 +30,7 @@ public final class ActivityManager {
         ActivityManager.monitors.add(new EntityActivity());
         ActivityManager.monitors.add(new PlayerActivity());
         ActivityManager.monitors.add(new VehicleActivity());
-        //ActivityManager.monitors.add(new CustomActivity());
+        ActivityManager.monitors.add(new CustomActivity());
     }
     
     public static void registerEvents(Set<Event.Type> monitored) {
@@ -51,9 +51,7 @@ public final class ActivityManager {
         
         // Filter out custom event names not supported.
         Set<String> supportedCustom = new HashSet<String>((custom != null ? custom : Collections.<String>emptySet()));
-        // TODO Fix custom events
-        supportedCustom.clear();
-        //supportedCustom.retainAll(CustomActivity.SUPPORTED_CUSTOMS);
+        supportedCustom.retainAll(CustomActivity.SUPPORTED_CUSTOMS);
         
         for (ActivityMonitor monitor : ActivityManager.monitors) {
             // Register only events this monitor supports.
@@ -85,7 +83,7 @@ public final class ActivityManager {
     }
     
     public static boolean isSupportedCustom(final String name) {
-        return false; // TODO Fix custom events // CustomActivity.SUPPORTED_CUSTOMS.contains(name);
+        return CustomActivity.SUPPORTED_CUSTOMS.contains(name);
     }
     
     /**
