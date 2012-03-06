@@ -115,11 +115,11 @@ public final class Main extends JavaPlugin {
         final int forcePercent = Main.loadInt(worldSpecific, pluginMain, "force.percent", State.DEFAULT_FORCE_PERCENT);
         Main.messageManager.log("Sleep state for [" + world.getName() + "] Forced Sleep Minimum Percent: " + forcePercent, MessageLevel.CONFIG);
 
-        final int inactivityLimit = Main.loadInt(worldSpecific, pluginMain, "inactivityLimit", State.DEFAULT_INACTIVITY_LIMIT);
-        Main.messageManager.log("Sleep state for [" + world.getName() + "] Inactivity Limit (seconds): " + inactivityLimit, MessageLevel.CONFIG);
+        final int idle = Main.loadInt(worldSpecific, pluginMain, "idle", State.DEFAULT_IDLE);
+        Main.messageManager.log("Sleep state for [" + world.getName() + "] Idle Threshold (seconds): " + idle, MessageLevel.CONFIG);
 
         final List<Interpreter> activity = new ArrayList<Interpreter>();
-        if (inactivityLimit > 0) {
+        if (idle > 0) {
             for (final String className : Main.loadStringList(worldSpecific, pluginMain, "activity", Collections.<String>emptyList())) {
                 final Interpreter interpreter = EventTracker.newInterpreter(className);
                 if (interpreter == null) {
@@ -132,7 +132,7 @@ public final class Main extends JavaPlugin {
             Main.messageManager.log("Sleep state for [" + world.getName() + "] Monitored Activity: " + activity.size() + " events", MessageLevel.CONFIG);
         }
 
-        final State state = new State(world, sleep, inactivityLimit, forceCount, forcePercent, activity);
+        final State state = new State(world, sleep, idle, forceCount, forcePercent, activity);
 
         for (final Notification.Type type : Notification.Type.values()) {
             final Notification notification = Main.loadNotification(type, worldSpecific, pluginMain);

@@ -33,9 +33,9 @@ public final class State implements Observer {
     /**
      * Time in seconds a player must not have any recorded activity in order to
      * be considered away. (-1 will disable this feature and never treat a
-     * player as inactive.)
+     * player as idle.)
      */
-    static final int DEFAULT_INACTIVITY_LIMIT = -1;
+    static final int DEFAULT_IDLE = -1;
 
     /**
      * Minimum number of players needed in bed for sleep to be forced. (-1 will
@@ -71,7 +71,7 @@ public final class State implements Observer {
     // Configuration
     World world;
     private final boolean isSleepEnabled;
-    public int inactivityLimit;
+    public int idle;
     private final int forceCount;
     private final int forcePercent;
     final EventTracker tracker = new EventTracker(Main.plugin);
@@ -82,7 +82,7 @@ public final class State implements Observer {
     private List<Player> ignoredCache = new ArrayList<Player>();
     private boolean isForcingSleep = false;
 
-    State(final World world, final boolean sleep, final int inactivityLimit, final int forceCount, final int forcePercent, final List<Interpreter> activity) {
+    State(final World world, final boolean sleep, final int idle, final int forceCount, final int forcePercent, final List<Interpreter> activity) {
         if (world == null)
             throw new IllegalArgumentException("world can't be null");
 
@@ -91,7 +91,7 @@ public final class State implements Observer {
 
         this.world = world;
         this.isSleepEnabled = sleep;
-        this.inactivityLimit = inactivityLimit;
+        this.idle = idle;
         this.forceCount = forceCount;
         this.forcePercent = forcePercent;
         if (activity != null) {
@@ -239,7 +239,7 @@ public final class State implements Observer {
     }
 
     /**
-     * Configure all players in the default nether, inactive players in this
+     * Configure all players in the default nether, idle players in this
      * world, and always ignored players in this world to ignore sleep. If all
      * other players in the world are then either in bed or ignoring sleep, a
      * natural sleep cycle should automatically commence.
@@ -254,9 +254,9 @@ public final class State implements Observer {
         for (final Player player : this.ignored())
             this.ignoreSleep(player, true, "Always Ignored");
 
-        // Configure inactive players to ignore sleep
-        for (final Player player : this.inactive())
-            this.ignoreSleep(player, true, "Inactive");
+        // Configure idle players to ignore sleep
+        for (final Player player : this.idles())
+            this.ignoreSleep(player, true, "Idle");
 
         if (Main.messageManager.isLevel(Channel.Type.LOG, MessageLevel.FINE))
             Main.messageManager.log("[" + this.world.getName() + "] " + this.description(), MessageLevel.FINE);
@@ -413,10 +413,10 @@ public final class State implements Observer {
         final List<Player> ignored = this.ignored();
         ignored.removeAll(this.inBed);
 
-        final List<Player> inactive = this.inactive();
-        inactive.removeAll(this.inBed);
+        final List<Player> idles = this.idles();
+        idles.removeAll(this.inBed);
 
-        final int possible = this.world.getPlayers().size() - ignored.size() - inactive.size();
+        final int possible = this.world.getPlayers().size() - ignored.size() - idles.size();
         return (possible > 0 ? possible : 0);
     }
 
@@ -428,7 +428,9 @@ public final class State implements Observer {
     private List<Player> ignored() {
         final List<Player> ignored = new ArrayList<Player>();
         for (final Player player : this.world.getPlayers())
-            if (player.hasPermission("sleep.ignore") || player.hasPermission("sleep.ignore." + this.world.getName()))
+            if (player.hasPermission("sleep.ignore")
+                    || (player.isPermissionSet("sleep.ignore." + this.world.getName()) && player.hasPermission("sleep.ignore." + this.world.getName()))
+            )
                 ignored.add(player);
 
         this.ignoredCache = ignored;
@@ -436,17 +438,17 @@ public final class State implements Observer {
     }
 
     /**
-     * Compile a list of current players that are inactive.
+     * Compile a list of current players that are idle.
      *
-     * @return players that are considered inactive
+     * @return players that are considered idle
      */
-    public List<Player> inactive() {
-        final List<Player> inactive = new ArrayList<Player>();
+    public List<Player> idles() {
+        final List<Player> idles = new ArrayList<Player>();
         for (final Player player : this.world.getPlayers())
             if (!this.isActive(player))
-                inactive.add(player);
+                idles.add(player);
 
-        return inactive;
+        return idles;
     }
 
     /**
@@ -456,12 +458,12 @@ public final class State implements Observer {
      * @return true if player has been active recently; otherwise false
      */
     public boolean isActive(final Player player) {
-        if (this.inactivityLimit <= -1) return true;
+        if (this.idle <= -1) return true;
 
         final Long last = this.tracker.getLastFor(player);
         if (last == null) return false;
 
-        final long oldestActive = System.currentTimeMillis() - (this.inactivityLimit * 1000);
+        final long oldestActive = System.currentTimeMillis() - (this.idle * 1000);
         if (last < oldestActive) return false;
 
         return true;

@@ -21,12 +21,12 @@ class SleepWho extends Action {
     void execute(final Context context) {
         final World world = this.parseWorld(context);
         if (world == null) {
-            Main.messageManager.respond(context.sender, "Unable to determine world.", MessageLevel.SEVERE, false);
+            Main.messageManager.respond(context.sender, "Unable to determine world", MessageLevel.SEVERE, false);
             return;
         }
 
         if (!Somnologist.states.containsKey(world)) {
-            Main.messageManager.respond(context.sender, "Sleep state for [" + world.getName() + "] is not tracked.", MessageLevel.SEVERE, false);
+            Main.messageManager.respond(context.sender, "Sleep state for [" + world.getName() + "] is not tracked", MessageLevel.SEVERE, false);
             return;
         }
 
@@ -39,10 +39,10 @@ class SleepWho extends Action {
             for (final Player player : state.inBed)
                 message += player.getDisplayName()+ ", ";
 
-            final List<Player> inactive = state.inactive();
-            inactive.removeAll(state.inBed);
-            for (final Player player : inactive)
-                message += player.getDisplayName() + "(Inactive), ";
+            final List<Player> idles = state.idles();
+            idles.removeAll(state.inBed);
+            for (final Player player : idles)
+                message += player.getDisplayName() + "(Idle), ";
 
             message = message.substring(0, message.length() - 2);
         }

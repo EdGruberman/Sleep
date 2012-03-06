@@ -1,5 +1,5 @@
 sleep: true
-inactivityLimit: 60
+idle: 60
 force:
     count: -1
     percent: -1

@@ -30,7 +30,7 @@ class SleepForce extends Action {
         }
 
         if (state.inBed.size() == 0) {
-            Main.messageManager.respond(context.sender, "Need at least 1 person in bed to force sleep.", MessageLevel.SEVERE, false);
+            Main.messageManager.respond(context.sender, "Need at least 1 person in bed to force sleep", MessageLevel.SEVERE, false);
             return;
         }
 

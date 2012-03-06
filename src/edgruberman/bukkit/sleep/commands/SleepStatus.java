@@ -19,12 +19,12 @@ class SleepStatus extends Action {
     void execute(final Context context) {
         final World world = this.parseWorld(context);
         if (world == null) {
-            Main.messageManager.respond(context.sender, "Unable to determine world.", MessageLevel.SEVERE, false);
+            Main.messageManager.respond(context.sender, "Unable to determine world", MessageLevel.SEVERE, false);
             return;
         }
 
         if (!Somnologist.states.containsKey(world)) {
-            Main.messageManager.respond(context.sender, "Sleep state for [" + world.getName() + "] is not tracked.", MessageLevel.SEVERE, false);
+            Main.messageManager.respond(context.sender, "Sleep state for [" + world.getName() + "] is not tracked", MessageLevel.SEVERE, false);
             return;
         }
 
