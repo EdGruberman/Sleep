@@ -1,5 +1,4 @@
 sleep: true
-safe: false
 inactivityLimit: 60
 force:
     count: -1
@@ -13,31 +12,19 @@ notifications:
         format: ''
         maxFrequency: 10
         timestamp: false
-    NIGHTMARE:
-        format: ''
-        maxFrequency: 10
-        timestamp: false
-    FORCE_SLEEP:
+    FORCE:
         format: '%1$s is forcing sleep...'
-        maxFrequency: -1
-        timestamp: false
-    FORCE_SAFE:
-        format: '%1$s is forcing safe sleep...'
         maxFrequency: -1
         timestamp: false
     FORCE_CONFIGURATION:
         format: 'Server is forcing sleep...'
         maxFrequency: -1
         timestamp: false
-    FORCE_CONFIGURATION_SAFE:
-        format: 'Server is forcing safe sleep...'
-        maxFrequency: -1
-        timestamp: false
 activity:
-    - PLAYER_MOVE
-    - PLAYER_CHAT
-    - PLAYER_INTERACT
-    - PLAYER_DROP_ITEM
-    - PLAYER_TOGGLE_SNEAK
-    - PLAYER_ITEM_HELD
-    - PLAYER_JOIN
+    - PlayerMoveEvent
+    - PlayerChatEvent
+    - PlayerInteractEvent
+    - PlayerDropItemEvent
+    - PlayerToggleSneakEvent
+    - PlayerItemHeldEvent
+    - PlayerJoinEvent
