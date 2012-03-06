@@ -4,21 +4,21 @@ force:
     count: -1
     percent: -1
 notifications:
+    FORCE:
+        format: 'Forcing sleep...'
+        maxFrequency: -1
+        timestamp: false
+    FORCE_COMMAND:
+        format: '%1$s is forcing sleep...' # 1 = Player Display Name
+        maxFrequency: -1
+        timestamp: false
     ENTER_BED:
-        format: ''
+        format: '' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
         maxFrequency: 10
         timestamp: false
     LEAVE_BED:
-        format: ''
+        format: '' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
         maxFrequency: 10
-        timestamp: false
-    FORCE:
-        format: '%1$s is forcing sleep...'
-        maxFrequency: -1
-        timestamp: false
-    FORCE_CONFIGURATION:
-        format: 'Server is forcing sleep...'
-        maxFrequency: -1
         timestamp: false
 activity:
     - PlayerMoveEvent

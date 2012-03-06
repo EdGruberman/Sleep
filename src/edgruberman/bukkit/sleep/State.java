@@ -289,9 +289,9 @@ public final class State implements Observer {
         if (sender != null) {
             name = sender.getName();
             if (sender instanceof Player) name = ((Player) sender).getDisplayName();
-            type = Notification.Type.FORCE;
+            type = Notification.Type.FORCE_COMMAND;
         } else {
-            type = Notification.Type.FORCE_CONFIGURATION;
+            type = Notification.Type.FORCE;
         }
         this.notify(type, sender, name, this.needForSleep(), this.inBed.size(), this.possibleSleepers());
 
