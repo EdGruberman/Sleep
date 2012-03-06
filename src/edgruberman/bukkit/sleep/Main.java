@@ -98,7 +98,7 @@ public final class Main extends JavaPlugin {
         }
 
         // Discard any existing state tracking
-        Somnologist.states.remove(world);
+        Somnologist.remove(world);
 
         // Load configuration values using defaults defined in code
         // overridden by defaults in the configuration file

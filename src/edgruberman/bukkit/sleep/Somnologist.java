@@ -41,6 +41,14 @@ public final class Somnologist implements Listener {
         Somnologist.defaultNether = null;
     }
 
+    static void remove(final World world) {
+        final State state = Somnologist.states.get(world);
+        if (state == null) return;
+
+        state.tracker.clear();
+        Somnologist.states.remove(state);
+    }
+
     @EventHandler(priority = EventPriority.MONITOR)
     public void onWorldLoad(final WorldLoadEvent event) {
         Main.loadState(event.getWorld());
@@ -50,7 +58,7 @@ public final class Somnologist implements Listener {
     public void onWorldUnload(final WorldUnloadEvent event) {
         if (event.isCancelled()) return;
 
-        Somnologist.states.remove(event.getWorld());
+        Somnologist.remove(event.getWorld());
     }
 
 }
