@@ -42,8 +42,8 @@ public final class ConfigurationFile {
     private final Plugin owner;
     private final File file;
     private final String defaults;
-    private FileConfiguration config;
     private int maxSaveFrequency;
+    private FileConfiguration config = null;
     private Long lastSaveAttempt = null;
     private Integer taskSave = null;
 
@@ -150,6 +150,7 @@ public final class ConfigurationFile {
     }
 
     FileConfiguration getConfig() {
+        if (this.config == null) this.load();
         return this.config;
     }
 

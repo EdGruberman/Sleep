@@ -2,9 +2,7 @@ package edgruberman.bukkit.sleep;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -99,21 +97,17 @@ public final class Main extends JavaPlugin {
             return;
         }
 
-        // Discard any existing state tracking.
+        // Discard any existing state tracking
         Somnologist.states.remove(world);
 
-        // Load configuration values using defaults defined in code, overridden
-        // by defaults in the configuration file, overridden by world specific
-        // settings in the Worlds folder.
+        // Load configuration values using defaults defined in code
+        // overridden by defaults in the configuration file
+        // overridden by world specific settings in the Worlds folder
         final FileConfiguration pluginMain = Main.configurationFile.getConfig();
         final FileConfiguration worldSpecific = (new ConfigurationFile(Main.plugin, Main.WORLD_SPECIFICS + "/" + world.getName() + "/config.yml", Main.WORLD_SPECIFICS + "/" + world.getName() + "/config.yml")).getConfig();
 
         final boolean sleep = Main.loadBoolean(worldSpecific, pluginMain, "sleep", State.DEFAULT_SLEEP);
         Main.messageManager.log("Sleep state for [" + world.getName() + "] Sleep Enabled: " + sleep, MessageLevel.CONFIG);
-
-        final Set<String> ignoredAlways = new HashSet<String>(Main.loadStringList(worldSpecific, pluginMain, "ignoredAlways", new ArrayList<String>()));
-        ignoredAlways.addAll(Main.loadStringList(worldSpecific, pluginMain, "ignoredAlwaysAlso", new ArrayList<String>()));
-        Main.messageManager.log("Sleep state for [" + world.getName() + "] Always Ignored Players (Configuration File): " + ignoredAlways, MessageLevel.CONFIG);
 
         final int forceCount = Main.loadInt(worldSpecific, pluginMain, "force.count", State.DEFAULT_FORCE_COUNT);
         Main.messageManager.log("Sleep state for [" + world.getName() + "] Forced Sleep Minimum Count: " + forceCount, MessageLevel.CONFIG);
@@ -190,11 +184,9 @@ public final class Main extends JavaPlugin {
      * @return value read from configuration
      */
     private static List<String> loadStringList(final FileConfiguration override, final FileConfiguration main, final String path, final List<String> codeDefault) {
-        List<String> value = override.getStringList(path);
-        if (value == null) value = main.getStringList(path);
-        if (value == null) value = codeDefault;
-
-        return value;
+        if (override.isSet(path)) return override.getStringList(path);
+        if (main.isSet(path)) return main.getStringList(path);
+        return codeDefault;
     }
 
     /**
