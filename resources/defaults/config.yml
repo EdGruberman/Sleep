@@ -9,15 +9,15 @@ notifications:
         maxFrequency: -1
         timestamp: false
     FORCE_COMMAND:
-        format: '%1$s is forcing sleep...' # 1 = Player Display Name
+        format: '%1$s&_ is forcing sleep...' # 1 = Player Display Name
         maxFrequency: -1
         timestamp: false
     ENTER_BED:
-        format: '%1$s entered bed (%3$d/%4$d = +%2$d to sleep)' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
+        format: '%1$s&_ entered bed (%3$d/%4$d = +%2$d to sleep)' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
         maxFrequency: 10
         timestamp: false
     LEAVE_BED:
-        format: '%1$s left bed (%3$d/%4$d = +%2$d to sleep)' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
+        format: '%1$s&_ left bed (%3$d/%4$d = +%2$d to sleep)' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
         maxFrequency: 10
         timestamp: false
 activity:
