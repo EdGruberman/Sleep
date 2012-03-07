@@ -81,6 +81,7 @@ public final class State implements Observer {
     public Set<Player> inBed = new HashSet<Player>();
     private List<Player> ignoredCache = new ArrayList<Player>();
     private boolean isForcingSleep = false;
+    private Player bedActivity = null;
 
     State(final World world, final boolean sleep, final int idle, final int forceCount, final int forcePercent, final List<Interpreter> activity) {
         if (world == null)
@@ -117,7 +118,7 @@ public final class State implements Observer {
     /**
      * Process a player joining this world.
      *
-     * @param joiner player that joined this world
+     * @param joiner who joined this world
      */
     void worldJoined(final Player joiner) {
         this.processActivity(joiner, "WorldJoinEvent");
@@ -126,10 +127,14 @@ public final class State implements Observer {
     /**
      * Process a player entering a bed.
      *
-     * @param enterer player that entered bed
+     * @param enterer who entered bed
      */
     void bedEntered(final Player enterer) {
         this.inBed.add(enterer);
+        // PlayerBedEnter event might have triggered in this plugin before EventTracker updates activity
+        // TODO Detect if monitored activity included an event that would trigger activity when a bed is entered (PlayerMoveEvent, PlayerTeleportEvent, PlayerBedEnter)
+        this.bedActivity = enterer;
+
         this.ignoreSleep(enterer, false, "Entered Bed");
 
         if (this.isAutoForcer(enterer)) {
@@ -145,43 +150,46 @@ public final class State implements Observer {
         }
 
         this.lull();
+        this.bedActivity = null;
     }
 
     /**
      * Process a player leaving a bed.
      *
-     * @param leaver player who left bed
-     * @param nightmare true if player is leaving due to a nightmare
+     * @param leaver who left bed
      */
     void bedLeft(final Player leaver) {
-        if (!this.inBed.remove(leaver)) return;
+        this.inBed.remove(leaver);
+        this.bedActivity = leaver;
 
         if (this.isNight()) {
-            // Avoid leave bed messages if entire world has finished sleeping and this is a normal awakening in the morning.
+            // Avoid leave bed messages if entire world has finished sleeping and this is a normal awakening in the morning
             this.notify(Notification.Type.LEAVE_BED, leaver, leaver.getDisplayName(), this.needForSleep(), this.inBed.size(), this.possibleSleepers());
         }
 
         final int need = this.needForSleep();
         if (need > 0) this.isForcingSleep = false;
 
-        // Only stop ignoring players if no one is left in bed.
-        if (this.inBed.size() != 0) return;
+        // Only stop ignoring players if no one is left in bed
+        if (this.inBed.size() != 0) {
+            // Configure players in this world to no longer ignore sleep
+            for (final Player player : this.world.getPlayers())
+                this.ignoreSleep(player, false, "Awakening World");
 
-        // Configure players in this world to no longer ignore sleep.
-        for (final Player player : this.world.getPlayers())
-            this.ignoreSleep(player, false, "Awakening World");
+            if (Somnologist.defaultNether != null) {
+                // Configure players in the default nether to no longer ignore sleep
+                for (final Player player : Somnologist.defaultNether.getPlayers())
+                    this.ignoreSleep(player, false, "Awakening Default Nether for [" + this.world.getName() + "]");
+            }
+        }
 
-        if (Somnologist.defaultNether == null) return;
-
-        // Configure players in the default nether to no longer ignore sleep.
-        for (final Player player : Somnologist.defaultNether.getPlayers())
-            this.ignoreSleep(player, false, "Awakening Default Nether for [" + this.world.getName() + "]");
+        this.bedActivity = null;
     }
 
     /**
      * Process a player leaving this world.
      *
-     * @param leaver
+     * @param leaver who left world
      */
     void worldLeft(final Player leaver) {
         this.bedLeft(leaver);
@@ -382,23 +390,23 @@ public final class State implements Observer {
         final int possible = this.possibleSleepers();
         final int inBed = this.inBed.size();
 
-        // Need 100% of possible if percent not specified.
+        // Need 100% of possible if percent not specified
         final double forcePercent = (((this.forcePercent > 0) && (this.forcePercent < 100)) ? this.forcePercent : 100);
         final int needPercent = (int) Math.ceil(forcePercent / 100 * possible);
 
-        // Use all possible if count not specified.
+        // Use all possible if count not specified
         final int needCount = (this.forceCount > 0 ? this.forceCount : possible);
 
-        // Need lowest count to satisfy either count or percent.
+        // Need lowest count to satisfy either count or percent
         int need = Math.min(needCount, needPercent) - inBed;
 
-        // Can't need less than no one.
+        // Can't need less than no one
         if (need < 0) need = 0;
 
-        // Can't need more than who is possible.
+        // Can't need more than who is possible
         if (need > possible) need = possible;
 
-        // Always need at least 1 person actually in bed.
+        // Always need at least 1 person actually in bed
         if (inBed == 0 && need == 0) need = 1;
 
         return need;
@@ -458,15 +466,18 @@ public final class State implements Observer {
      * @return true if player has been active recently; otherwise false
      */
     public boolean isActive(final Player player) {
-        if (this.idle <= -1) return true;
+        if (this.idle <= 0) return true;
 
         final Long last = this.tracker.getLastFor(player);
-        if (last == null) return false;
+        if (last != null) {
+            final long duration = (System.currentTimeMillis() - last) / 1000;
+            if (duration < this.idle) return true;
+        }
 
-        final long oldestActive = System.currentTimeMillis() - (this.idle * 1000);
-        if (last < oldestActive) return false;
 
-        return true;
+        if (player == this.bedActivity) return true;
+
+        return false;
     }
 
 }
