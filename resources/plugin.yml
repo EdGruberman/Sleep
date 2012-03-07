@@ -59,19 +59,15 @@ permissions:
         children:
             sleep.notify.ENTER_BED: true
             sleep.notify.LEAVE_BED: true
-            sleep.notify.FORCE: true
-            sleep.notify.FORCE_CONFIGURATION: true
+            sleep.notify.FORCE_COMMAND: true
     sleep.notify.ENTER_BED:
         description: Will notify local world in which player has entered bed
         default: false
     sleep.notify.LEAVE_BED:
         description: Will notify local world in which player has left bed manually
         default: false
-    sleep.notify.FORCE:
+    sleep.notify.FORCE_COMMAND:
         description: Will notify target world that has been forced to sleep from a player action or command
-        default: false
-    sleep.notify.FORCE_CONFIGURATION:
-        description: Will notify target world that has been forced to sleep according to server configuration
         default: false
     sleep.force:
         description: Will automatically force sleep when entering bed
