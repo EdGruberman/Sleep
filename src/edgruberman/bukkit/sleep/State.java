@@ -140,7 +140,7 @@ public final class State implements Observer {
         for (final Player tuckedIn : this.inBed)
             if (tuckedIn.hasPermission("sleep.notify.ENTER_BED")) {
                 final Notification notification = this.notifications.get(Notification.Type.STATUS);
-                final String message = notification.format(this.needForSleep(), this.inBed.size(), this.possibleSleepers());
+                final String message = notification.format(Main.plugin.getName(), this.needForSleep(), this.inBed.size(), this.possibleSleepers());
                 Main.messageManager.respond(joiner, message, MessageLevel.STATUS, notification.isTimestamped());
                 return;
             }

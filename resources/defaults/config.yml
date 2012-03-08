@@ -24,7 +24,7 @@ notifications:
         maxFrequency: -1
         timestamp: false
     STATUS:
-        format: '%2$d&_ player(s) in bed (need +%1$d to sleep)' # 1 = Player Count Needed, 2 = Player Count In Bed, 3 = Player Count Possible
+        format: '%3$d&_ player(s) in bed (need +%2$d to sleep)' # 1 = Plugin Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
         timestamp: false
 activity:
     - PlayerMoveEvent
