@@ -75,12 +75,12 @@ public final class State implements Observer {
     private final int forceCount;
     private final int forcePercent;
     final EventTracker tracker = new EventTracker(Main.plugin);
-    private final Map<Notification.Type, Notification> notifications = new HashMap<Notification.Type, Notification>();
+    public final Map<Notification.Type, Notification> notifications = new HashMap<Notification.Type, Notification>();
 
     // Status
     public Set<Player> inBed = new HashSet<Player>();
     private List<Player> ignoredCache = new ArrayList<Player>();
-    private boolean isForcingSleep = false;
+    private CommandSender sleepForcer = null;
     private Player bedActivity = null;
 
     State(final World world, final boolean sleep, final int idle, final int forceCount, final int forcePercent, final List<Interpreter> activity) {
@@ -122,6 +122,28 @@ public final class State implements Observer {
      */
     void worldJoined(final Player joiner) {
         this.processActivity(joiner, "WorldJoinEvent");
+        if (this.inBed.size() == 0) return;
+
+        // Forced sleep in progress
+        if (this.sleepForcer != null) {
+            this.ignoreSleep(joiner, true, "Forcing Sleep");
+            return;
+        }
+
+        // Public notification when sleep was going to complete naturally so in-bed players also understand why sleep did not complete
+        if (this.needForSleep() == 1) {
+            this.notify(Notification.Type.INTERRUPT, joiner, joiner.getDisplayName(), this.needForSleep(), this.inBed.size(), this.possibleSleepers());
+            return;
+        }
+
+        // Private notification of previous enter bed notification
+        for (final Player tuckedIn : this.inBed)
+            if (tuckedIn.hasPermission("sleep.notify.ENTER_BED")) {
+                final Notification notification = this.notifications.get(Notification.Type.STATUS);
+                final String message = notification.format(this.needForSleep(), this.inBed.size(), this.possibleSleepers());
+                Main.messageManager.respond(joiner, message, MessageLevel.STATUS, notification.isTimestamped());
+                return;
+            }
     }
 
     /**
@@ -163,12 +185,27 @@ public final class State implements Observer {
         this.bedActivity = leaver;
 
         if (this.isNight()) {
-            // Avoid leave bed messages if entire world has finished sleeping and this is a normal awakening in the morning
+            // Night time bed leaves only occur because of a manual action
             this.notify(Notification.Type.LEAVE_BED, leaver, leaver.getDisplayName(), this.needForSleep(), this.inBed.size(), this.possibleSleepers());
-        }
 
-        final int need = this.needForSleep();
-        if (need > 0) this.isForcingSleep = false;
+        } else if (this.sleepForcer != null && this.inBed.size() == 0) {
+            // Last player to leave bed during a morning awakening after sleep was forced
+
+            // Generate notification
+            Notification.Type type = null;
+            String name = Main.plugin.getName();
+            if (this.sleepForcer != null) {
+                name = this.sleepForcer.getName();
+                if (this.sleepForcer instanceof Player) name = ((Player) this.sleepForcer).getDisplayName();
+                type = Notification.Type.FORCE_COMMAND;
+            } else {
+                type = Notification.Type.FORCE;
+            }
+            this.notify(type, this.sleepForcer, name, this.needForSleep(), this.inBed.size(), this.possibleSleepers());
+
+            // Allow activity to again cancel idle status in order to remove ignored sleep
+            this.sleepForcer = null;
+        }
 
         // Only stop ignoring players if no one is left in bed
         if (this.inBed.size() != 0) {
@@ -198,7 +235,7 @@ public final class State implements Observer {
     }
 
     /**
-     * Generate a notification for an event if it is defined.
+     * Generate a notification to this world for an event if it is defined.
      *
      * @param type type to generate
      * @param sender event originator, null for code logic; frequency tracking
@@ -236,14 +273,14 @@ public final class State implements Observer {
         if (player.getWorld().equals(Somnologist.defaultNether)) return;
 
         // Activity should not remove ignore status when forcing sleep
-        if (this.isForcingSleep) return;
+        if (this.sleepForcer != null) return;
 
         // Activity should not remove ignore status for always ignored players
         if (this.ignoredCache.contains(player)) return;
 
         Main.messageManager.log("Activity detected for " + player.getName() + " (Type: " + type + ")", MessageLevel.FINE);
 
-        this.ignoreSleep(player, false, "Monitored Activity");
+        this.ignoreSleep(player, false, "Activity");
     }
 
     /**
@@ -289,19 +326,7 @@ public final class State implements Observer {
      */
     public void forceSleep(final CommandSender sender) {
         // Indicate forced sleep for this world to ensure activity does not negate ignore status
-        this.isForcingSleep = true;
-
-        // Generate notification
-        Notification.Type type = null;
-        String name = null;
-        if (sender != null) {
-            name = sender.getName();
-            if (sender instanceof Player) name = ((Player) sender).getDisplayName();
-            type = Notification.Type.FORCE_COMMAND;
-        } else {
-            type = Notification.Type.FORCE;
-        }
-        this.notify(type, sender, name, this.needForSleep(), this.inBed.size(), this.possibleSleepers());
+        this.sleepForcer = sender;
 
         // Set sleeping ignored for players not already in bed, or entering bed, or ignoring sleep to allow Minecraft to manage sleep normally
         for (final Player player : this.world.getPlayers())
@@ -417,7 +442,7 @@ public final class State implements Observer {
      *
      * @return count of active, not always ignored, and not already in bed
      */
-    private int possibleSleepers() {
+    public int possibleSleepers() {
         final List<Player> ignored = this.ignored();
         ignored.removeAll(this.inBed);
 

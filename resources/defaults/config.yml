@@ -5,11 +5,10 @@ force:
     percent: -1
 notifications:
     FORCE:
-        format: 'Forcing sleep...'
-        maxFrequency: -1
+        format: 'Forced sleep' # 1 = Plugin Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
         timestamp: false
     FORCE_COMMAND:
-        format: '%1$s&_ is forcing sleep...' # 1 = Player Display Name
+        format: '%1$s&_ forced sleep' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
         maxFrequency: -1
         timestamp: false
     ENTER_BED:
@@ -19,6 +18,13 @@ notifications:
     LEAVE_BED:
         format: '%1$s&_ left bed (need +%2$d to sleep)' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
         maxFrequency: 10
+        timestamp: false
+    INTERRUPT:
+        format: '%1$s&_ interrupted sleep (need +%2$d to sleep)' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
+        maxFrequency: -1
+        timestamp: false
+    STATUS:
+        format: '%2$d&_ player(s) in bed (need +%1$d to sleep)' # 1 = Player Count Needed, 2 = Player Count In Bed, 3 = Player Count Possible
         timestamp: false
 activity:
     - PlayerMoveEvent

@@ -6,6 +6,7 @@ import org.bukkit.entity.Player;
 
 import edgruberman.bukkit.messagemanager.MessageLevel;
 import edgruberman.bukkit.sleep.Main;
+import edgruberman.bukkit.sleep.Notification;
 import edgruberman.bukkit.sleep.Somnologist;
 import edgruberman.bukkit.sleep.State;
 
@@ -29,8 +30,7 @@ class SleepStatus extends Action {
         }
 
         final State state = Somnologist.states.get(world);
-        final int need = state.needForSleep();
-        final String message = (state.inBed.size() == 0 ? "No" : state.inBed.size()) + " player" + (state.inBed.size() == 1 ? "" : "s") + " in bed; Need" + (need == 0 ? " no" : " at least " + need) + " more player" + (need == 1 ? "" : "s") + " in bed to sleep.";
+        final String message = state.notifications.get(Notification.Type.STATUS).format(state.needForSleep(), state.inBed.size(), state.possibleSleepers());
         Main.messageManager.respond(context.sender, message, MessageLevel.STATUS, false);
         if (state.inBed.size() >= 1) state.lull();
     }
@@ -43,4 +43,5 @@ class SleepStatus extends Action {
 
         return Bukkit.getServer().getWorld(context.arguments.get(1));
     }
+
 }

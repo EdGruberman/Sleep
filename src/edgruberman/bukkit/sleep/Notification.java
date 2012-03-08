@@ -10,9 +10,9 @@ import org.bukkit.entity.Player;
 import edgruberman.bukkit.messagemanager.MessageLevel;
 
 /**
- * Represents a message to display for an event.
+ * Event related message displayed to a world.
  */
-final class Notification {
+public final class Notification {
 
     /**
      * Message to broadcast to world when a player event occurs (null or
@@ -45,6 +45,14 @@ final class Notification {
         this.isTimestamped = isTimestamped;
     }
 
+    public String format(final Object... args) {
+        return String.format(this.format, args);
+    }
+
+    public boolean isTimestamped() {
+        return this.isTimestamped;
+    }
+
     /**
      * Send message regarding this notification. Limit players from sending
      * more than defined maximum frequency.  Console and code logic is not
@@ -69,8 +77,7 @@ final class Notification {
             this.lastGenerated.put(player, System.currentTimeMillis());
         }
 
-        final String message = String.format(this.format, args);
-        Main.messageManager.send(world, message, MessageLevel.EVENT, this.isTimestamped);
+        Main.messageManager.send(world, this.format(args), MessageLevel.EVENT, this.isTimestamped);
     }
 
     /**
@@ -106,6 +113,6 @@ final class Notification {
      * Recognized events that can generate notifications.
      */
     public enum Type {
-        ENTER_BED, LEAVE_BED, FORCE, FORCE_COMMAND
+        ENTER_BED, LEAVE_BED, FORCE, FORCE_COMMAND, INTERRUPT, STATUS
     }
 }
