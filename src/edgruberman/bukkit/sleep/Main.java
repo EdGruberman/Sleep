@@ -72,6 +72,8 @@ public final class Main extends JavaPlugin {
     public static void loadConfiguration() {
         Main.configurationFile.load();
 
+        Somnologist.disable();
+
         Somnologist.defaultNether = Main.findDefaultNether();
         Main.messageManager.log("Default Nether: " + (Somnologist.defaultNether != null ? Somnologist.defaultNether.getName() : "<Not found>"), MessageLevel.CONFIG);
 
@@ -82,7 +84,7 @@ public final class Main extends JavaPlugin {
         Somnologist.excluded.addAll(excluded);
         Main.messageManager.log("Excluded Worlds: " + Somnologist.excluded, MessageLevel.CONFIG);
 
-        Somnologist.reset();
+        for (final World world : Bukkit.getServer().getWorlds()) Main.loadState(world);
     }
 
     /**

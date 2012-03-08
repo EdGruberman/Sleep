@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -28,17 +27,13 @@ public final class Somnologist implements Listener {
     }
 
     /**
-     * Reset sleep state for each world already loaded.
+     * Disable sleep state tracking for all worlds.
      */
-    static void reset() {
-        Somnologist.states.clear();
-        for (final World world : Bukkit.getServer().getWorlds()) Main.loadState(world);
-    }
-
     static void disable() {
         for (final State state : Somnologist.states.values()) state.tracker.clear();
         Somnologist.states.clear();
         Somnologist.defaultNether = null;
+        Somnologist.excluded.clear();
     }
 
     static void remove(final World world) {
