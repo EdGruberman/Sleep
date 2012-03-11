@@ -4,11 +4,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.bukkit.Bukkit;
 import org.bukkit.World;
-import org.bukkit.World.Environment;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import edgruberman.bukkit.messagemanager.MessageLevel;
@@ -31,8 +28,7 @@ public final class Main extends JavaPlugin {
     private static final String WORLD_SPECIFICS = "Worlds";
 
     public static MessageManager messageManager;
-
-    static Plugin plugin;
+    public static Somnologist somnologist = null;
 
     private static ConfigurationFile configurationFile;
 
@@ -40,73 +36,43 @@ public final class Main extends JavaPlugin {
     public void onLoad() {
         Main.messageManager = new MessageManager(this);
         Main.configurationFile = new ConfigurationFile(this);
-
-        // Static loading of world specific configuration files requires reference to owning plugin.
-        Main.plugin = this;
     }
 
     @Override
     public void onEnable() {
-        // Load configuration file and load initial sleep states.
-        Main.loadConfiguration();
-
-        // Track sleep state for new worlds as appropriate.
-        new Somnologist(this);
-
-        // Start monitoring events related to players sleeping.
-        new PlayerMonitor(this);
-
-        // Register commands.
+        this.loadConfiguration();
         new Sleep(this);
     }
 
     @Override
     public void onDisable() {
-        Somnologist.disable();
+        Main.somnologist.clear();
     }
 
     /**
      * Load plugin's configuration file and reset sleep states for each world.
      * This will cause new events to be registered as needed.
      */
-    public static void loadConfiguration() {
+    public void loadConfiguration() {
         Main.configurationFile.load();
 
-        Somnologist.disable();
-
-        Somnologist.defaultNether = Main.findDefaultNether();
-        Main.messageManager.log("Default Nether: " + (Somnologist.defaultNether != null ? Somnologist.defaultNether.getName() : "<Not found>"), MessageLevel.CONFIG);
-
-        Somnologist.excluded.clear();
-        if (Somnologist.defaultNether != null) Somnologist.excluded.add(Somnologist.defaultNether.getName());
-        List<String> excluded = Main.configurationFile.getConfig().getStringList("excluded");
-        if (excluded == null) excluded = Collections.<String>emptyList();
-        Somnologist.excluded.addAll(excluded);
-        Main.messageManager.log("Excluded Worlds: " + Somnologist.excluded, MessageLevel.CONFIG);
-
-        for (final World world : Bukkit.getServer().getWorlds()) Main.loadState(world);
+        if (Main.somnologist != null) Main.somnologist.clear();
+        final List<String> excluded = Main.configurationFile.getConfig().getStringList("excluded");
+        Main.messageManager.log("Excluded Worlds: " + excluded, MessageLevel.CONFIG);
+        Main.somnologist = new Somnologist(this, excluded);
     }
 
     /**
-     * Track sleep state for a specified world. (Worlds explicitly excluded in
-     * the configuration file and the default nether world will be cancelled.)
+     * Create a fresh sleep state for a specified world from the configuration.
      *
-     * @param world world to track sleep state for
+     * @param world world to create sleep state for
      */
-    static void loadState(final World world) {
-        if (Somnologist.excluded.contains(world.getName())) {
-            Main.messageManager.log("Sleep state for [" + world.getName() + "] will not be tracked.", MessageLevel.CONFIG);
-            return;
-        }
-
-        // Discard any existing state tracking
-        Somnologist.remove(world);
-
+    State loadState(final World world) {
         // Load configuration values using defaults defined in code
-        // overridden by defaults in the configuration file
-        // overridden by world specific settings in the Worlds folder
+        // overridden by defaults in the main plugin configuration file
+        // overridden by world specific settings in the WORLD_SPECIFICS folder
         final FileConfiguration pluginMain = Main.configurationFile.getConfig();
-        final FileConfiguration worldSpecific = (new ConfigurationFile(Main.plugin, Main.WORLD_SPECIFICS + "/" + world.getName() + "/config.yml", Main.WORLD_SPECIFICS + "/" + world.getName() + "/config.yml")).getConfig();
+        final FileConfiguration worldSpecific = (new ConfigurationFile(this, Main.WORLD_SPECIFICS + "/" + world.getName() + "/config.yml", Main.WORLD_SPECIFICS + "/" + world.getName() + "/config.yml")).getConfig();
 
         final boolean sleep = Main.loadBoolean(worldSpecific, pluginMain, "sleep", State.DEFAULT_SLEEP);
         Main.messageManager.log("Sleep state for [" + world.getName() + "] Sleep Enabled: " + sleep, MessageLevel.CONFIG);
@@ -134,15 +100,17 @@ public final class Main extends JavaPlugin {
             Main.messageManager.log("Sleep state for [" + world.getName() + "] Monitored Activity: " + activity.size() + " events", MessageLevel.CONFIG);
         }
 
-        final State state = new State(world, sleep, idle, forceCount, forcePercent, activity);
+        final State state = new State(this, world, sleep, idle, forceCount, forcePercent, activity);
 
         for (final Notification.Type type : Notification.Type.values()) {
-            final Notification notification = Main.loadNotification(type, worldSpecific, pluginMain);
+            final Notification notification = this.loadNotification(type, worldSpecific);
             if (notification != null) {
-                Main.messageManager.log("Sleep state for [" + world.getName() + "] " + notification.description(), MessageLevel.CONFIG);
+                Main.messageManager.log("Sleep state for [" + world.getName() + "] " + notification.description().replace("&", "&&"), MessageLevel.CONFIG);
                 state.addNotification(notification);
             }
         }
+
+        return state;
     }
 
     /**
@@ -153,12 +121,12 @@ public final class Main extends JavaPlugin {
      * @param main base settings
      * @return notification defined according to configuration
      */
-    private static Notification loadNotification(final Notification.Type type, final FileConfiguration override, final FileConfiguration main) {
-        final String format = Main.loadString(override, main, "notifications." + type.name() + ".format", Notification.DEFAULT_FORMAT);
+    private Notification loadNotification(final Notification.Type type, final FileConfiguration override) {
+        final String format = Main.loadString(override, Main.configurationFile.getConfig(), "notifications." + type.name() + ".format", Notification.DEFAULT_FORMAT);
         if (format == null || format.length() == 0) return null;
 
-        final int maxFrequency = Main.loadInt(override, main, "notifications." + type.name() + ".maxFrequency", Notification.DEFAULT_MAX_FREQUENCY);
-        final boolean isTimestamped = Main.loadBoolean(override, main, "notifications." + type.name() + ".timestamp", Notification.DEFAULT_TIMESTAMP);
+        final int maxFrequency = Main.loadInt(override, Main.configurationFile.getConfig(), "notifications." + type.name() + ".maxFrequency", Notification.DEFAULT_MAX_FREQUENCY);
+        final boolean isTimestamped = Main.loadBoolean(override, Main.configurationFile.getConfig(), "notifications." + type.name() + ".timestamp", Notification.DEFAULT_TIMESTAMP);
 
         return new Notification(type, format, maxFrequency, isTimestamped);
     }
@@ -215,20 +183,6 @@ public final class Main extends JavaPlugin {
      */
     private static boolean loadBoolean(final FileConfiguration override, final FileConfiguration main, final String path, final boolean codeDefault) {
         return override.getBoolean(path, main.getBoolean(path, codeDefault));
-    }
-
-    /**
-     * Determine default nether world.
-     *
-     * @return world that is associated as default nether
-     */
-    private static World findDefaultNether() {
-        // Use index number to find first nether world which should be the nether world the server associates by default
-        for (int i = 0; i < Bukkit.getServer().getWorlds().size(); ++i)
-            if (Bukkit.getServer().getWorlds().get(i).getEnvironment().equals(Environment.NETHER))
-                return Bukkit.getServer().getWorlds().get(i);
-
-        return null;
     }
 
 }

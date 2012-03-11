@@ -9,10 +9,10 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
 
-import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 
 import edgruberman.bukkit.messagemanager.MessageLevel;
 import edgruberman.bukkit.messagemanager.channels.Channel;
@@ -69,12 +69,13 @@ public final class State implements Observer {
     private static final long TICKS_BEFORE_DEEP_SLEEP = 90;
 
     // Configuration
+    private final Plugin plugin;
     World world;
     private final boolean isSleepEnabled;
     public int idle;
     private final int forceCount;
     private final int forcePercent;
-    final EventTracker tracker = new EventTracker(Main.plugin);
+    final EventTracker tracker;
     public final Map<Notification.Type, Notification> notifications = new HashMap<Notification.Type, Notification>();
 
     // Status
@@ -83,13 +84,9 @@ public final class State implements Observer {
     private CommandSender sleepForcer = null;
     private Player bedActivity = null;
 
-    State(final World world, final boolean sleep, final int idle, final int forceCount, final int forcePercent, final List<Interpreter> activity) {
-        if (world == null)
-            throw new IllegalArgumentException("world can't be null");
-
-        if (Somnologist.excluded.contains(world))
-            throw new IllegalArgumentException("excluded world");
-
+    State(final Plugin plugin, final World world, final boolean sleep, final int idle, final int forceCount, final int forcePercent, final List<Interpreter> activity) {
+        this.plugin = plugin;
+        this.tracker = new EventTracker(plugin);
         this.world = world;
         this.isSleepEnabled = sleep;
         this.idle = idle;
@@ -102,8 +99,14 @@ public final class State implements Observer {
 
         for (final Player player : world.getPlayers())
             if (player.isSleeping()) this.inBed.add(player);
+    }
 
-        Somnologist.states.put(world, this);
+    /**
+     * Remove all references to this sleep state.
+     */
+    void clear() {
+        this.tracker.deleteObserver(this);
+        this.tracker.clear();
     }
 
     /**
@@ -124,23 +127,23 @@ public final class State implements Observer {
         this.processActivity(joiner, "WorldJoinEvent");
         if (this.inBed.size() == 0) return;
 
-        // Forced sleep in progress
+        // Prevent interruption of forced sleep in progress
         if (this.sleepForcer != null) {
             this.ignoreSleep(joiner, true, "Forcing Sleep");
             return;
         }
 
-        // Public notification when sleep was going to complete naturally so in-bed players also understand why sleep did not complete
+        // Notify of interruption when a natural sleep is in progress
         if (this.needForSleep() == 1) {
             this.notify(Notification.Type.INTERRUPT, joiner, joiner.getDisplayName(), this.needForSleep(), this.inBed.size(), this.possibleSleepers());
             return;
         }
 
-        // Private notification of previous enter bed notification
+        // Private notification of missed enter bed notification(s)
         for (final Player tuckedIn : this.inBed)
             if (tuckedIn.hasPermission("sleep.notify.ENTER_BED")) {
                 final Notification notification = this.notifications.get(Notification.Type.STATUS);
-                final String message = notification.format(Main.plugin.getName(), this.needForSleep(), this.inBed.size(), this.possibleSleepers());
+                final String message = notification.format(this.plugin.getName(), this.needForSleep(), this.inBed.size(), this.possibleSleepers());
                 Main.messageManager.respond(joiner, message, MessageLevel.STATUS, notification.isTimestamped());
                 return;
             }
@@ -159,7 +162,7 @@ public final class State implements Observer {
 
         this.ignoreSleep(enterer, false, "Entered Bed");
 
-        if (this.isAutoForcer(enterer)) {
+        if (enterer.hasPermission(Main.PERMISSION_PREFIX + ".force")) {
             this.forceSleep(enterer);
             return;
         }
@@ -167,7 +170,7 @@ public final class State implements Observer {
         this.notify(Notification.Type.ENTER_BED, enterer, enterer.getDisplayName(), this.needForSleep(), this.inBed.size(), this.possibleSleepers());
 
         if (!this.isSleepEnabled) {
-            Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(Main.plugin, new Insomnia(enterer), State.TICKS_BEFORE_DEEP_SLEEP);
+            this.plugin.getServer().getScheduler().scheduleSyncDelayedTask(this.plugin, new Insomnia(enterer), State.TICKS_BEFORE_DEEP_SLEEP);
             return;
         }
 
@@ -181,7 +184,8 @@ public final class State implements Observer {
      * @param leaver who left bed
      */
     void bedLeft(final Player leaver) {
-        this.inBed.remove(leaver);
+        if (!this.inBed.remove(leaver)) return;
+
         this.bedActivity = leaver;
 
         if (this.isNight()) {
@@ -193,7 +197,7 @@ public final class State implements Observer {
 
             // Generate notification
             Notification.Type type = null;
-            String name = Main.plugin.getName();
+            String name = this.plugin.getName();
             if (this.sleepForcer != null) {
                 name = this.sleepForcer.getName();
                 if (this.sleepForcer instanceof Player) name = ((Player) this.sleepForcer).getDisplayName();
@@ -207,18 +211,10 @@ public final class State implements Observer {
             this.sleepForcer = null;
         }
 
-        // Only stop ignoring players if no one is left in bed
-        if (this.inBed.size() != 0) {
-            // Configure players in this world to no longer ignore sleep
+        // Stop ignoring players if no one is left in bed
+        if (this.inBed.size() == 0)
             for (final Player player : this.world.getPlayers())
                 this.ignoreSleep(player, false, "Awakening World");
-
-            if (Somnologist.defaultNether != null) {
-                // Configure players in the default nether to no longer ignore sleep
-                for (final Player player : Somnologist.defaultNether.getPlayers())
-                    this.ignoreSleep(player, false, "Awakening Default Nether for [" + this.world.getName() + "]");
-            }
-        }
 
         this.bedActivity = null;
     }
@@ -230,8 +226,7 @@ public final class State implements Observer {
      */
     void worldLeft(final Player leaver) {
         this.bedLeft(leaver);
-        for (final Notification notification : this.notifications.values())
-            notification.lastGenerated.remove(leaver);
+        this.lull();
     }
 
     /**
@@ -255,6 +250,8 @@ public final class State implements Observer {
     @Override
     public void update(final Observable o, final Object arg) {
         final PlayerEvent playerEvent = (PlayerEvent) arg;
+        if (playerEvent.player.getWorld() != this.world) return;
+
         this.processActivity(playerEvent.player, playerEvent.event.getClass().getName());
     }
 
@@ -269,31 +266,22 @@ public final class State implements Observer {
         // Activity should not remove ignore status if not currently ignoring
         if (!player.isSleepingIgnored()) return;
 
-        // Activity should not remove ignore status for players in the default nether
-        if (player.getWorld().equals(Somnologist.defaultNether)) return;
-
         // Activity should not remove ignore status when forcing sleep
         if (this.sleepForcer != null) return;
 
         // Activity should not remove ignore status for always ignored players
         if (this.ignoredCache.contains(player)) return;
 
-        Main.messageManager.log("Activity detected for " + player.getName() + " (Type: " + type + ")", MessageLevel.FINE);
-
-        this.ignoreSleep(player, false, "Activity");
+        this.ignoreSleep(player, false, "Activity (Type: " + type + ")");
     }
 
     /**
-     * Configure all players in the default nether, idle players in this
-     * world, and always ignored players in this world to ignore sleep. If all
-     * other players in the world are then either in bed or ignoring sleep, a
-     * natural sleep cycle should automatically commence.
+     * Configure idle players, and always ignored players to ignore sleep.
+     * If all other players in the world are then either in bed or ignoring
+     * sleep natural sleep cycle should automatically commence.
      */
     public void lull() {
-        // Ignore players in default nether world
-        if (Somnologist.defaultNether != null)
-            for (final Player player : Somnologist.defaultNether.getPlayers())
-                this.ignoreSleep(player, true, "Default Nether");
+        if (!this.isNight() || this.inBed.size() == 0) return;
 
         // Configure always ignored players to ignore sleep
         for (final Player player : this.ignored())
@@ -309,14 +297,7 @@ public final class State implements Observer {
         if (this.forceCount <= -1 && this.forcePercent <= -1) return;
 
         // Force sleep if no more needed and not everyone is in bed
-        if ((this.needForSleep() == 0) && (this.inBed.size() != this.possibleSleepers())) this.forceSleep();
-    }
-
-    /**
-     * Force sleep to occur for this world based on configuration.
-     */
-    private void forceSleep() {
-        this.forceSleep(null);
+        if ((this.needForSleep() == 0) && (this.inBed.size() != this.possibleSleepers())) this.forceSleep(null);
     }
 
     /**
@@ -368,17 +349,6 @@ public final class State implements Observer {
         if ((State.TIME_NIGHT_START <= now) && (now < State.TIME_NIGHT_END)) return true;
 
         return false;
-    }
-
-    /**
-     * Determine if player has permission to automatically force sleep when
-     * using a bed.
-     *
-     * @param player player to determine if has permission
-     * @return true if player has permission; otherwise false
-     */
-    private boolean isAutoForcer(final Player player) {
-        return player.hasPermission(Main.PERMISSION_PREFIX + ".force");
     }
 
     /**
@@ -498,7 +468,6 @@ public final class State implements Observer {
             final long duration = (System.currentTimeMillis() - last) / 1000;
             if (duration < this.idle) return true;
         }
-
 
         if (player == this.bedActivity) return true;
 

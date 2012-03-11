@@ -35,8 +35,7 @@ public final class Notification {
     private final String format;
     private final int maxFrequency;
     private final boolean isTimestamped;
-
-    Map<Player, Long> lastGenerated = new HashMap<Player, Long>();
+    private final Map<Player, Long> lastGenerated = new HashMap<Player, Long>();
 
     Notification(final Type type, final String format, final int maxFrequency, final boolean isTimestamped) {
         this.type = type;
@@ -115,4 +114,5 @@ public final class Notification {
     public enum Type {
         ENTER_BED, LEAVE_BED, FORCE, FORCE_COMMAND, INTERRUPT, STATUS
     }
+
 }

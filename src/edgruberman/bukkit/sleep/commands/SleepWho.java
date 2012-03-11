@@ -8,7 +8,6 @@ import org.bukkit.entity.Player;
 
 import edgruberman.bukkit.messagemanager.MessageLevel;
 import edgruberman.bukkit.sleep.Main;
-import edgruberman.bukkit.sleep.Somnologist;
 import edgruberman.bukkit.sleep.State;
 
 class SleepWho extends Action {
@@ -25,12 +24,12 @@ class SleepWho extends Action {
             return;
         }
 
-        if (!Somnologist.states.containsKey(world)) {
+        final State state = Main.somnologist.getState(world);
+        if (state == null) {
             Main.messageManager.respond(context.sender, "Sleep state for [" + world.getName() + "] is not tracked", MessageLevel.SEVERE, false);
             return;
         }
 
-        final State state = Somnologist.states.get(world);
         String message;
         if (state.inBed.size() == 0) {
             message = "No one is currently in bed.";
@@ -59,4 +58,5 @@ class SleepWho extends Action {
 
         return Bukkit.getServer().getWorld(context.arguments.get(1));
     }
+
 }

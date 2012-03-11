@@ -11,7 +11,7 @@ class SleepReload extends Action {
 
     @Override
     void execute(final Context context) {
-        Main.loadConfiguration();
+        ((Main) this.command.plugin).loadConfiguration();
         Main.messageManager.respond(context.sender, "Configuration reloaded", MessageLevel.STATUS, false);
     }
 

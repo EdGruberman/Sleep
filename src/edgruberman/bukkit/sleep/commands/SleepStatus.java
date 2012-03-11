@@ -7,7 +7,6 @@ import org.bukkit.entity.Player;
 import edgruberman.bukkit.messagemanager.MessageLevel;
 import edgruberman.bukkit.sleep.Main;
 import edgruberman.bukkit.sleep.Notification;
-import edgruberman.bukkit.sleep.Somnologist;
 import edgruberman.bukkit.sleep.State;
 
 class SleepStatus extends Action {
@@ -24,12 +23,13 @@ class SleepStatus extends Action {
             return;
         }
 
-        if (!Somnologist.states.containsKey(world)) {
+        final State state = Main.somnologist.getState(world);
+        if (state == null) {
             Main.messageManager.respond(context.sender, "Sleep state for [" + world.getName() + "] is not tracked", MessageLevel.SEVERE, false);
             return;
         }
 
-        final State state = Somnologist.states.get(world);
+
         final String message = state.notifications.get(Notification.Type.STATUS).format(state.needForSleep(), state.inBed.size(), state.possibleSleepers());
         Main.messageManager.respond(context.sender, message, MessageLevel.STATUS, false);
         if (state.inBed.size() >= 1) state.lull();
