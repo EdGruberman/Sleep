@@ -1,6 +1,6 @@
 name: @NAME@
 description: Manages sleep criteria and notifications for multi-player environments
-depend: [MessageManager,PlayerActivity]
+softdepend: [MessageManager, PlayerActivity]
 version: @VERSION@
 author: @AUTHOR@
 main: edgruberman.bukkit.sleep.Main

@@ -1,11 +1,20 @@
 package edgruberman.bukkit.sleep;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
 
 import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import edgruberman.bukkit.messagemanager.MessageLevel;
@@ -27,6 +36,12 @@ public final class Main extends JavaPlugin {
      */
     private static final String WORLD_SPECIFICS = "Worlds";
 
+    private static final Map<String, String> DEPENDENCIES = new HashMap<String, String>();
+    static {
+        Main.DEPENDENCIES.put("MessageManager", "5.0.0");
+        Main.DEPENDENCIES.put("PlayerActivity", "1.0.0");
+    }
+
     public static MessageManager messageManager;
     public static Somnologist somnologist = null;
 
@@ -34,6 +49,7 @@ public final class Main extends JavaPlugin {
 
     @Override
     public void onLoad() {
+        this.checkDependencies();
         Main.messageManager = new MessageManager(this);
         Main.configurationFile = new ConfigurationFile(this);
     }
@@ -183,6 +199,60 @@ public final class Main extends JavaPlugin {
      */
     private static boolean loadBoolean(final FileConfiguration override, final FileConfiguration main, final String path, final boolean codeDefault) {
         return override.getBoolean(path, main.getBoolean(path, codeDefault));
+    }
+
+    private void checkDependencies() {
+        for (final Map.Entry<String, String> dependency : Main.DEPENDENCIES.entrySet()) {
+            final Plugin plugin = this.getServer().getPluginManager().getPlugin(dependency.getKey());
+            if (plugin == null) {
+                final File pluginJar = this.installDependency(dependency.getKey(), this.getDataFolder().getParentFile());
+                try {
+                    this.getServer().getPluginManager().loadPlugin(pluginJar).onLoad();
+                } catch (final Exception e) {
+                    this.getLogger().log(Level.SEVERE, "Unable to load dependency " + dependency.getKey() + " from \"" + pluginJar.getPath() + "\"", e);
+                }
+                this.getLogger().log(Level.INFO, "Successfully installed dependency: " + dependency.getKey() + " v" + dependency.getValue());
+                continue;
+            }
+
+            if (!plugin.getDescription().getVersion().equals(dependency.getValue())) {
+                this.installDependency(dependency.getKey(), this.getServer().getUpdateFolderFile());
+                this.getLogger().log(Level.SEVERE, "Dependency update for " + dependency.getKey() + " v" + dependency.getValue() + " required. Restart your server as soon as possible to automatically apply the update.");
+                continue;
+            }
+        }
+    }
+
+    private File installDependency(final String name, final File outputFolder) {
+        final URL source = this.getClass().getResource("/lib/" + name + ".jar");
+        final File pluginJar = new File(outputFolder, name + ".jar");
+        this.extract(source, pluginJar);
+        return pluginJar;
+    }
+
+    /**
+     * Save a file to the local file system.
+     */
+    private void extract(final URL source, final File destination) {
+        destination.getParentFile().mkdir();
+
+        InputStream in = null;
+        OutputStream out = null;
+        int len;
+        final byte[] buf = new byte[4096];
+
+        try {
+            in = source.openStream();
+            out = new FileOutputStream(destination);
+            while ((len = in.read(buf)) > 0) out.write(buf, 0, len);
+
+        } catch (final Exception e) {
+            this.getLogger().log(Level.SEVERE, "Unable to extract \"" + source.getFile() + "\" to \"" + destination.getPath() + "\"", e);
+
+        } finally {
+            try { if (in != null) in.close(); } catch (final Exception e) { e.printStackTrace(); }
+            try { if (out != null) out.close(); } catch (final Exception e) { e.printStackTrace(); }
+        }
     }
 
 }
