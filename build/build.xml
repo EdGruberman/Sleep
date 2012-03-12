@@ -92,6 +92,7 @@
             <filterset>
                 <filter token="NAME" value="${plugin.name}" />
                 <filter token="VERSION" value="${version}" />
+                <filter token="VERSION.TARGET" value="${version.target}" />
                 <filter token="AUTHOR" value="${bukkit.author}" />
             </filterset>
         </copy>
@@ -129,6 +130,7 @@
     <target name="-Get Version" description="Reads version into local property">
         <property file="${version.properties}" prefix="version" />
         <property name="version" value="${version.major}.${version.minor}.${version.revision}${version.type}${version.build}" />
+        <property name="version.target" value="${version.major}.${version.minor}.${version.revision}" />
     </target>
 
     <target name="-Existing Version" description="Generates console output with version">

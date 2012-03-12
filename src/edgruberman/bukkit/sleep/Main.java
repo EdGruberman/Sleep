@@ -42,6 +42,8 @@ public final class Main extends JavaPlugin {
         Main.DEPENDENCIES.put("PlayerActivity", "1.0.0");
     }
 
+    private static final String MINIMUM_CONFIGURATION_VERSION = "4.0.0";
+
     public static MessageManager messageManager;
     public static Somnologist somnologist = null;
 
@@ -52,6 +54,7 @@ public final class Main extends JavaPlugin {
         this.checkDependencies();
         Main.messageManager = new MessageManager(this);
         Main.configurationFile = new ConfigurationFile(this);
+        Main.configurationFile.setMinVersion(Main.MINIMUM_CONFIGURATION_VERSION);
     }
 
     @Override
@@ -201,28 +204,40 @@ public final class Main extends JavaPlugin {
         return override.getBoolean(path, main.getBoolean(path, codeDefault));
     }
 
+    /**
+     * Install or update any plugins this plugin is dependent upon.
+     */
     private void checkDependencies() {
         for (final Map.Entry<String, String> dependency : Main.DEPENDENCIES.entrySet()) {
             final Plugin plugin = this.getServer().getPluginManager().getPlugin(dependency.getKey());
+
             if (plugin == null) {
                 final File pluginJar = this.installDependency(dependency.getKey(), this.getDataFolder().getParentFile());
                 try {
                     this.getServer().getPluginManager().loadPlugin(pluginJar).onLoad();
                 } catch (final Exception e) {
                     this.getLogger().log(Level.SEVERE, "Unable to load dependency " + dependency.getKey() + " from \"" + pluginJar.getPath() + "\"", e);
+                    continue;
                 }
-                this.getLogger().log(Level.INFO, "Successfully installed dependency: " + dependency.getKey() + " v" + dependency.getValue());
+                this.getLogger().log(Level.INFO, "Installed dependency: " + dependency.getKey() + " v" + dependency.getValue());
                 continue;
             }
 
-            if (!plugin.getDescription().getVersion().equals(dependency.getValue())) {
-                this.installDependency(dependency.getKey(), this.getServer().getUpdateFolderFile());
-                this.getLogger().log(Level.SEVERE, "Dependency update for " + dependency.getKey() + " v" + dependency.getValue() + " required. Restart your server as soon as possible to automatically apply the update.");
-                continue;
-            }
+            if (plugin.getDescription().getVersion().equals(dependency.getValue())) return;
+
+            this.installDependency(dependency.getKey(), this.getServer().getUpdateFolderFile());
+            this.getLogger().log(Level.SEVERE, "Dependency update for " + dependency.getKey() + " v" + dependency.getValue() + " required. Restart your server as soon as possible to automatically apply the update.");
+            continue;
         }
     }
 
+    /**
+     * Extract embedded plugin file from JAR.
+     *
+     * @param name plugin name
+     * @param outputFolder where to play plugin file
+     * @return plugin file on the file system
+     */
     private File installDependency(final String name, final File outputFolder) {
         final URL source = this.getClass().getResource("/lib/" + name + ".jar");
         final File pluginJar = new File(outputFolder, name + ".jar");

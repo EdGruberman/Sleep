@@ -34,3 +34,4 @@ activity:
     - PlayerToggleSneakEvent
     - PlayerItemHeldEvent
     - PlayerJoinEvent
+version: @VERSION.TARGET@
