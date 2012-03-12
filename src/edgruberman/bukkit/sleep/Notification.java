@@ -60,23 +60,25 @@ public final class Notification {
      * @param world world to send message to
      * @param sender event originator, null for code logic
      * @param args parameters to substitute in message
+     * @return true if notification was sent; otherwise false
      */
-    void generate(final World world, final CommandSender sender, final Object... args) {
+    boolean generate(final World world, final CommandSender sender, final Object... args) {
         // Always allow code logic to generate notification, but check permission for command senders
         if (sender != null)
-            if (!this.isAllowed(sender)) return;
+            if (!this.isAllowed(sender)) return false;
 
         Player player = null;
         if (sender instanceof Player) player = (Player) sender;
         if (player != null && this.maxFrequency > -1) {
             // Prevent message if too frequent.
             if (!this.lastGenerated.containsKey(player)) this.lastGenerated.put(player, 0L);
-            if (System.currentTimeMillis() < (this.lastGenerated.get(player) + (this.maxFrequency * 1000))) return;
+            if (System.currentTimeMillis() < (this.lastGenerated.get(player) + (this.maxFrequency * 1000))) return false;
 
             this.lastGenerated.put(player, System.currentTimeMillis());
         }
 
         Main.messageManager.send(world, this.format(args), MessageLevel.EVENT, this.isTimestamped);
+        return true;
     }
 
     /**

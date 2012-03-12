@@ -77,6 +77,7 @@ public final class State implements Observer {
     private final int forcePercent;
     final EventTracker tracker;
     public final Map<Notification.Type, Notification> notifications = new HashMap<Notification.Type, Notification>();
+    private boolean hasGeneratedEnterBed = false;
 
     // Status
     public Set<Player> inBed = new HashSet<Player>();
@@ -140,13 +141,11 @@ public final class State implements Observer {
         }
 
         // Private notification of missed enter bed notification(s)
-        for (final Player tuckedIn : this.inBed)
-            if (tuckedIn.hasPermission("sleep.notify.ENTER_BED")) {
-                final Notification notification = this.notifications.get(Notification.Type.STATUS);
-                final String message = notification.format(this.plugin.getName(), this.needForSleep(), this.inBed.size(), this.possibleSleepers());
-                Main.messageManager.respond(joiner, message, MessageLevel.STATUS, notification.isTimestamped());
-                return;
-            }
+        if (this.hasGeneratedEnterBed) {
+            final Notification notification = this.notifications.get(Notification.Type.STATUS);
+            final String message = notification.format(this.plugin.getName(), this.needForSleep(), this.inBed.size(), this.possibleSleepers());
+            Main.messageManager.respond(joiner, message, MessageLevel.STATUS, notification.isTimestamped());
+        }
     }
 
     /**
@@ -167,7 +166,7 @@ public final class State implements Observer {
             return;
         }
 
-        this.notify(Notification.Type.ENTER_BED, enterer, enterer.getDisplayName(), this.needForSleep(), this.inBed.size(), this.possibleSleepers());
+        this.hasGeneratedEnterBed = this.notify(Notification.Type.ENTER_BED, enterer, enterer.getDisplayName(), this.needForSleep(), this.inBed.size(), this.possibleSleepers());
 
         if (!this.isSleepEnabled) {
             this.plugin.getServer().getScheduler().scheduleSyncDelayedTask(this.plugin, new Insomnia(enterer), State.TICKS_BEFORE_DEEP_SLEEP);
@@ -212,9 +211,11 @@ public final class State implements Observer {
         }
 
         // Stop ignoring players if no one is left in bed
-        if (this.inBed.size() == 0)
+        if (this.inBed.size() == 0) {
+            this.hasGeneratedEnterBed = false;
             for (final Player player : this.world.getPlayers())
                 this.ignoreSleep(player, false, "Awakening World");
+        }
 
         this.bedActivity = null;
     }
@@ -235,12 +236,13 @@ public final class State implements Observer {
      * @param type type to generate
      * @param sender event originator, null for code logic; frequency tracking
      * @param args parameters to substitute in message
+     * @return true if notification was sent; otherwise false
      */
-    private void notify(final Notification.Type type, final CommandSender sender, final Object... args) {
+    private boolean notify(final Notification.Type type, final CommandSender sender, final Object... args) {
         final Notification notification = this.notifications.get(type);
-        if (notification == null) return;
+        if (notification == null) return false;
 
-        notification.generate(this.world, sender, args);
+        return notification.generate(this.world, sender, args);
     }
 
     /**
