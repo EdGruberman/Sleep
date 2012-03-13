@@ -21,6 +21,7 @@ import edgruberman.bukkit.messagemanager.MessageLevel;
 import edgruberman.bukkit.messagemanager.MessageManager;
 import edgruberman.bukkit.playeractivity.EventTracker;
 import edgruberman.bukkit.playeractivity.Interpreter;
+import edgruberman.bukkit.sleep.ConfigurationFile.FileVersion;
 import edgruberman.bukkit.sleep.commands.Sleep;
 
 public final class Main extends JavaPlugin {
@@ -36,6 +37,7 @@ public final class Main extends JavaPlugin {
      */
     private static final String WORLD_SPECIFICS = "Worlds";
 
+    // Minimum versions
     private static final Map<String, String> DEPENDENCIES = new HashMap<String, String>();
     static {
         Main.DEPENDENCIES.put("MessageManager", "5.0.0");
@@ -51,9 +53,9 @@ public final class Main extends JavaPlugin {
 
     @Override
     public void onLoad() {
+        Main.configurationFile = new ConfigurationFile(this);
         this.checkDependencies();
         Main.messageManager = new MessageManager(this);
-        Main.configurationFile = new ConfigurationFile(this);
         Main.configurationFile.setMinVersion(Main.MINIMUM_CONFIGURATION_VERSION);
     }
 
@@ -223,10 +225,12 @@ public final class Main extends JavaPlugin {
                 continue;
             }
 
-            if (plugin.getDescription().getVersion().equals(dependency.getValue())) return;
+            final FileVersion existing = Main.configurationFile.new FileVersion(plugin.getDescription().getVersion());
+            final FileVersion required = Main.configurationFile.new FileVersion(dependency.getValue());
+            if (existing.compareTo(required) >= 0) return;
 
             this.installDependency(dependency.getKey(), this.getServer().getUpdateFolderFile());
-            this.getLogger().log(Level.SEVERE, "Dependency update for " + dependency.getKey() + " v" + dependency.getValue() + " required. Restart your server as soon as possible to automatically apply the update.");
+            this.getLogger().log(Level.SEVERE, "Dependency update for " + dependency.getKey() + " v" + dependency.getValue() + " required; Restart your server as soon as possible to automatically apply the update");
             continue;
         }
     }

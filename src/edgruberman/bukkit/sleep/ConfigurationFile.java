@@ -13,8 +13,6 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
 
-import edgruberman.bukkit.messagemanager.MessageLevel;
-
 /**
  * Standardized plugin configuration file management class.
  *
@@ -78,7 +76,7 @@ public final class ConfigurationFile {
      * @param maxSaveFrequency shortest duration in seconds each save can occur
      */
     ConfigurationFile(final Plugin owner, final int maxSaveFrequency) {
-        this(owner, null, null, null, maxSaveFrequency);
+        this(owner, (String) null, (String) null, (String) null, maxSaveFrequency);
     }
 
     /**
@@ -213,11 +211,11 @@ public final class ConfigurationFile {
             if (sinceLastSave < this.maxSaveFrequency) {
                 // If task already scheduled let it run when expected
                 if (this.isSaveQueued()) {
-                    Main.messageManager.log("Save request already queued; Last save was " + sinceLastSave + " seconds ago; " + this.file, MessageLevel.FINEST);
+                    this.owner.getLogger().log(Level.FINEST, "Save request already queued for file: " + this.file + " (Last save was " + sinceLastSave + " seconds ago)");
                     return;
                 }
 
-                Main.messageManager.log("Queueing configuration file save request to run in " + (this.maxSaveFrequency - sinceLastSave) + " seconds; Last save was " + sinceLastSave + " seconds ago; " + this.file, MessageLevel.FINEST);
+                this.owner.getLogger().log(Level.FINEST, "Queueing save request to run in " + (this.maxSaveFrequency - sinceLastSave) + " seconds for file: " + this.file + " (Last save was " + sinceLastSave + " seconds ago)");
 
                 // Schedule task to save cache to file system
                 final ConfigurationFile that = this;
@@ -235,7 +233,7 @@ public final class ConfigurationFile {
             this.config.save(this.file);
 
         } catch (final IOException e) {
-            Main.messageManager.log("Unable to save configuration file; " + this.file, MessageLevel.SEVERE, e);
+            this.owner.getLogger().log(Level.SEVERE, "Unable to save configuration file: " + this.file, e);
             return;
 
         } finally {
@@ -244,7 +242,7 @@ public final class ConfigurationFile {
 
         this.taskSave = null;
 
-        Main.messageManager.log("Saved configuration file; " + this.file, MessageLevel.FINEST);
+        this.owner.getLogger().log(Level.FINEST, "Saved configuration file: " + this.file);
     }
 
     /**
