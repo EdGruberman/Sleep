@@ -30,7 +30,7 @@ class SleepStatus extends Action {
         }
 
 
-        final String message = state.notifications.get(Notification.Type.STATUS).format(state.needForSleep(), state.inBed.size(), state.possibleSleepers());
+        final String message = state.notifications.get(Notification.Type.STATUS).format(this.command.plugin.getDescription().getName(), state.needForSleep(), state.inBed.size(), state.possibleSleepers());
         Main.messageManager.respond(context.sender, message, MessageLevel.STATUS, false);
         if (state.inBed.size() >= 1) state.lull();
     }
