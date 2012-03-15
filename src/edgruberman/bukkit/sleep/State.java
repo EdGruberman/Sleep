@@ -87,19 +87,22 @@ public final class State implements Observer {
 
     State(final Plugin plugin, final World world, final boolean sleep, final int idle, final int forceCount, final int forcePercent, final List<Interpreter> activity) {
         this.plugin = plugin;
-        this.tracker = new EventTracker(plugin);
         this.world = world;
         this.isSleepEnabled = sleep;
         this.idle = idle;
         this.forceCount = forceCount;
         this.forcePercent = forcePercent;
+
+        this.tracker = new EventTracker(plugin);
         if (activity != null) {
             this.tracker.addInterpreters(activity);
             this.tracker.addObserver(this);
         }
 
-        for (final Player player : world.getPlayers())
+        for (final Player player : world.getPlayers()) {
+            this.tracker.record(player, null); // Set initial reference point for inactivity
             if (player.isSleeping()) this.inBed.add(player);
+        }
     }
 
     /**
@@ -324,8 +327,6 @@ public final class State implements Observer {
      * @param reason brief description for logging/troubleshooting purposes
      */
     private void ignoreSleep(final Player player, final boolean ignore, final String reason) {
-        if (!player.isOnline()) return;
-
         // Don't modify players already set as expected
         if (player.isSleepingIgnored() == ignore) return;
 
@@ -334,7 +335,7 @@ public final class State implements Observer {
 
         Main.messageManager.log(
                 "Setting " + player.getName() + " in [" + player.getWorld().getName() + "]"
-                    + " to" + (ignore ? "" : " not") + " ignore sleep. (" + reason + ")"
+                    + " to" + (ignore ? "" : " not") + " ignore sleep (" + reason + ")"
                 , MessageLevel.FINE
         );
         player.setSleepingIgnored(ignore);
@@ -433,9 +434,7 @@ public final class State implements Observer {
     private List<Player> ignored() {
         final List<Player> ignored = new ArrayList<Player>();
         for (final Player player : this.world.getPlayers())
-            if (player.hasPermission("sleep.ignore")
-                    || (player.isPermissionSet("sleep.ignore." + this.world.getName()) && player.hasPermission("sleep.ignore." + this.world.getName()))
-            )
+            if (player.hasPermission(Main.PERMISSION_PREFIX + ".ignore"))
                 ignored.add(player);
 
         this.ignoredCache = ignored;
@@ -466,10 +465,10 @@ public final class State implements Observer {
         if (this.idle <= 0) return true;
 
         final Long last = this.tracker.getLastFor(player);
-        if (last != null) {
-            final long duration = (System.currentTimeMillis() - last) / 1000;
-            if (duration < this.idle) return true;
-        }
+        if (last == null) return true; // Assume active until relative point identified; Also useful to avoid trigger on worldLeft after PlayerQuit
+
+        final long duration = (System.currentTimeMillis() - last) / 1000;
+        if (duration < this.idle) return true;
 
         if (player == this.bedActivity) return true;
 
