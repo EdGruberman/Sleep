@@ -84,6 +84,7 @@ public final class State implements Observer {
     private List<Player> ignoredCache = new ArrayList<Player>();
     private CommandSender sleepForcer = null;
     private Player bedActivity = null;
+    private Player leaving = null;
 
     State(final Plugin plugin, final World world, final boolean sleep, final int idle, final int forceCount, final int forcePercent, final List<Interpreter> activity) {
         this.plugin = plugin;
@@ -229,8 +230,10 @@ public final class State implements Observer {
      * @param leaver who left world
      */
     void worldLeft(final Player leaver) {
+        this.leaving = leaver;
         this.bedLeft(leaver);
         this.lull();
+        this.leaving = null;
     }
 
     /**
@@ -332,6 +335,9 @@ public final class State implements Observer {
 
         // Don't ignore players in bed
         if (ignore && this.inBed.contains(player)) return;
+
+        // Don't ignore players in the middle of leaving
+        if (this.leaving != null && this.leaving == player) return;
 
         Main.messageManager.log(
                 "Setting " + player.getName() + " in [" + player.getWorld().getName() + "]"
@@ -465,12 +471,12 @@ public final class State implements Observer {
         if (this.idle <= 0) return true;
 
         final Long last = this.tracker.getLastFor(player);
-        if (last == null) return true; // Assume active until relative point identified; Also useful to avoid trigger on worldLeft after PlayerQuit
+        if (last == null) return false; // No activity registered means player is inactive
 
         final long duration = (System.currentTimeMillis() - last) / 1000;
         if (duration < this.idle) return true;
 
-        if (player == this.bedActivity) return true;
+        if (player == this.bedActivity) return true; // Treat player as active when entering/exiting a bed
 
         return false;
     }
