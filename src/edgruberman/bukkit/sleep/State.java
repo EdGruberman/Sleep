@@ -8,17 +8,19 @@ import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
+import java.util.logging.Level;
 
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventPriority;
 import org.bukkit.plugin.Plugin;
 
 import edgruberman.bukkit.messagemanager.MessageLevel;
-import edgruberman.bukkit.messagemanager.channels.Channel;
 import edgruberman.bukkit.playeractivity.EventTracker;
 import edgruberman.bukkit.playeractivity.Interpreter;
-import edgruberman.bukkit.playeractivity.PlayerEvent;
+import edgruberman.bukkit.playeractivity.PlayerActivity;
+import edgruberman.bukkit.playeractivity.PlayerIdle;
 
 /**
  * Sleep state for a specific world.
@@ -79,12 +81,14 @@ public final class State implements Observer {
     public final Map<Notification.Type, Notification> notifications = new HashMap<Notification.Type, Notification>();
     private boolean hasGeneratedEnterBed = false;
 
-    // Status
-    public Set<Player> inBed = new HashSet<Player>();
-    private List<Player> ignoredCache = new ArrayList<Player>();
+    // Player Indexes
+    public List<Player> players = new ArrayList<Player>();
+    public List<Player> playersInBed = new ArrayList<Player>();
+    public List<Player> playersIdle = new ArrayList<Player>();
+    public List<Player> playersIgnored = new ArrayList<Player>();
+
+    private boolean isForcingSleep = false;
     private CommandSender sleepForcer = null;
-    private Player bedActivity = null;
-    private Player leaving = null;
 
     State(final Plugin plugin, final World world, final boolean sleep, final int idle, final int forceCount, final int forcePercent, final List<Interpreter> activity) {
         this.plugin = plugin;
@@ -96,31 +100,17 @@ public final class State implements Observer {
 
         this.tracker = new EventTracker(plugin);
         if (activity != null) {
+            this.tracker.setDefaultPriority(EventPriority.HIGHEST); // One below Somnologist's MONITOR to ensure activity/idle status are updated before any processing in this State
             this.tracker.addInterpreters(activity);
-            this.tracker.addObserver(this);
+            this.tracker.activityPublisher.addObserver(this);
+            this.tracker.idlePublisher.setThreshold(this.idle * 1000);
+            this.tracker.idlePublisher.addObserver(this);
         }
 
         for (final Player player : world.getPlayers()) {
-            this.tracker.record(player, null); // Set initial reference point for inactivity
-            if (player.isSleeping()) this.inBed.add(player);
+            if (player.isSleeping()) this.playersInBed.add(player);
+            this.updateIgnored(player);
         }
-    }
-
-    /**
-     * Remove all references to this sleep state.
-     */
-    void clear() {
-        this.tracker.deleteObserver(this);
-        this.tracker.clear();
-    }
-
-    /**
-     * Associate event message for this state.
-     *
-     * @param notification message and settings to associate
-     */
-    void addNotification(final Notification notification) {
-        this.notifications.put(notification.type, notification);
     }
 
     /**
@@ -129,25 +119,31 @@ public final class State implements Observer {
      * @param joiner who joined this world
      */
     void worldJoined(final Player joiner) {
-        this.processActivity(joiner, "WorldJoinEvent");
-        if (this.inBed.size() == 0) return;
+        this.players.add(joiner);
+        if (this.tracker.idlePublisher.getIdle().contains(joiner)) this.playersIdle.add(joiner);
+        this.updateIgnored(joiner);
+
+        if (this.playersInBed.size() == 0) return;
+
+        this.plugin.getLogger().log(Level.FINEST, "[" + this.world.getName() + "] World Join: " + joiner.getName());
 
         // Prevent interruption of forced sleep in progress
-        if (this.sleepForcer != null) {
-            this.ignoreSleep(joiner, true, "Forcing Sleep");
+        if (this.isForcingSleep) {
+            this.setSleepingIgnored(joiner, true, "Forcing Sleep: World Join");
             return;
         }
 
         // Notify of interruption when a natural sleep is in progress
-        if (this.needForSleep() == 1) {
-            this.notify(Notification.Type.INTERRUPT, joiner, joiner.getDisplayName(), this.needForSleep(), this.inBed.size(), this.possibleSleepers());
+        if (this.sleepersNeeded() == 1) {
+            this.plugin.getLogger().log(Level.FINE, "[" + this.world.getName() + "] Interruption: " + joiner.getName());
+            this.notify(Notification.Type.INTERRUPT, joiner, joiner.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible());
             return;
         }
 
         // Private notification of missed enter bed notification(s)
         if (this.hasGeneratedEnterBed) {
             final Notification notification = this.notifications.get(Notification.Type.STATUS);
-            final String message = notification.format(this.plugin.getName(), this.needForSleep(), this.inBed.size(), this.possibleSleepers());
+            final String message = notification.format(this.plugin.getName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible());
             Main.messageManager.respond(joiner, message, MessageLevel.STATUS, notification.isTimestamped());
         }
     }
@@ -158,27 +154,24 @@ public final class State implements Observer {
      * @param enterer who entered bed
      */
     void bedEntered(final Player enterer) {
-        this.inBed.add(enterer);
-        // PlayerBedEnter event might have triggered in this plugin before EventTracker updates activity
-        // TODO Detect if monitored activity included an event that would trigger activity when a bed is entered (PlayerMoveEvent, PlayerTeleportEvent, PlayerBedEnter)
-        this.bedActivity = enterer;
+        this.playersInBed.add(enterer);
+        this.plugin.getLogger().log(Level.FINEST, "[" + this.world.getName() + "] Bed Entered: " + enterer.getName());
 
-        this.ignoreSleep(enterer, false, "Entered Bed");
+        this.setSleepingIgnored(enterer, false, "Entered Bed");
 
         if (enterer.hasPermission(Main.PERMISSION_PREFIX + ".force")) {
             this.forceSleep(enterer);
             return;
         }
 
-        this.hasGeneratedEnterBed = this.notify(Notification.Type.ENTER_BED, enterer, enterer.getDisplayName(), this.needForSleep(), this.inBed.size(), this.possibleSleepers());
+        this.hasGeneratedEnterBed = this.notify(Notification.Type.ENTER_BED, enterer, enterer.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible());
 
         if (!this.isSleepEnabled) {
-            this.plugin.getServer().getScheduler().scheduleSyncDelayedTask(this.plugin, new Insomnia(enterer), State.TICKS_BEFORE_DEEP_SLEEP);
+            this.plugin.getServer().getScheduler().scheduleSyncDelayedTask(this.plugin, new Insomnia(enterer, this.plugin), State.TICKS_BEFORE_DEEP_SLEEP);
             return;
         }
 
         this.lull();
-        this.bedActivity = null;
     }
 
     /**
@@ -187,18 +180,23 @@ public final class State implements Observer {
      * @param leaver who left bed
      */
     void bedLeft(final Player leaver) {
-        if (!this.inBed.remove(leaver)) return;
+        if (!this.playersInBed.remove(leaver)) return;
 
-        this.bedActivity = leaver;
+        this.plugin.getLogger().log(Level.FINEST, "[" + this.world.getName() + "] Bed Left: " + leaver.getName());
 
         if (this.isNight()) {
             // Night time bed leaves only occur because of a manual action
-            this.notify(Notification.Type.LEAVE_BED, leaver, leaver.getDisplayName(), this.needForSleep(), this.inBed.size(), this.possibleSleepers());
+            this.notify(Notification.Type.LEAVE_BED, leaver, leaver.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible());
 
-        } else if (this.sleepForcer != null && this.inBed.size() == 0) {
-            // Last player to leave bed during a morning awakening after sleep was forced
+        } else if (this.playersInBed.size() == 0) {
+            // Last player to leave bed during a morning awakening
+            this.hasGeneratedEnterBed = false;
+            for (final Player player : this.world.getPlayers())
+                this.setSleepingIgnored(player, false, "Awakening World");
 
-            // Generate notification
+            if (!this.isForcingSleep) return;
+
+            // Generate forced sleep notification
             Notification.Type type = null;
             String name = this.plugin.getName();
             if (this.sleepForcer != null) {
@@ -208,20 +206,14 @@ public final class State implements Observer {
             } else {
                 type = Notification.Type.FORCE;
             }
-            this.notify(type, this.sleepForcer, name, this.needForSleep(), this.inBed.size(), this.possibleSleepers());
+            this.notify(type, this.sleepForcer, name, this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible());
 
             // Allow activity to again cancel idle status in order to remove ignored sleep
             this.sleepForcer = null;
+            this.isForcingSleep = false;
         }
 
-        // Stop ignoring players if no one is left in bed
-        if (this.inBed.size() == 0) {
-            this.hasGeneratedEnterBed = false;
-            for (final Player player : this.world.getPlayers())
-                this.ignoreSleep(player, false, "Awakening World");
-        }
 
-        this.bedActivity = null;
     }
 
     /**
@@ -230,82 +222,77 @@ public final class State implements Observer {
      * @param leaver who left world
      */
     void worldLeft(final Player leaver) {
-        this.leaving = leaver;
-        this.bedLeft(leaver);
+        this.players.remove(leaver);
+        this.playersIdle.remove(leaver);
+        this.updateIgnored(leaver);
+        this.bedLeft(leaver); // TODO research why this is necessary
+
+        if (this.playersInBed.size() == 0) return;
+
+        this.plugin.getLogger().log(Level.FINEST, "[" + this.world.getName() + "] World Left: " + leaver.getName());
         this.lull();
-        this.leaving = null;
     }
 
     /**
-     * Generate a notification to this world for an event if it is defined.
-     *
-     * @param type type to generate
-     * @param sender event originator, null for code logic; frequency tracking
-     * @param args parameters to substitute in message
-     * @return true if notification was sent; otherwise false
-     */
-    private boolean notify(final Notification.Type type, final CommandSender sender, final Object... args) {
-        final Notification notification = this.notifications.get(type);
-        if (notification == null) return false;
-
-        return notification.generate(this.world, sender, args);
-    }
-
-    /**
-     * Receives notification of player activity from the EventTracker.
-     * (This could be called on high frequency events such as PLAYER_MOVE.)
+     * Receives notification of player activity and idle from the EventTracker.
+     * (This could be called on high frequency events such as PlayerMoveEvent.)
      */
     @Override
     public void update(final Observable o, final Object arg) {
-        final PlayerEvent playerEvent = (PlayerEvent) arg;
-        if (playerEvent.player.getWorld() != this.world) return;
+        // Player Idle
+        if (arg instanceof PlayerIdle) {
+            final PlayerIdle idle = (PlayerIdle) arg;
+            this.playersIdle.add(idle.player);
+            this.lull();
+            return;
+        }
 
-        this.processActivity(playerEvent.player, playerEvent.event.getClass().getName());
-    }
+        // Player Activity
+        final PlayerActivity activity = (PlayerActivity) arg;
+        if (activity.player.getWorld() != this.world) return;
 
-    /**
-     * Update player to not ignore sleeping based on detected activity.
-     * (This could be called on high frequency events such as PLAYER_MOVE.)
-     *
-     * @param player player that generated activity
-     * @param type type of activity
-     */
-    public void processActivity(final Player player, final String type) {
+        this.playersIdle.remove(activity.player);
+
         // Activity should not remove ignore status if not currently ignoring
-        if (!player.isSleepingIgnored()) return;
+        if (!activity.player.isSleepingIgnored()) return;
 
-        // Activity should not remove ignore status when forcing sleep
-        if (this.sleepForcer != null) return;
+        // Activity should not remove ignore status when forcing sleep, or when force sleep would occur after not being idle
+        if (this.isForcingSleep) return;
 
         // Activity should not remove ignore status for always ignored players
-        if (this.ignoredCache.contains(player)) return;
+        if (this.playersIgnored.contains(activity.player)) return;
 
-        this.ignoreSleep(player, false, "Activity (Type: " + type + ")");
+        this.setSleepingIgnored(activity.player, false, "Activity: " + activity.event.getEventName());
+
+        this.lull(); // Necessary in case player is idle before a natural sleep that would have caused a force
     }
 
     /**
      * Configure idle players, and always ignored players to ignore sleep.
      * If all other players in the world are then either in bed or ignoring
-     * sleep natural sleep cycle should automatically commence.
+     * sleep a natural sleep cycle should automatically commence. (If forced
+     * sleep is defined and requirements are met, sleep will be forced.)
      */
     public void lull() {
-        if (!this.isNight() || this.inBed.size() == 0) return;
+        if (!this.isNight() || this.playersInBed.size() == 0) return;
 
         // Configure always ignored players to ignore sleep
-        for (final Player player : this.ignored())
-            this.ignoreSleep(player, true, "Always Ignored");
+        for (final Player player : this.playersIgnored)
+            this.setSleepingIgnored(player, true, "Always Ignored");
 
         // Configure idle players to ignore sleep
-        for (final Player player : this.idles())
-            this.ignoreSleep(player, true, "Idle");
+        for (final Player player : this.playersIdle)
+            this.setSleepingIgnored(player, true, "Idle");
 
-        if (Main.messageManager.isLevel(Channel.Type.LOG, MessageLevel.FINE))
-            Main.messageManager.log("[" + this.world.getName() + "] " + this.description(), MessageLevel.FINE);
+        if (this.plugin.getLogger().isLoggable(Level.FINE)) this.plugin.getLogger().log(Level.FINE, "[" + this.world.getName() + "] " + this.description());
 
         if (this.forceCount <= -1 && this.forcePercent <= -1) return;
 
-        // Force sleep if no more needed and not everyone is in bed
-        if ((this.needForSleep() == 0) && (this.inBed.size() != this.possibleSleepers())) this.forceSleep(null);
+        // Let natural sleep happen if everyone is in bed
+        if (this.playersInBed.size() == this.sleepersPossible().size()) return;
+
+        // Force sleep if no more are needed
+        if (this.sleepersNeeded() == 0) this.forceSleep(null);
     }
 
     /**
@@ -315,11 +302,12 @@ public final class State implements Observer {
      */
     public void forceSleep(final CommandSender sender) {
         // Indicate forced sleep for this world to ensure activity does not negate ignore status
+        this.isForcingSleep = true;
         this.sleepForcer = sender;
 
         // Set sleeping ignored for players not already in bed, or entering bed, or ignoring sleep to allow Minecraft to manage sleep normally
         for (final Player player : this.world.getPlayers())
-            this.ignoreSleep(player, true, "Forcing Sleep");
+            this.setSleepingIgnored(player, true, "Forcing Sleep");
     }
 
     /**
@@ -329,70 +317,25 @@ public final class State implements Observer {
      * @param ignore true to set player to ignore sleeping; false otherwise
      * @param reason brief description for logging/troubleshooting purposes
      */
-    private void ignoreSleep(final Player player, final boolean ignore, final String reason) {
+    private void setSleepingIgnored(final Player player, final boolean ignore, final String reason) {
         // Don't modify players already set as expected
         if (player.isSleepingIgnored() == ignore) return;
 
         // Don't ignore players in bed
-        if (ignore && this.inBed.contains(player)) return;
+        if (ignore && this.playersInBed.contains(player)) return;
 
-        // Don't ignore players in the middle of leaving
-        if (this.leaving != null && this.leaving == player) return;
-
-        Main.messageManager.log(
-                "Setting " + player.getName() + " in [" + player.getWorld().getName() + "]"
-                    + " to" + (ignore ? "" : " not") + " ignore sleep (" + reason + ")"
-                , MessageLevel.FINE
-        );
+        this.plugin.getLogger().log(Level.FINE, "[" + this.world.getName() + "] Setting " + player.getName() + " to" + (ignore ? "" : " not") + " ignore sleep (" + reason + ")");
         player.setSleepingIgnored(ignore);
     }
 
     /**
-     * Determine if world time will let a player get in to bed.
+     * Number of players still needed to enter bed for sleep to occur.
      *
-     * @return true if time allows bed usage; otherwise false
+     * @return number of players still needed; 0 if no more are needed
      */
-    private boolean isNight() {
-        final long now = this.world.getTime();
-
-        if ((State.TIME_NIGHT_START <= now) && (now < State.TIME_NIGHT_END)) return true;
-
-        return false;
-    }
-
-    /**
-     * Description of status of sleep cycle.
-     *
-     * @return text description of status
-     */
-    public String description() {
-        // Example output:
-        // "Sleep needs +4; 3 in bed out of 7 possible = 42% (forced when 100%)";
-        // "Sleep needs +2; 3 in bed (forced when 5) out of 7 possible = 42% (forced when 50%)";
-        // "Sleep needs +2; 3 in bed (forced when 5) out of 7 possible = 42%";
-        // "Sleep needs +1; 3 in bed out of 7 possible = 42% (forced when 50%)";
-        // "Sleep needs no more; 5 in bed (need 5) out of 7 possible = 71% (forced when 50%)";
-        final int need = this.needForSleep();
-        final int count = this.inBed.size();
-        final int possible = this.possibleSleepers();
-        final int requiredPercent = (this.forcePercent <= 100 ? this.forcePercent : 100);
-        final int currentPercent = (int) Math.floor((double) count / (possible > 0 ? possible : 1) * 100);
-
-        return "Sleep needs " + (need > 0 ? "+" + need : "no more") + ";"
-            + " " + count + " in bed" + (this.forceCount > 0 ? " (forced when " + this.forceCount + ")" : "")
-            + " out of " + possible + " possible"
-            + " = " + currentPercent + "%" + (requiredPercent > 0 ? " (forced when " + requiredPercent + "%)" : "")
-        ;
-    }
-
-    /**
-     * Number of players still needed to enter bed for sleep.
-     *
-     * @return number of players still needed, 0 if no more is needed
-     */
-    public int needForSleep() {
-        final int possible = this.possibleSleepers();
-        final int inBed = this.inBed.size();
+    public int sleepersNeeded() {
+        final int possible = this.sleepersPossible().size();
+        final int inBed = this.playersInBed.size();
 
         // Need 100% of possible if percent not specified
         final double forcePercent = (((this.forcePercent > 0) && (this.forcePercent < 100)) ? this.forcePercent : 100);
@@ -417,66 +360,86 @@ public final class State implements Observer {
     }
 
     /**
-     * Count of possible players considered for sleep.
+     * Total number of players considered for sleep.
      *
-     * @return count of active, not always ignored, and not already in bed
+     * @return number of active, not always ignored, and not already in bed
      */
-    public int possibleSleepers() {
-        final List<Player> ignored = this.ignored();
-        ignored.removeAll(this.inBed);
+    public Set<Player> sleepersPossible() {
+        final Set<Player> possible = new HashSet<Player>(this.players);
+        possible.removeAll(this.playersIdle);
+        possible.removeAll(this.playersIgnored);
+        possible.addAll(this.playersInBed); // Add back in any players idle and/or ignored that are also in bed
 
-        final List<Player> idles = this.idles();
-        idles.removeAll(this.inBed);
-
-        final int possible = this.world.getPlayers().size() - ignored.size() - idles.size();
-        return (possible > 0 ? possible : 0);
+        return possible;
     }
 
     /**
-     * Compile a list of current players that are always ignored for sleep.
+     * Associate event message for this state.
      *
-     * @return players that always ignore sleep
+     * @param notification message and settings to associate
      */
-    private List<Player> ignored() {
-        final List<Player> ignored = new ArrayList<Player>();
-        for (final Player player : this.world.getPlayers())
-            if (player.hasPermission(Main.PERMISSION_PREFIX + ".ignore"))
-                ignored.add(player);
-
-        this.ignoredCache = ignored;
-        return ignored;
+    void addNotification(final Notification notification) {
+        this.notifications.put(notification.type, notification);
     }
 
     /**
-     * Compile a list of current players that are idle.
+     * Generate a notification to this world for an event if it is defined.
      *
-     * @return players that are considered idle
+     * @param type type to generate
+     * @param sender event originator, null for code logic; frequency tracking
+     * @param args parameters to substitute in message
+     * @return true if notification was sent; otherwise false
      */
-    public List<Player> idles() {
-        final List<Player> idles = new ArrayList<Player>();
-        for (final Player player : this.world.getPlayers())
-            if (!this.isActive(player))
-                idles.add(player);
+    private boolean notify(final Notification.Type type, final CommandSender sender, final Object... args) {
+        final Notification notification = this.notifications.get(type);
+        if (notification == null) return false;
 
-        return idles;
+        return notification.generate(this.world, sender, args);
     }
 
     /**
-     * Determine if player has any recent activity.
+     * Description of status of sleep cycle.
      *
-     * @param player player to check activity on
-     * @return true if player has been active recently; otherwise false
+     * @return text description of status
      */
-    public boolean isActive(final Player player) {
-        if (this.idle <= 0) return true;
+    public String description() {
+        // Example output:
+        // "Sleep needs +4; 3 in bed out of 7 possible = 42% (forced when 100%)";
+        // "Sleep needs +2; 3 in bed (forced when 5) out of 7 possible = 42% (forced when 50%)";
+        // "Sleep needs +2; 3 in bed (forced when 5) out of 7 possible = 42%";
+        // "Sleep needs +1; 3 in bed out of 7 possible = 42% (forced when 50%)";
+        // "Sleep needs no more; 5 in bed (need 5) out of 7 possible = 71% (forced when 50%)";
+        final int need = this.sleepersNeeded();
+        final int count = this.playersInBed.size();
+        final int possible = this.sleepersPossible().size();
+        final int requiredPercent = (this.forcePercent <= 100 ? this.forcePercent : 100);
+        final int currentPercent = (int) Math.floor((double) count / (possible > 0 ? possible : 1) * 100);
 
-        final Long last = this.tracker.getLastFor(player);
-        if (last == null) return false; // No activity registered means player is inactive
+        return "Sleep needs " + (need > 0 ? "+" + need : "no more") + ";"
+            + " " + count + " in bed" + (this.forceCount > 0 ? " (forced when " + this.forceCount + ")" : "")
+            + " out of " + possible + " possible"
+            + " = " + currentPercent + "%" + (requiredPercent > 0 ? " (forced when " + requiredPercent + "%)" : "")
+        ;
+    }
 
-        final long duration = (System.currentTimeMillis() - last) / 1000;
-        if (duration < this.idle) return true;
+    private void updateIgnored(final Player player) {
+        if (player.hasPermission(Main.PERMISSION_PREFIX + ".ignore")) {
+            this.playersIgnored.add(player);
+            return;
+        }
 
-        if (player == this.bedActivity) return true; // Treat player as active when entering/exiting a bed
+        this.playersIgnored.remove(player);
+    }
+
+    /**
+     * Determine if world time will let a player get in to bed.
+     *
+     * @return true if time allows bed usage; otherwise false
+     */
+    private boolean isNight() {
+        final long now = this.world.getTime();
+
+        if ((State.TIME_NIGHT_START <= now) && (now < State.TIME_NIGHT_END)) return true;
 
         return false;
     }

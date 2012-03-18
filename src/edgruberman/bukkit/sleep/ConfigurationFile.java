@@ -154,7 +154,7 @@ public final class ConfigurationFile {
 
             // Backup existing file
             String backupName = this.file.getName().substring(0, this.file.getName().lastIndexOf("."));
-            backupName += "_" + new SimpleDateFormat("yyyyMMdd'T'HHmmZ").format(new Date()) + ".yml";
+            backupName += " backup - version " + this.getVersion().toString() + " - " + new SimpleDateFormat("yyyyMMdd'T'HHmm").format(new Date()) + ".yml";
             final File backup = new File(this.file.getParentFile(), backupName);
             this.owner.getLogger().log(Level.WARNING, "Existing configuration file \"" + this.file.getPath() + "\" with version \"" + this.getVersion() + "\" is out of date; Required minimum version is \"" + this.minVersion + "\"; Backing up existing file to \"" + backup.getPath() + "\"");
             this.file.renameTo(backup);

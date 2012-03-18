@@ -1,5 +1,6 @@
 package edgruberman.bukkit.sleep.commands;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.bukkit.Bukkit;
@@ -31,15 +32,15 @@ class SleepWho extends Action {
         }
 
         String message;
-        if (state.inBed.size() == 0) {
-            message = "No one is currently in bed.";
+        if (state.playersInBed.size() == 0) {
+            message = "No one is currently in bed";
         } else {
             message = "Sleeping in [" + world.getName() + "]: ";
-            for (final Player player : state.inBed)
+            for (final Player player : state.playersInBed)
                 message += player.getDisplayName()+ ", ";
 
-            final List<Player> idles = state.idles();
-            idles.removeAll(state.inBed);
+            final List<Player> idles = new ArrayList<Player>(state.playersIdle);
+            idles.removeAll(state.playersInBed);
             for (final Player player : idles)
                 message += player.getDisplayName() + "(Idle), ";
 
@@ -47,7 +48,7 @@ class SleepWho extends Action {
         }
 
         Main.messageManager.respond(context.sender, message, MessageLevel.STATUS, false);
-        if (state.inBed.size() >= 1) state.lull();
+        state.lull();
     }
 
     private World parseWorld(final Context context) {

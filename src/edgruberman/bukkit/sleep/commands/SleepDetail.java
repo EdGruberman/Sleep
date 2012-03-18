@@ -29,7 +29,7 @@ class SleepDetail extends Action {
         }
 
         Main.messageManager.respond(context.sender, state.description(), MessageLevel.STATUS, false);
-        if (state.inBed.size() >= 1) state.lull();
+        state.lull();
     }
 
     private World parseWorld(final Context context) {

@@ -2,8 +2,10 @@ package edgruberman.bukkit.sleep;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 
 import org.bukkit.World;
 import org.bukkit.World.Environment;
@@ -19,8 +21,6 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.event.world.WorldUnloadEvent;
 import org.bukkit.plugin.Plugin;
-
-import edgruberman.bukkit.messagemanager.MessageLevel;
 
 /**
  * Sleep state management.
@@ -46,12 +46,12 @@ public final class Somnologist implements Listener {
      */
     State loadState(final World world) {
         if (world.getEnvironment() != Environment.NORMAL) {
-            Main.messageManager.log("Sleep state for [" + world.getName() + "] will not be tracked because its environment is " + world.getEnvironment().toString(), MessageLevel.CONFIG);
+            this.plugin.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] will not be tracked because its environment is " + world.getEnvironment().toString());
             return null;
         }
 
         if (this.excluded.contains(world.getName())) {
-            Main.messageManager.log("Sleep state for [" + world.getName() + "] will not be tracked because it is explicitly excluded", MessageLevel.CONFIG);
+            this.plugin.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] will not be tracked because it is explicitly excluded");
             return null;
         }
 
@@ -69,17 +69,14 @@ public final class Somnologist implements Listener {
      */
     void clear() {
         HandlerList.unregisterAll(this);
-        for (final State state : this.states.values()) state.clear();
-        this.states.clear();
+
+        final Iterator<State> it = this.states.values().iterator();
+        while (it.hasNext()) {
+            it.next().tracker.clear();
+            it.remove();
+        }
+
         this.excluded.clear();
-    }
-
-    void removeState(final World world) {
-        final State state = this.states.get(world);
-        if (state == null) return;
-
-        state.clear();
-        this.states.remove(state);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -91,7 +88,11 @@ public final class Somnologist implements Listener {
     public void onWorldUnload(final WorldUnloadEvent event) {
         if (event.isCancelled()) return;
 
-        this.removeState(event.getWorld());
+        final State state = this.states.get(event.getWorld());
+        if (state == null) return;
+
+        state.tracker.clear();
+        this.states.remove(state);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -130,7 +131,6 @@ public final class Somnologist implements Listener {
         final State state = this.states.get(event.getPlayer().getWorld());
         if (state == null) return;
 
-        Main.messageManager.log(event.getPlayer().getName() + " entered bed in [" + event.getPlayer().getWorld().getName() + "]", MessageLevel.FINE);
         state.bedEntered(event.getPlayer());
     }
 
@@ -140,7 +140,6 @@ public final class Somnologist implements Listener {
         final State state = this.states.get(event.getPlayer().getWorld());
         if (state == null) return;
 
-        Main.messageManager.log(event.getPlayer().getName() + " left bed in [" + event.getPlayer().getWorld().getName() + "]", MessageLevel.FINE);
         state.bedLeft(event.getPlayer());
     }
 

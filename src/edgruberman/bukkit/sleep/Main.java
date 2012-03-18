@@ -41,27 +41,38 @@ public final class Main extends JavaPlugin {
     private static final Map<String, String> DEPENDENCIES = new HashMap<String, String>();
     static {
         Main.DEPENDENCIES.put("MessageManager", "5.0.0");
-        Main.DEPENDENCIES.put("PlayerActivity", "1.0.0");
+        Main.DEPENDENCIES.put("PlayerActivity", "1.1.0");
     }
 
-    private static final String MINIMUM_CONFIGURATION_VERSION = "4.0.0";
+    private static final String MINIMUM_CONFIGURATION_VERSION = "4.1.0a0";
 
     public static MessageManager messageManager;
     public static Somnologist somnologist = null;
 
-    private static ConfigurationFile configurationFile;
+    private ConfigurationFile configurationFile;
+    private boolean firstEnable = true;
 
     @Override
     public void onLoad() {
-        Main.configurationFile = new ConfigurationFile(this);
+        this.configurationFile = new ConfigurationFile(this);
+        this.configurationFile.setMinVersion(Main.MINIMUM_CONFIGURATION_VERSION);
+        this.configurationFile.load();
+        this.setLoggingLevel();
         this.checkDependencies();
         Main.messageManager = new MessageManager(this);
-        Main.configurationFile.setMinVersion(Main.MINIMUM_CONFIGURATION_VERSION);
+    }
+
+    private void setLoggingLevel() {
+        final String name = this.configurationFile.getConfig().getString("logLevel", "INFO");
+        Level level = MessageLevel.parse(name);
+        if (level == null) level = Level.INFO;
+        this.getLogger().setLevel(level);
     }
 
     @Override
     public void onEnable() {
         this.loadConfiguration();
+        this.firstEnable = false;
         new Sleep(this);
     }
 
@@ -75,11 +86,12 @@ public final class Main extends JavaPlugin {
      * This will cause new events to be registered as needed.
      */
     public void loadConfiguration() {
-        Main.configurationFile.load();
+        if (!this.firstEnable) this.configurationFile.load();
 
         if (Main.somnologist != null) Main.somnologist.clear();
-        final List<String> excluded = Main.configurationFile.getConfig().getStringList("excluded");
-        Main.messageManager.log("Excluded Worlds: " + excluded, MessageLevel.CONFIG);
+        final List<String> excluded = this.configurationFile.getConfig().getStringList("excluded");
+        this.getLogger().log(Level.CONFIG, "Excluded Worlds: " + excluded);
+
         Main.somnologist = new Somnologist(this, excluded);
     }
 
@@ -92,33 +104,33 @@ public final class Main extends JavaPlugin {
         // Load configuration values using defaults defined in code
         // overridden by defaults in the main plugin configuration file
         // overridden by world specific settings in the WORLD_SPECIFICS folder
-        final FileConfiguration pluginMain = Main.configurationFile.getConfig();
+        final FileConfiguration pluginMain = this.configurationFile.getConfig();
         final FileConfiguration worldSpecific = (new ConfigurationFile(this, Main.WORLD_SPECIFICS + "/" + world.getName() + "/config.yml", Main.WORLD_SPECIFICS + "/" + world.getName() + "/config.yml")).getConfig();
 
         final boolean sleep = Main.loadBoolean(worldSpecific, pluginMain, "sleep", State.DEFAULT_SLEEP);
-        Main.messageManager.log("Sleep state for [" + world.getName() + "] Sleep Enabled: " + sleep, MessageLevel.CONFIG);
+        this.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] Sleep Enabled: " + sleep);
 
         final int forceCount = Main.loadInt(worldSpecific, pluginMain, "force.count", State.DEFAULT_FORCE_COUNT);
-        Main.messageManager.log("Sleep state for [" + world.getName() + "] Forced Sleep Minimum Count: " + forceCount, MessageLevel.CONFIG);
+        this.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] Forced Sleep Minimum Count: " + forceCount);
 
         final int forcePercent = Main.loadInt(worldSpecific, pluginMain, "force.percent", State.DEFAULT_FORCE_PERCENT);
-        Main.messageManager.log("Sleep state for [" + world.getName() + "] Forced Sleep Minimum Percent: " + forcePercent, MessageLevel.CONFIG);
+        this.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] Forced Sleep Minimum Percent: " + forcePercent);
 
         final int idle = Main.loadInt(worldSpecific, pluginMain, "idle", State.DEFAULT_IDLE);
-        Main.messageManager.log("Sleep state for [" + world.getName() + "] Idle Threshold (seconds): " + idle, MessageLevel.CONFIG);
+        this.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] Idle Threshold (seconds): " + idle);
 
         final List<Interpreter> activity = new ArrayList<Interpreter>();
         if (idle > 0) {
             for (final String className : Main.loadStringList(worldSpecific, pluginMain, "activity", Collections.<String>emptyList())) {
                 final Interpreter interpreter = EventTracker.newInterpreter(className);
                 if (interpreter == null) {
-                    Main.messageManager.log("Unsupported activity: " + className, MessageLevel.WARNING);
+                    this.getLogger().log(Level.WARNING, "Unsupported activity: " + className);
                     continue;
                 }
 
                 activity.add(interpreter);
             }
-            Main.messageManager.log("Sleep state for [" + world.getName() + "] Monitored Activity: " + activity.size() + " events", MessageLevel.CONFIG);
+            this.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] Monitored Activity: " + activity.size() + " events");
         }
 
         final State state = new State(this, world, sleep, idle, forceCount, forcePercent, activity);
@@ -126,7 +138,7 @@ public final class Main extends JavaPlugin {
         for (final Notification.Type type : Notification.Type.values()) {
             final Notification notification = this.loadNotification(type, worldSpecific);
             if (notification != null) {
-                Main.messageManager.log("Sleep state for [" + world.getName() + "] " + notification.description().replace("&", "&&"), MessageLevel.CONFIG);
+                this.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] " + notification.description());
                 state.addNotification(notification);
             }
         }
@@ -143,11 +155,11 @@ public final class Main extends JavaPlugin {
      * @return notification defined according to configuration
      */
     private Notification loadNotification(final Notification.Type type, final FileConfiguration override) {
-        final String format = Main.loadString(override, Main.configurationFile.getConfig(), "notifications." + type.name() + ".format", Notification.DEFAULT_FORMAT);
+        final String format = Main.loadString(override, this.configurationFile.getConfig(), "notifications." + type.name() + ".format", Notification.DEFAULT_FORMAT);
         if (format == null || format.length() == 0) return null;
 
-        final int maxFrequency = Main.loadInt(override, Main.configurationFile.getConfig(), "notifications." + type.name() + ".maxFrequency", Notification.DEFAULT_MAX_FREQUENCY);
-        final boolean isTimestamped = Main.loadBoolean(override, Main.configurationFile.getConfig(), "notifications." + type.name() + ".timestamp", Notification.DEFAULT_TIMESTAMP);
+        final int maxFrequency = Main.loadInt(override, this.configurationFile.getConfig(), "notifications." + type.name() + ".maxFrequency", Notification.DEFAULT_MAX_FREQUENCY);
+        final boolean isTimestamped = Main.loadBoolean(override, this.configurationFile.getConfig(), "notifications." + type.name() + ".timestamp", Notification.DEFAULT_TIMESTAMP);
 
         return new Notification(type, format, maxFrequency, isTimestamped);
     }
@@ -225,9 +237,9 @@ public final class Main extends JavaPlugin {
                 continue;
             }
 
-            final FileVersion existing = Main.configurationFile.new FileVersion(plugin.getDescription().getVersion());
-            final FileVersion required = Main.configurationFile.new FileVersion(dependency.getValue());
-            if (existing.compareTo(required) >= 0) return;
+            final FileVersion existing = this.configurationFile.new FileVersion(plugin.getDescription().getVersion());
+            final FileVersion required = this.configurationFile.new FileVersion(dependency.getValue());
+            if (existing.compareTo(required) >= 0) continue;
 
             this.installDependency(dependency.getKey(), this.getServer().getUpdateFolderFile());
             this.getLogger().log(Level.SEVERE, "Dependency update for " + dependency.getKey() + " v" + dependency.getValue() + " required; Restart your server as soon as possible to automatically apply the update");

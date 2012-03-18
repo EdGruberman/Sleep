@@ -5,5 +5,6 @@ send:
         level: EVENT
     WORLD:
         level: EVENT
-    LOG:
-        level: INFO
+# color:
+#    EVENT:
+#       WORLD: YELLOW

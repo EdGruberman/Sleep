@@ -34,4 +34,6 @@ activity:
     - PlayerToggleSneakEvent
     - PlayerItemHeldEvent
     - PlayerJoinEvent
-version: @VERSION.TARGET@
+    - PlayerChangedWorldEvent
+logLevel: INFO
+version: @VERSION@
