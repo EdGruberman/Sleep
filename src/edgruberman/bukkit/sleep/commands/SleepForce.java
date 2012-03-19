@@ -7,34 +7,38 @@ import org.bukkit.entity.Player;
 import edgruberman.bukkit.messagemanager.MessageLevel;
 import edgruberman.bukkit.sleep.Main;
 import edgruberman.bukkit.sleep.State;
+import edgruberman.bukkit.sleep.commands.util.Action;
+import edgruberman.bukkit.sleep.commands.util.Context;
+import edgruberman.bukkit.sleep.commands.util.Handler;
 
 class SleepForce extends Action {
 
-    SleepForce(final Command owner) {
-        super("force", owner);
+    SleepForce(final Handler handler) {
+        super(handler, "force");
     }
 
     @Override
-    void execute(final Context context) {
+    public boolean perform(final Context context) {
         final World world = this.parseWorld(context);
         if (world == null) {
             Main.messageManager.respond(context.sender, "Unable to determine world", MessageLevel.SEVERE, false);
-            return;
+            return false;
         }
 
         final State state = Main.somnologist.getState(world);
         if (state == null) {
-            Main.messageManager.respond(context.sender, "Sleep state for [" + world.getName() + "] is not tracked", MessageLevel.SEVERE, false);
-            return;
+            Main.messageManager.respond(context.sender, "Sleep state for [" + world.getName() + "] is not managed", MessageLevel.SEVERE, false);
+            return true;
         }
 
         if (state.playersInBed.size() == 0) {
             Main.messageManager.respond(context.sender, "Need at least 1 person in bed to force sleep", MessageLevel.SEVERE, false);
-            return;
+            return true;
         }
 
         Main.messageManager.respond(context.sender, "Forcing sleep in [" + world.getName() + "]...", MessageLevel.STATUS, false);
         state.forceSleep(context.sender);
+        return true;
     }
 
     private World parseWorld(final Context context) {

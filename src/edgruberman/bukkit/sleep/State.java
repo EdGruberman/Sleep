@@ -70,23 +70,21 @@ public final class State implements Observer {
      */
     private static final long TICKS_BEFORE_DEEP_SLEEP = 90;
 
-    // Configuration
-    private final Plugin plugin;
-    World world;
-    private final boolean isSleepEnabled;
-    public int idle;
-    private final int forceCount;
-    private final int forcePercent;
-    final EventTracker tracker;
-    public final Map<Notification.Type, Notification> notifications = new HashMap<Notification.Type, Notification>();
+    final public Plugin plugin;
+    final public World world;
+    final public boolean isSleepEnabled;
+    final public int idle;
+    final public int forceCount;
+    final public int forcePercent;
+    final public Map<Notification.Type, Notification> notifications = new HashMap<Notification.Type, Notification>();
+    final public EventTracker tracker;
+
+    final public List<Player> players = new ArrayList<Player>();
+    final public List<Player> playersInBed = new ArrayList<Player>();
+    final public List<Player> playersIdle = new ArrayList<Player>();
+    final public List<Player> playersIgnored = new ArrayList<Player>();
+
     private boolean hasGeneratedEnterBed = false;
-
-    // Player Indexes
-    public List<Player> players = new ArrayList<Player>();
-    public List<Player> playersInBed = new ArrayList<Player>();
-    public List<Player> playersIdle = new ArrayList<Player>();
-    public List<Player> playersIgnored = new ArrayList<Player>();
-
     private boolean isForcingSleep = false;
     private CommandSender sleepForcer = null;
 
@@ -404,7 +402,7 @@ public final class State implements Observer {
      */
     public String description() {
         // Example output:
-        // "Sleep needs +4; 3 in bed out of 7 possible = 42% (forced when 100%)";
+        // "Sleep needs +4; 3 in bed out of 7 possible = 42% (need 100%)";
         // "Sleep needs +2; 3 in bed (forced when 5) out of 7 possible = 42% (forced when 50%)";
         // "Sleep needs +2; 3 in bed (forced when 5) out of 7 possible = 42%";
         // "Sleep needs +1; 3 in bed out of 7 possible = 42% (forced when 50%)";

@@ -1,5 +1,5 @@
 name: @NAME@
-description: Manages sleep criteria and notifications for multi-player environments
+description: Manages sleep criteria and notifications
 softdepend: [MessageManager, PlayerActivity]
 version: @VERSION@
 author: @AUTHOR@
@@ -9,27 +9,20 @@ commands:
         description: Manages sleep functionality
         permission: sleep.sleep
         usage: |
-            /<command>[ status[ <World>]] - Display how many players still needed for sleep in <World>
-            /<command> detail[ <World>] - Display sleep requirements in <World>
-            /<command> who[ <World] - Display who is in bed in <World>
-            /<command> force[ <World>] - Force sleep in <World>
-            /<command> reload - Reload configuration files
+            /<command>[ who][ <World>] - Who is preventing sleep
+            /<command> detail[ <World>] - Sleep requirements
+            /<command> force[ <World>] - Force sleep for one night
+            /<command> reload - Reload configuration
 permissions:
     sleep.sleep.info:
-        description: Can use all the basic information actions of the sleep command
+        description: Can use the basic information actions of the sleep command
         default: true
         children:
-            sleep.sleep.status: true
             sleep.sleep.who: true
             sleep.sleep.detail: true
     sleep.sleep:
         description: Can use sleep command
         default: op
-    sleep.sleep.status:
-        description: Can use status action of sleep command
-        default: op
-        children:
-            sleep.sleep: true
     sleep.sleep.who:
         description: Can use who action of sleep command
         default: op
@@ -40,13 +33,13 @@ permissions:
         default: op
         children:
             sleep.sleep: true
-    sleep.sleep.reload:
-        description: Can use reload action of sleep command
+    sleep.sleep.force:
+        description: Can use force action of sleep command
         default: op
         children:
             sleep.sleep: true
-    sleep.sleep.force:
-        description: Can use force action of sleep command
+    sleep.sleep.reload:
+        description: Can use reload action of sleep command
         default: op
         children:
             sleep.sleep: true

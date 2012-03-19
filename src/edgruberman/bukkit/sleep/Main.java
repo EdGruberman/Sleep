@@ -44,7 +44,7 @@ public final class Main extends JavaPlugin {
         Main.DEPENDENCIES.put("PlayerActivity", "1.1.0");
     }
 
-    private static final String MINIMUM_CONFIGURATION_VERSION = "4.1.0a0";
+    private static final String MINIMUM_CONFIGURATION_VERSION = "4.1.0b4";
 
     public static MessageManager messageManager;
     public static Somnologist somnologist = null;
