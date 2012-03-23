@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Handler;
 import java.util.logging.Level;
 
 import org.bukkit.World;
@@ -50,7 +51,6 @@ public final class Main extends JavaPlugin {
     public static Somnologist somnologist = null;
 
     private ConfigurationFile configurationFile;
-    private boolean firstEnable = true;
 
     @Override
     public void onLoad() {
@@ -58,21 +58,16 @@ public final class Main extends JavaPlugin {
         this.configurationFile.setMinVersion(Main.MINIMUM_CONFIGURATION_VERSION);
         this.configurationFile.load();
         this.setLoggingLevel();
-        this.checkDependencies();
-        Main.messageManager = new MessageManager(this);
-    }
 
-    private void setLoggingLevel() {
-        final String name = this.configurationFile.getConfig().getString("logLevel", "INFO");
-        Level level = MessageLevel.parse(name);
-        if (level == null) level = Level.INFO;
-        this.getLogger().setLevel(level);
+        this.checkDependencies();
     }
 
     @Override
     public void onEnable() {
-        this.loadConfiguration();
-        this.firstEnable = false;
+        Main.messageManager = new MessageManager(this);
+
+        this.configure();
+
         new Sleep(this);
     }
 
@@ -81,14 +76,29 @@ public final class Main extends JavaPlugin {
         Main.somnologist.clear();
     }
 
+    private void setLoggingLevel() {
+        final String name = this.configurationFile.getConfig().getString("logLevel", "INFO");
+        Level level = MessageLevel.parse(name);
+        if (level == null) level = Level.INFO;
+
+        // Only set the parent handler lower if necessary, otherwise leave it alone for other configurations that have set it.
+        for (final Handler h : this.getLogger().getParent().getHandlers())
+            if (h.getLevel().intValue() > level.intValue()) h.setLevel(level);
+
+        this.getLogger().setLevel(level);
+        this.getLogger().log(Level.CONFIG, "Logging level set to: " + this.getLogger().getLevel());
+    }
+
     /**
      * Load plugin's configuration file and reset sleep states for each world.
      * This will cause new events to be registered as needed.
      */
-    public void loadConfiguration() {
-        if (!this.firstEnable) this.configurationFile.load();
+    public void configure() {
+        if (Main.somnologist != null) {
+            this.setLoggingLevel();
+            Main.somnologist.clear();
+        }
 
-        if (Main.somnologist != null) Main.somnologist.clear();
         final List<String> excluded = this.configurationFile.getConfig().getStringList("excluded");
         this.getLogger().log(Level.CONFIG, "Excluded Worlds: " + excluded);
 
