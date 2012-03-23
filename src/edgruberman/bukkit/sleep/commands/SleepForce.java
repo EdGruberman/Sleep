@@ -21,22 +21,22 @@ class SleepForce extends Action {
     public boolean perform(final Context context) {
         final World world = this.parseWorld(context);
         if (world == null) {
-            Main.messageManager.respond(context.sender, "Unable to determine world", MessageLevel.SEVERE, false);
+            Main.messageManager.tell(context.sender, "Unable to determine world", MessageLevel.SEVERE, false);
             return false;
         }
 
         final State state = Main.somnologist.getState(world);
         if (state == null) {
-            Main.messageManager.respond(context.sender, "Sleep state for [" + world.getName() + "] is not managed", MessageLevel.SEVERE, false);
+            Main.messageManager.tell(context.sender, "Sleep state for [" + world.getName() + "] is not managed", MessageLevel.SEVERE, false);
             return true;
         }
 
         if (state.playersInBed.size() == 0) {
-            Main.messageManager.respond(context.sender, "Need at least 1 person in bed to force sleep", MessageLevel.SEVERE, false);
+            Main.messageManager.tell(context.sender, "Need at least 1 person in bed to force sleep", MessageLevel.SEVERE, false);
             return true;
         }
 
-        Main.messageManager.respond(context.sender, "Forcing sleep in [" + world.getName() + "]...", MessageLevel.STATUS, false);
+        Main.messageManager.tell(context.sender, "Forcing sleep in [" + world.getName() + "]...", MessageLevel.STATUS, false);
         state.forceSleep(context.sender);
         return true;
     }

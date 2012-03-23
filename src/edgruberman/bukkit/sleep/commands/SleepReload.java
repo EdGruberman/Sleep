@@ -15,7 +15,7 @@ class SleepReload extends Action {
     @Override
     public boolean perform(final Context context) {
         ((Main) context.handler.command.getPlugin()).loadConfiguration();
-        Main.messageManager.respond(context.sender, "Configuration reloaded", MessageLevel.STATUS, false);
+        Main.messageManager.tell(context.sender, "Configuration reloaded", MessageLevel.STATUS, false);
         return true;
     }
 

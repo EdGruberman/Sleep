@@ -94,7 +94,7 @@ public abstract class Action {
     public boolean isAllowed(final Context context) {
         // Check base command permission first
         if ((this.handler.permission != null) && !context.sender.hasPermission(this.handler.permission)) {
-            Main.messageManager.respond(context.sender, "You are not allowed to use the " + context.label + " command", MessageLevel.RIGHTS, false);
+            Main.messageManager.tell(context.sender, "You are not allowed to use the " + context.label + " command", MessageLevel.RIGHTS, false);
             return false;
         }
 
@@ -116,7 +116,7 @@ public abstract class Action {
     private boolean isAllowed(final CommandSender sender, final Action action) {
         // Check if sender is allowed to perform specified action
         if ((action.permission != null) && !sender.hasPermission(action.permission)) {
-            Main.messageManager.respond(sender, "You are not allowed to use the " + this.getNamePath() + " action of the " + this.handler.command.getLabel() + " command", MessageLevel.RIGHTS, false);
+            Main.messageManager.tell(sender, "You are not allowed to use the " + this.getNamePath() + " action of the " + this.handler.command.getLabel() + " command", MessageLevel.RIGHTS, false);
             return false;
         }
 

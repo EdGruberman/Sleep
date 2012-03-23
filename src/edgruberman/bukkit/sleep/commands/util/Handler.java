@@ -45,7 +45,7 @@ public class Handler implements CommandExecutor  {
 
         // Send usage information on error
         for (final String line : context.action.handler.command.getUsage().replace("<command>", context.label).split("\n"))
-            Main.messageManager.respond(context.sender, line, MessageLevel.NOTICE, false);
+            Main.messageManager.tell(context.sender, line, MessageLevel.NOTICE, false);
 
         return true; // Always tell Bukkit this is successful as usage message errors are handled internally
     }

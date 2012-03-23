@@ -1,10 +1,1 @@
-send:
-    PLAYER:
-        level: CONFIG
-    SERVER:
-        level: EVENT
-    WORLD:
-        level: EVENT
-#color:
-#    EVENT:
-#        WORLD: YELLOW
+version: 6.0.0

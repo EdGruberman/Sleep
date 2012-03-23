@@ -142,7 +142,7 @@ public final class State implements Observer {
         if (this.hasGeneratedEnterBed) {
             final Notification notification = this.notifications.get(Notification.Type.STATUS);
             final String message = notification.format(this.plugin.getName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible());
-            Main.messageManager.respond(joiner, message, MessageLevel.STATUS, notification.isTimestamped());
+            Main.messageManager.tell(joiner, message, MessageLevel.STATUS, notification.isTimestamped());
         }
     }
 
