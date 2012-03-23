@@ -253,7 +253,7 @@ public final class Main extends JavaPlugin {
             if (existing.compareTo(required) >= 0) continue;
 
             this.installDependency(dependency.getKey(), this.getServer().getUpdateFolderFile());
-            this.getLogger().log(Level.SEVERE, "Dependency update for " + dependency.getKey() + " v" + dependency.getValue() + " required; Restart your server as soon as possible to automatically apply the update", new IllegalStateException());
+            this.getLogger().log(Level.SEVERE, "Dependency update for " + dependency.getKey() + " v" + dependency.getValue() + " required; Restart your server as soon as possible to automatically apply the update");
             isRestartRequired = true;
         }
         if (isRestartRequired) throw new IllegalStateException("Server restart required");
