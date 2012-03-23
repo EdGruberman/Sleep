@@ -41,7 +41,7 @@ public final class Main extends JavaPlugin {
     private static final Map<String, String> DEPENDENCIES = new HashMap<String, String>();
     static {
         Main.DEPENDENCIES.put("MessageManager", "6.0.0b1");
-        Main.DEPENDENCIES.put("PlayerActivity", "1.2.0");
+        Main.DEPENDENCIES.put("PlayerActivity", "1.3.0b1");
     }
 
     private static final String MINIMUM_CONFIGURATION_VERSION = "4.1.0b4";

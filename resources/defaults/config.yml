@@ -35,5 +35,8 @@ activity:
     - PlayerItemHeldEvent
     - PlayerJoinEvent
     - PlayerChangedWorldEvent
+    - EnchantItemEvent
+    - PrepareItemEnchantEvent
+    - InventoryClickEvent
 logLevel: INFO
 version: @VERSION@
