@@ -6,6 +6,7 @@ import org.bukkit.entity.Player;
 
 import edgruberman.bukkit.messagemanager.MessageLevel;
 import edgruberman.bukkit.sleep.Main;
+import edgruberman.bukkit.sleep.Message;
 import edgruberman.bukkit.sleep.State;
 import edgruberman.bukkit.sleep.commands.util.Action;
 import edgruberman.bukkit.sleep.commands.util.Context;
@@ -21,17 +22,17 @@ class SleepDetail extends Action {
     public boolean perform(final Context context) {
         final World world = this.parseWorld(context);
         if (world == null) {
-            Main.messageManager.tell(context.sender, "Unable to determine world", MessageLevel.SEVERE, false);
+            Message.manager.tell(context.sender, "Unable to determine world", MessageLevel.SEVERE, false);
             return false;
         }
 
         final State state = Main.somnologist.getState(world);
         if (state == null) {
-            Main.messageManager.tell(context.sender, "Sleep state for [" + world.getName() + "] is not tracked", MessageLevel.SEVERE, false);
+            Message.manager.tell(context.sender, "Sleep state for [" + world.getName() + "] is not tracked", MessageLevel.SEVERE, false);
             return true;
         }
 
-        Main.messageManager.tell(context.sender, state.description(), MessageLevel.STATUS, false);
+        Message.manager.tell(context.sender, state.description(), MessageLevel.STATUS, false);
         return true;
     }
 

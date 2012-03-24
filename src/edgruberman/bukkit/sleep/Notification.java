@@ -77,7 +77,7 @@ public final class Notification {
             this.lastGenerated.put(player, System.currentTimeMillis());
         }
 
-        Main.messageManager.send(world, this.format(args), MessageLevel.EVENT, this.isTimestamped);
+        Message.manager.send(world, this.format(args), MessageLevel.EVENT, this.isTimestamped);
         return true;
     }
 

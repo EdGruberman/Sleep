@@ -1,29 +1,20 @@
 package edgruberman.bukkit.sleep;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 
 import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import edgruberman.bukkit.messagemanager.MessageLevel;
-import edgruberman.bukkit.messagemanager.MessageManager;
 import edgruberman.bukkit.playeractivity.EventTracker;
 import edgruberman.bukkit.playeractivity.Interpreter;
-import edgruberman.bukkit.sleep.ConfigurationFile.FileVersion;
 import edgruberman.bukkit.sleep.commands.Sleep;
+import edgruberman.bukkit.sleep.dependencies.DependencyChecker;
 
 public final class Main extends JavaPlugin {
 
@@ -38,33 +29,25 @@ public final class Main extends JavaPlugin {
      */
     private static final String WORLD_SPECIFICS = "Worlds";
 
-    // Minimum versions
-    private static final Map<String, String> DEPENDENCIES = new HashMap<String, String>();
-    static {
-        Main.DEPENDENCIES.put("MessageManager", "6.0.0b7");
-        Main.DEPENDENCIES.put("PlayerActivity", "1.3.0b6");
-    }
+    private static final String MINIMUM_VERSION_CONFIG = "5.0.0a0";
 
-    private static final String MINIMUM_CONFIGURATION_VERSION = "5.0.0a0";
-
-    public static MessageManager messageManager;
     public static Somnologist somnologist = null;
 
     private ConfigurationFile configurationFile;
 
     @Override
     public void onLoad() {
-        this.configurationFile = new ConfigurationFile(this);
-        this.configurationFile.setMinVersion(Main.MINIMUM_CONFIGURATION_VERSION);
-        this.configurationFile.load();
-        this.setLoggingLevel();
-
-        this.checkDependencies();
+        new DependencyChecker(this);
     }
 
     @Override
     public void onEnable() {
-        Main.messageManager = new MessageManager(this);
+        this.configurationFile = new ConfigurationFile(this);
+        this.configurationFile.setMinVersion(Main.MINIMUM_VERSION_CONFIG);
+        this.configurationFile.load();
+        this.setLoggingLevel();
+
+        new Message(this);
 
         this.configure();
 
@@ -226,76 +209,6 @@ public final class Main extends JavaPlugin {
      */
     private static boolean loadBoolean(final FileConfiguration override, final FileConfiguration main, final String path, final boolean codeDefault) {
         return override.getBoolean(path, main.getBoolean(path, codeDefault));
-    }
-
-    /**
-     * Install or update any plugins this plugin is dependent upon.
-     */
-    private void checkDependencies() {
-        boolean isRestartRequired = false;
-        for (final Map.Entry<String, String> dependency : Main.DEPENDENCIES.entrySet()) {
-            final Plugin plugin = this.getServer().getPluginManager().getPlugin(dependency.getKey());
-
-            if (plugin == null) {
-                final File pluginJar = this.installDependency(dependency.getKey(), this.getDataFolder().getParentFile());
-                try {
-                    this.getServer().getPluginManager().loadPlugin(pluginJar).onLoad();
-                } catch (final Exception e) {
-                    this.getLogger().log(Level.SEVERE, "Unable to load dependency " + dependency.getKey() + " from \"" + pluginJar.getPath() + "\"", e);
-                    continue;
-                }
-                this.getLogger().log(Level.INFO, "Installed dependency: " + dependency.getKey() + " v" + dependency.getValue());
-                continue;
-            }
-
-            final FileVersion existing = this.configurationFile.new FileVersion(plugin.getDescription().getVersion());
-            final FileVersion required = this.configurationFile.new FileVersion(dependency.getValue());
-            if (existing.compareTo(required) >= 0) continue;
-
-            this.installDependency(dependency.getKey(), this.getServer().getUpdateFolderFile());
-            this.getLogger().log(Level.SEVERE, "Dependency update for " + dependency.getKey() + " v" + dependency.getValue() + " required; Restart your server as soon as possible to automatically apply the update");
-            isRestartRequired = true;
-        }
-        if (isRestartRequired) throw new IllegalStateException("Server restart required");
-    }
-
-    /**
-     * Extract embedded plugin file from JAR.
-     *
-     * @param name plugin name
-     * @param outputFolder where to play plugin file
-     * @return plugin file on the file system
-     */
-    private File installDependency(final String name, final File outputFolder) {
-        final URL source = this.getClass().getResource("/lib/" + name + ".jar");
-        final File pluginJar = new File(outputFolder, name + ".jar");
-        this.extract(source, pluginJar);
-        return pluginJar;
-    }
-
-    /**
-     * Save a file to the local file system.
-     */
-    private void extract(final URL source, final File destination) {
-        destination.getParentFile().mkdir();
-
-        InputStream in = null;
-        OutputStream out = null;
-        int len;
-        final byte[] buf = new byte[4096];
-
-        try {
-            in = source.openStream();
-            out = new FileOutputStream(destination);
-            while ((len = in.read(buf)) > 0) out.write(buf, 0, len);
-
-        } catch (final Exception e) {
-            this.getLogger().log(Level.SEVERE, "Unable to extract \"" + source.getFile() + "\" to \"" + destination.getPath() + "\"", e);
-
-        } finally {
-            try { if (in != null) in.close(); } catch (final Exception e) { e.printStackTrace(); }
-            try { if (out != null) out.close(); } catch (final Exception e) { e.printStackTrace(); }
-        }
     }
 
 }

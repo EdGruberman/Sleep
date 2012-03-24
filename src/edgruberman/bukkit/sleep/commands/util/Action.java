@@ -7,7 +7,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import edgruberman.bukkit.messagemanager.MessageLevel;
-import edgruberman.bukkit.sleep.Main;
+import edgruberman.bukkit.sleep.Message;
 
 /**
  * Single action of a command.
@@ -94,7 +94,7 @@ public abstract class Action {
     public boolean isAllowed(final Context context) {
         // Check base command permission first
         if ((this.handler.permission != null) && !context.sender.hasPermission(this.handler.permission)) {
-            Main.messageManager.tell(context.sender, "You are not allowed to use the " + context.label + " command", MessageLevel.RIGHTS, false);
+            Message.manager.send(context.sender, "You are not allowed to use the " + context.label + " command", MessageLevel.RIGHTS, false);
             return false;
         }
 
@@ -116,7 +116,7 @@ public abstract class Action {
     private boolean isAllowed(final CommandSender sender, final Action action) {
         // Check if sender is allowed to perform specified action
         if ((action.permission != null) && !sender.hasPermission(action.permission)) {
-            Main.messageManager.tell(sender, "You are not allowed to use the " + this.getNamePath() + " action of the " + this.handler.command.getLabel() + " command", MessageLevel.RIGHTS, false);
+            Message.manager.send(sender, "You are not allowed to use the " + this.getNamePath() + " action of the " + this.handler.command.getLabel() + " command", MessageLevel.RIGHTS, false);
             return false;
         }
 
@@ -179,7 +179,7 @@ public abstract class Action {
 
     @Override
     public String toString() {
-        return "Action [handler=" + this.handler + ", getNamePath()=" + this.getNamePath() + "]";
+        return "Action [handler=" + this.handler.toString() + ", getNamePath()=" + this.getNamePath() + "]";
     }
 
     /**
