@@ -54,7 +54,7 @@ public final class Main extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        Main.somnologist.clear();
+        if (Main.somnologist != null) Main.somnologist.clear();
     }
 
     /**
