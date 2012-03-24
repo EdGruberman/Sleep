@@ -3,14 +3,12 @@ package edgruberman.bukkit.sleep;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.logging.Handler;
 import java.util.logging.Level;
 
 import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import edgruberman.bukkit.messagemanager.MessageLevel;
 import edgruberman.bukkit.playeractivity.EventTracker;
 import edgruberman.bukkit.playeractivity.Interpreter;
 import edgruberman.bukkit.sleep.commands.Sleep;
@@ -45,7 +43,7 @@ public final class Main extends JavaPlugin {
         this.configurationFile = new ConfigurationFile(this);
         this.configurationFile.setMinVersion(Main.MINIMUM_VERSION_CONFIG);
         this.configurationFile.load();
-        this.setLoggingLevel();
+        this.configurationFile.setLoggingLevel();
 
         new Message(this);
 
@@ -59,26 +57,13 @@ public final class Main extends JavaPlugin {
         Main.somnologist.clear();
     }
 
-    private void setLoggingLevel() {
-        final String name = this.configurationFile.getConfig().getString("logLevel", "INFO");
-        Level level = MessageLevel.parse(name);
-        if (level == null) level = Level.INFO;
-
-        // Only set the parent handler lower if necessary, otherwise leave it alone for other configurations that have set it.
-        for (final Handler h : this.getLogger().getParent().getHandlers())
-            if (h.getLevel().intValue() > level.intValue()) h.setLevel(level);
-
-        this.getLogger().setLevel(level);
-        this.getLogger().log(Level.CONFIG, "Logging level set to: " + this.getLogger().getLevel());
-    }
-
     /**
      * Load plugin's configuration file and reset sleep states for each world.
      * This will cause new events to be registered as needed.
      */
     public void configure() {
         if (Main.somnologist != null) {
-            this.setLoggingLevel();
+            this.configurationFile.setLoggingLevel();
             Main.somnologist.clear();
         }
 
