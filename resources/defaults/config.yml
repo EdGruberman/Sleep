@@ -1,8 +1,3 @@
-sleep: true
-idle: 60
-force:
-    count: -1
-    percent: -1
 notifications:
     ENTER_BED:
         format: '%1$s&* entered bed (need +%2$d to sleep)' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
@@ -26,6 +21,7 @@ notifications:
         format: '%1$s&* forced sleep' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
         maxFrequency: -1
         timestamp: false
+idle: 60
 activity:
     - PlayerMoveEvent
     - PlayerChatEvent
@@ -38,5 +34,9 @@ activity:
     - EnchantItemEvent
     - PrepareItemEnchantEvent
     - InventoryClickEvent
+force:
+    count: -1
+    percent: -1
+sleep: true
 logLevel: INFO
 version: @VERSION@
