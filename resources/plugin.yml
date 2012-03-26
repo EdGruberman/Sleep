@@ -9,9 +9,9 @@ commands:
         description: Manages sleep functionality
         permission: sleep.sleep
         usage: |
-            /<command>[ who][ <World>] - Who is preventing sleep
-            /<command> detail[ <World>] - Sleep requirements
-            /<command> force[ <World>] - Force sleep for one night
+            /<command> - Who is preventing sleep
+            /<command> detail - Sleep requirements
+            /<command> force - Force sleep for one night
             /<command> reload - Reload configuration
 permissions:
     sleep.sleep.info:

@@ -55,7 +55,7 @@ class SleepWho extends Action {
 
             String players = "";
             for (final Player player : notSleeping)
-                players += player.getDisplayName() + ", ";
+                players += player.getDisplayName() + "&*, ";
 
             message = notSleeping.size() + " player" + (notSleeping.size() != 1 ? "s" : "") + " preventing sleep";
             if (state.forceCount >= 1 || state.forcePercent >= 1) message += " (need +" + state.sleepersNeeded() + ")";
