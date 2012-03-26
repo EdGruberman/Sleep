@@ -15,7 +15,7 @@ public final class DependencyChecker {
 
     private static final List<PluginDependency> MINIMUMS = Arrays.<PluginDependency>asList(
               new PluginDependency("MessageManager", "edgruberman.bukkit.messagemanager.Main", "6.0.0b30")
-            , new PluginDependency("PlayerActivity", "edgruberman.bukkit.playeractivity.Main", "1.3.0b30")
+            , new PluginDependency("PlayerActivity", "edgruberman.bukkit.playeractivity.Main", "1.3.0b31")
     );
 
     private final Plugin plugin;
