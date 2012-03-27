@@ -3,7 +3,7 @@ description: Manages sleep criteria and notifications
 softdepend: [MessageManager, PlayerActivity]
 version: @VERSION@
 author: @AUTHOR@
-main: edgruberman.bukkit.sleep.Main
+main: @MAIN@
 commands:
     sleep:
         description: Manages sleep functionality
