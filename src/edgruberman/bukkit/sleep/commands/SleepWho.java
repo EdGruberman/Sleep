@@ -55,11 +55,11 @@ class SleepWho extends Action {
 
             String players = "";
             for (final Player player : notSleeping)
-                players += player.getDisplayName() + "&*, ";
+                players += ChatColor.WHITE + player.getDisplayName() + "&*, ";
 
             message = notSleeping.size() + " player" + (notSleeping.size() != 1 ? "s" : "") + " preventing sleep";
             if (state.forceCount >= 1 || state.forcePercent >= 1) message += " (need +" + state.sleepersNeeded() + ")";
-            message += ": " + ChatColor.WHITE + players;
+            message += ": " + players;
             message = message.substring(0, message.length() - 2);
         }
 
