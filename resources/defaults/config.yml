@@ -4,7 +4,7 @@ notifications:
         maxFrequency: 10
         timestamp: false
     LEAVE_BED:
-        format: '%1$s&* left bed (need +%2$d to sleep)' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
+        format: '%1$s&* left bed (need +%2$d to sleep; %3$d in bed)' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
         maxFrequency: 10
         timestamp: false
     INTERRUPT:
