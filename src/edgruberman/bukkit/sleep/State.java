@@ -13,7 +13,10 @@ import java.util.logging.Level;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
+import org.bukkit.event.HandlerList;
+import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 
 import edgruberman.bukkit.messagemanager.MessageLevel;
@@ -21,11 +24,14 @@ import edgruberman.bukkit.playeractivity.EventTracker;
 import edgruberman.bukkit.playeractivity.Interpreter;
 import edgruberman.bukkit.playeractivity.PlayerActivity;
 import edgruberman.bukkit.playeractivity.PlayerIdle;
+import edgruberman.bukkit.playeractivity.consumers.AwayBack;
+import edgruberman.bukkit.playeractivity.consumers.PlayerAway;
+import edgruberman.bukkit.playeractivity.consumers.PlayerBack;
 
 /**
  * Sleep state for a specific world.
  */
-public final class State implements Observer {
+public final class State implements Observer, Listener {
 
     /**
      * True to allow players to cause sleep to occur. False to prevent sleep.
@@ -44,6 +50,8 @@ public final class State implements Observer {
      * disable this feature.)
      */
     static final int DEFAULT_FORCE_COUNT = -1;
+
+    static final boolean DEFAULT_AWAY_IDLE = false;
 
     /**
      * Minimum percent of players in bed out of possible (active and not
@@ -78,6 +86,7 @@ public final class State implements Observer {
     final public int idle;
     final public int forceCount;
     final public int forcePercent;
+    final public boolean awayIdle;
     final public Map<Notification.Type, Notification> notifications = new HashMap<Notification.Type, Notification>();
     final public EventTracker tracker;
 
@@ -85,18 +94,20 @@ public final class State implements Observer {
     final public List<Player> playersInBed = new ArrayList<Player>();
     final public List<Player> playersIdle = new ArrayList<Player>();
     final public List<Player> playersIgnored = new ArrayList<Player>();
+    final public List<Player> playersAway = new ArrayList<Player>();
 
     private boolean hasGeneratedEnterBed = false;
     private boolean isForcingSleep = false;
     private CommandSender sleepForcer = null;
 
-    State(final Plugin plugin, final World world, final boolean sleep, final int idle, final int forceCount, final int forcePercent, final List<Interpreter> activity) {
+    State(final Plugin plugin, final World world, final boolean sleep, final int idle, final int forceCount, final int forcePercent, final boolean awayIdle, final List<Interpreter> activity) {
         this.plugin = plugin;
         this.world = world;
         this.isSleepEnabled = sleep;
         this.idle = idle;
         this.forceCount = forceCount;
         this.forcePercent = forcePercent;
+        this.awayIdle = awayIdle;
 
         this.tracker = new EventTracker(plugin);
         if (activity != null) {
@@ -111,9 +122,39 @@ public final class State implements Observer {
             this.players.add(player);
             if (player.isSleeping()) this.playersInBed.add(player);
             if (this.tracker.idlePublisher.getIdle().contains(player)) this.playersIdle.add(player);
+            if (this.awayIdle && this.getAwayBack() != null && this.getAwayBack().isAway(player)) this.playersAway.add(player);
             if (player.hasPermission(State.PERMISSION_IGNORE)) this.playersIgnored.add(player);
         }
     }
+
+    /**
+     * Associate event message for this state.
+     *
+     * @param notification message and settings to associate
+     */
+    void addNotification(final Notification notification) {
+        this.notifications.put(notification.type, notification);
+    }
+
+    private AwayBack getAwayBack() {
+        return edgruberman.bukkit.playeractivity.Main.awayBack;
+    }
+
+    /**
+     * Ensure all object references have been released.
+     */
+    void clear() {
+        HandlerList.unregisterAll(this);
+        this.tracker.clear();
+        this.notifications.clear();
+        this.players.clear();
+        this.playersInBed.clear();
+        this.playersIdle.clear();
+        this.playersIgnored.clear();
+        this.playersAway.clear();
+    }
+
+    // ---- Player Status Management ------------------------------------------
 
     /**
      * Process a player joining this world.
@@ -123,6 +164,7 @@ public final class State implements Observer {
     void worldJoined(final Player joiner) {
         this.players.add(joiner);
         if (this.tracker.idlePublisher.getIdle().contains(joiner)) this.playersIdle.add(joiner);
+        if (this.awayIdle && this.getAwayBack() != null && this.getAwayBack().isAway(joiner)) this.playersAway.add(joiner);
         if (joiner.hasPermission(State.PERMISSION_IGNORE)) this.playersIgnored.add(joiner);
 
         if (this.playersInBed.size() == 0) return;
@@ -226,6 +268,7 @@ public final class State implements Observer {
     void worldLeft(final Player leaver) {
         this.players.remove(leaver);
         this.playersIdle.remove(leaver);
+        this.playersAway.remove(leaver);
         this.playersIgnored.remove(leaver);
         this.bedLeft(leaver);
 
@@ -264,10 +307,29 @@ public final class State implements Observer {
         // Activity should not remove ignore status for always ignored players
         if (this.playersIgnored.contains(activity.player)) return;
 
+        // Activity should not remove ignore status for away players
+        if (this.playersAway.contains(activity.player)) return;
+
         this.setSleepingIgnored(activity.player, false, "Activity: " + activity.event.getEventName());
 
         this.lull(); // Necessary in case player is idle before a natural sleep that would have caused a force
     }
+
+    @EventHandler
+    public void onPlayerAway(final PlayerAway event) {
+        if (!event.getPlayer().getWorld().equals(this.world)) return;
+
+        this.playersAway.add(event.getPlayer());
+    }
+
+    @EventHandler
+    public void onPlayerBack(final PlayerBack event) {
+        if (!event.getPlayer().getWorld().equals(this.world)) return;
+
+        this.playersAway.remove(event.getPlayer());
+    }
+
+    // ---- Sleep Management --------------------------------------------------
 
     /**
      * Configure idle players, and always ignored players to ignore sleep.
@@ -285,6 +347,10 @@ public final class State implements Observer {
         // Configure idle players to ignore sleep
         for (final Player player : this.playersIdle)
             this.setSleepingIgnored(player, true, "Idle");
+
+        // Configure away players to ignore sleep
+        for (final Player player : this.playersAway)
+            this.setSleepingIgnored(player, true, "Away");
 
         if (this.plugin.getLogger().isLoggable(Level.FINE)) this.plugin.getLogger().log(Level.FINE, "[" + this.world.getName() + "] " + this.description());
 
@@ -330,6 +396,8 @@ public final class State implements Observer {
         player.setSleepingIgnored(ignore);
     }
 
+    // ---- Current Status Summarizing ----------------------------------------
+
     /**
      * Number of players still needed to enter bed for sleep to occur.
      *
@@ -369,34 +437,11 @@ public final class State implements Observer {
     public Set<Player> sleepersPossible() {
         final Set<Player> possible = new HashSet<Player>(this.players);
         possible.removeAll(this.playersIdle);
+        possible.removeAll(this.playersAway);
         possible.removeAll(this.playersIgnored);
         possible.addAll(this.playersInBed); // Add back in any players idle and/or ignored that are also in bed
 
         return possible;
-    }
-
-    /**
-     * Associate event message for this state.
-     *
-     * @param notification message and settings to associate
-     */
-    void addNotification(final Notification notification) {
-        this.notifications.put(notification.type, notification);
-    }
-
-    /**
-     * Generate a notification to this world for an event if it is defined.
-     *
-     * @param type type to generate
-     * @param sender event originator, null for code logic; frequency tracking
-     * @param args parameters to substitute in message
-     * @return true if notification was sent; otherwise false
-     */
-    private boolean notify(final Notification.Type type, final CommandSender sender, final Object... args) {
-        final Notification notification = this.notifications.get(type);
-        if (notification == null) return false;
-
-        return notification.generate(this.world, sender, args);
     }
 
     /**
@@ -435,6 +480,23 @@ public final class State implements Observer {
         if ((State.TIME_NIGHT_START <= now) && (now < State.TIME_NIGHT_END)) return true;
 
         return false;
+    }
+
+    // ---- Utility Methods ---------------------------------------------------
+
+    /**
+     * Generate a notification to this world for an event if it is defined.
+     *
+     * @param type type to generate
+     * @param sender event originator, null for code logic; frequency tracking
+     * @param args parameters to substitute in message
+     * @return true if notification was sent; otherwise false
+     */
+    private boolean notify(final Notification.Type type, final CommandSender sender, final Object... args) {
+        final Notification notification = this.notifications.get(type);
+        if (notification == null) return false;
+
+        return notification.generate(this.world, sender, args);
     }
 
 }

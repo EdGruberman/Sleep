@@ -55,6 +55,7 @@ public final class Main extends JavaPlugin {
     @Override
     public void onDisable() {
         if (Main.somnologist != null) Main.somnologist.clear();
+
     }
 
     /**
@@ -75,31 +76,32 @@ public final class Main extends JavaPlugin {
 
     /**
      * Create a fresh sleep state for a specified world from the configuration.
+     * World Specific Configuration > Plugin Configuration > Code Defaults
      *
      * @param world world to create sleep state for
      */
     State loadState(final World world) {
-        // Load configuration values using defaults defined in code
-        // overridden by defaults in the main plugin configuration file
-        // overridden by world specific settings in the WORLD_SPECIFICS folder
-        final FileConfiguration pluginMain = this.configurationFile.getConfig();
-        final FileConfiguration worldSpecific = (new ConfigurationFile(this, Main.WORLD_SPECIFICS + "/" + world.getName() + "/config.yml", Main.WORLD_SPECIFICS + "/" + world.getName() + "/config.yml")).getConfig();
+        final FileConfiguration defaultConfig = this.configurationFile.getConfig();
+        final FileConfiguration worldConfig = (new ConfigurationFile(this, Main.WORLD_SPECIFICS + "/" + world.getName() + "/config.yml", Main.WORLD_SPECIFICS + "/" + world.getName() + "/config.yml")).getConfig();
 
-        final boolean sleep = Main.loadBoolean(worldSpecific, pluginMain, "sleep", State.DEFAULT_SLEEP);
+        final boolean sleep = Main.loadBoolean(worldConfig, defaultConfig, "sleep", State.DEFAULT_SLEEP);
         this.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] Sleep Enabled: " + sleep);
 
-        final int forceCount = Main.loadInt(worldSpecific, pluginMain, "force.count", State.DEFAULT_FORCE_COUNT);
+        final int forceCount = Main.loadInt(worldConfig, defaultConfig, "force.count", State.DEFAULT_FORCE_COUNT);
         this.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] Forced Sleep Minimum Count: " + forceCount);
 
-        final int forcePercent = Main.loadInt(worldSpecific, pluginMain, "force.percent", State.DEFAULT_FORCE_PERCENT);
+        final int forcePercent = Main.loadInt(worldConfig, defaultConfig, "force.percent", State.DEFAULT_FORCE_PERCENT);
         this.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] Forced Sleep Minimum Percent: " + forcePercent);
 
-        final int idle = Main.loadInt(worldSpecific, pluginMain, "idle", State.DEFAULT_IDLE);
+        final boolean awayIdle = Main.loadBoolean(worldConfig, defaultConfig, "awayIdle", State.DEFAULT_AWAY_IDLE);
+        this.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] Away Idle: " + awayIdle);
+
+        final int idle = Main.loadInt(worldConfig, defaultConfig, "idle", State.DEFAULT_IDLE);
         this.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] Idle Threshold (seconds): " + idle);
 
         final List<Interpreter> activity = new ArrayList<Interpreter>();
         if (idle > 0) {
-            for (final String className : Main.loadStringList(worldSpecific, pluginMain, "activity", Collections.<String>emptyList())) {
+            for (final String className : Main.loadStringList(worldConfig, defaultConfig, "activity", Collections.<String>emptyList())) {
                 final Interpreter interpreter = EventTracker.newInterpreter(className);
                 if (interpreter == null) {
                     this.getLogger().log(Level.WARNING, "Unsupported activity: " + className);
@@ -111,13 +113,22 @@ public final class Main extends JavaPlugin {
             this.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] Monitored Activity: " + activity.size() + " events");
         }
 
-        final State state = new State(this, world, sleep, idle, forceCount, forcePercent, activity);
+        final State state = new State(this, world, sleep, idle, forceCount, forcePercent, awayIdle, activity);
 
         for (final Notification.Type type : Notification.Type.values()) {
-            final Notification notification = this.loadNotification(type, worldSpecific);
+            final Notification notification = this.loadNotification(type, worldConfig);
             if (notification != null) {
                 this.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] " + notification.description());
                 state.addNotification(notification);
+            }
+        }
+
+        // Ensure /away command is enabled if Sleep configuration needs it
+        if (awayIdle && edgruberman.bukkit.playeractivity.Main.awayBack == null) {
+            if (edgruberman.bukkit.playeractivity.Main.enable("awayBack")) {
+                this.getLogger().info("Enabled AwayBack consumer in PlayerActivity");
+            } else {
+                this.getLogger().warning("Unable to enable AwayBack consumer in PlayerActivity");
             }
         }
 

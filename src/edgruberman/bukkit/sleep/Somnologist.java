@@ -72,7 +72,7 @@ public final class Somnologist implements Listener {
 
         final Iterator<State> it = this.states.values().iterator();
         while (it.hasNext()) {
-            it.next().tracker.clear();
+            it.next().clear();
             it.remove();
         }
 

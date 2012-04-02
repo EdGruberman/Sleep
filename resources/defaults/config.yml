@@ -38,5 +38,6 @@ force:
     count: -1
     percent: -1
 sleep: true
+awayIdle: false
 logLevel: INFO
 version: @VERSION@

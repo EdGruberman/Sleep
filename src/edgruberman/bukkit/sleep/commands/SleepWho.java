@@ -45,6 +45,7 @@ class SleepWho extends Action {
             final List<Player> notSleeping = new ArrayList<Player>(state.players);
             notSleeping.removeAll(state.playersInBed);
             notSleeping.removeAll(state.playersIdle);
+            notSleeping.removeAll(state.playersAway);
             notSleeping.removeAll(state.playersIgnored);
 
             Collections.sort(notSleeping, new Comparator<Player>() {
