@@ -70,6 +70,8 @@ public final class State implements Observer {
      */
     private static final long TICKS_BEFORE_DEEP_SLEEP = 90;
 
+    private static final String PERMISSION_IGNORE = Main.PERMISSION_PREFIX + ".ignore";
+
     final public Plugin plugin;
     final public World world;
     final public boolean isSleepEnabled;
@@ -106,8 +108,10 @@ public final class State implements Observer {
         }
 
         for (final Player player : world.getPlayers()) {
+            this.players.add(player);
             if (player.isSleeping()) this.playersInBed.add(player);
-            this.updateIgnored(player);
+            if (this.tracker.idlePublisher.getIdle().contains(player)) this.playersIdle.add(player);
+            if (player.hasPermission(State.PERMISSION_IGNORE)) this.playersIgnored.add(player);
         }
     }
 
@@ -119,7 +123,7 @@ public final class State implements Observer {
     void worldJoined(final Player joiner) {
         this.players.add(joiner);
         if (this.tracker.idlePublisher.getIdle().contains(joiner)) this.playersIdle.add(joiner);
-        this.updateIgnored(joiner);
+        if (joiner.hasPermission(State.PERMISSION_IGNORE)) this.playersIgnored.add(joiner);
 
         if (this.playersInBed.size() == 0) return;
 
@@ -222,7 +226,7 @@ public final class State implements Observer {
     void worldLeft(final Player leaver) {
         this.players.remove(leaver);
         this.playersIdle.remove(leaver);
-        this.updateIgnored(leaver);
+        this.playersIgnored.remove(leaver);
         this.bedLeft(leaver);
 
         if (this.playersInBed.size() == 0) return;
@@ -418,15 +422,6 @@ public final class State implements Observer {
             + " out of " + possible + " possible"
             + " = " + currentPercent + "%" + (requiredPercent > 0 ? " (forced when " + requiredPercent + "%)" : "")
         ;
-    }
-
-    private void updateIgnored(final Player player) {
-        if (player.hasPermission(Main.PERMISSION_PREFIX + ".ignore")) {
-            this.playersIgnored.add(player);
-            return;
-        }
-
-        this.playersIgnored.remove(player);
     }
 
     /**
