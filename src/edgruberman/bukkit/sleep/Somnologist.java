@@ -22,6 +22,9 @@ import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.event.world.WorldUnloadEvent;
 import org.bukkit.plugin.Plugin;
 
+import edgruberman.bukkit.playeractivity.consumers.PlayerAway;
+import edgruberman.bukkit.playeractivity.consumers.PlayerBack;
+
 /**
  * Sleep state management.
  */
@@ -91,7 +94,7 @@ public final class Somnologist implements Listener {
         final State state = this.states.get(event.getWorld());
         if (state == null) return;
 
-        state.tracker.clear();
+        state.clear();
         this.states.remove(state);
     }
 
@@ -101,17 +104,17 @@ public final class Somnologist implements Listener {
         final State state = this.states.get(event.getPlayer().getWorld());
         if (state == null) return;
 
-        state.worldJoined(event.getPlayer());
+        state.add(event.getPlayer());
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerChangedWorld(final PlayerChangedWorldEvent event) {
         // Notify tracked sleep states of player moving between them
         final State from = this.states.get(event.getFrom());
-        if (from != null) from.worldLeft(event.getPlayer());
+        if (from != null) from.remove(event.getPlayer());
 
         final State to = this.states.get(event.getPlayer().getWorld());
-        if (to != null) to.worldJoined(event.getPlayer());
+        if (to != null) to.add(event.getPlayer());
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -120,7 +123,7 @@ public final class Somnologist implements Listener {
         final State state = this.states.get(event.getPlayer().getWorld());
         if (state == null) return;
 
-        state.worldLeft(event.getPlayer());
+        state.remove(event.getPlayer());
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -141,6 +144,24 @@ public final class Somnologist implements Listener {
         if (state == null) return;
 
         state.bedLeft(event.getPlayer());
+    }
+
+    @EventHandler
+    public void onPlayerAway(final PlayerAway event) {
+        // Ignore for untracked world sleep states
+        final State state = this.states.get(event.getPlayer().getWorld());
+        if (state == null) return;
+
+        state.setAway(event.getPlayer());
+    }
+
+    @EventHandler
+    public void onPlayerBack(final PlayerBack event) {
+        // Ignore for untracked world sleep states
+        final State state = this.states.get(event.getPlayer().getWorld());
+        if (state == null) return;
+
+        state.setBack(event.getPlayer());
     }
 
 }

@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.logging.Level;
 
 import org.bukkit.World;
-import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import edgruberman.bukkit.playeractivity.EventTracker;
@@ -47,31 +47,17 @@ public final class Main extends JavaPlugin {
 
         new Message(this);
 
-        this.configure();
+        final List<String> excluded = this.configurationFile.getConfig().getStringList("excluded");
+        this.getLogger().log(Level.CONFIG, "Excluded Worlds: " + excluded);
+
+        Main.somnologist = new Somnologist(this, excluded);
 
         new Sleep(this);
     }
 
     @Override
     public void onDisable() {
-        if (Main.somnologist != null) Main.somnologist.clear();
-
-    }
-
-    /**
-     * Load plugin's configuration file and reset sleep states for each world.
-     * This will cause new events to be registered as needed.
-     */
-    public void configure() {
-        if (Main.somnologist != null) {
-            this.configurationFile.setLoggingLevel();
-            Main.somnologist.clear();
-        }
-
-        final List<String> excluded = this.configurationFile.getConfig().getStringList("excluded");
-        this.getLogger().log(Level.CONFIG, "Excluded Worlds: " + excluded);
-
-        Main.somnologist = new Somnologist(this, excluded);
+        Main.somnologist.clear();
     }
 
     /**
@@ -81,27 +67,32 @@ public final class Main extends JavaPlugin {
      * @param world world to create sleep state for
      */
     State loadState(final World world) {
-        final FileConfiguration defaultConfig = this.configurationFile.getConfig();
-        final FileConfiguration worldConfig = (new ConfigurationFile(this, Main.WORLD_SPECIFICS + "/" + world.getName() + "/config.yml", Main.WORLD_SPECIFICS + "/" + world.getName() + "/config.yml")).getConfig();
+        final ConfigurationSection defaultConfig = this.configurationFile.getConfig();
+        final ConfigurationSection worldConfig = (new ConfigurationFile(this, Main.WORLD_SPECIFICS + "/" + world.getName() + "/config.yml", Main.WORLD_SPECIFICS + "/" + world.getName() + "/config.yml")).getConfig();
 
-        final boolean sleep = Main.loadBoolean(worldConfig, defaultConfig, "sleep", State.DEFAULT_SLEEP);
+        final boolean sleep = worldConfig.getBoolean("sleep", defaultConfig.getBoolean("sleep", State.DEFAULT_SLEEP));
         this.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] Sleep Enabled: " + sleep);
 
-        final int forceCount = Main.loadInt(worldConfig, defaultConfig, "force.count", State.DEFAULT_FORCE_COUNT);
+        final int forceCount = worldConfig.getInt("force.count", defaultConfig.getInt("force.count", State.DEFAULT_FORCE_COUNT));
         this.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] Forced Sleep Minimum Count: " + forceCount);
 
-        final int forcePercent = Main.loadInt(worldConfig, defaultConfig, "force.percent", State.DEFAULT_FORCE_PERCENT);
+        final int forcePercent = worldConfig.getInt("force.percent", defaultConfig.getInt("force.percent", State.DEFAULT_FORCE_PERCENT));
         this.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] Forced Sleep Minimum Percent: " + forcePercent);
 
-        final boolean awayIdle = Main.loadBoolean(worldConfig, defaultConfig, "awayIdle", State.DEFAULT_AWAY_IDLE);
+        final boolean awayIdle = worldConfig.getBoolean("awayIdle", defaultConfig.getBoolean("awayIdle", State.DEFAULT_AWAY_IDLE));
         this.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] Away Idle: " + awayIdle);
 
-        final int idle = Main.loadInt(worldConfig, defaultConfig, "idle", State.DEFAULT_IDLE);
+        final int idle = worldConfig.getInt("idle", defaultConfig.getInt("idle", State.DEFAULT_IDLE));
         this.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] Idle Threshold (seconds): " + idle);
 
         final List<Interpreter> activity = new ArrayList<Interpreter>();
         if (idle > 0) {
-            for (final String className : Main.loadStringList(worldConfig, defaultConfig, "activity", Collections.<String>emptyList())) {
+            List<String> interpreterClasses = null;
+            if (worldConfig.isSet("activity")) interpreterClasses = worldConfig.getStringList("activity");
+            else if (defaultConfig.isSet("activity")) interpreterClasses = defaultConfig.getStringList("activity");
+            else interpreterClasses = Collections.<String>emptyList();
+
+            for (final String className : interpreterClasses) {
                 final Interpreter interpreter = EventTracker.newInterpreter(className);
                 if (interpreter == null) {
                     this.getLogger().log(Level.WARNING, "Unsupported activity: " + className);
@@ -116,7 +107,7 @@ public final class Main extends JavaPlugin {
         final State state = new State(this, world, sleep, idle, forceCount, forcePercent, awayIdle, activity);
 
         for (final Notification.Type type : Notification.Type.values()) {
-            final Notification notification = this.loadNotification(type, worldConfig);
+            final Notification notification = this.loadNotification(type, worldConfig, defaultConfig);
             if (notification != null) {
                 this.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] " + notification.description());
                 state.addNotification(notification);
@@ -139,72 +130,22 @@ public final class Main extends JavaPlugin {
      * Load notification settings from configuration file.
      *
      * @param type notification type to load
-     * @param override settings preferred over main
-     * @param main base settings
+     * @param worldConfig world specific configuration
+     * @param defaultConfig default plugin configuration
      * @return notification defined according to configuration
      */
-    private Notification loadNotification(final Notification.Type type, final FileConfiguration override) {
-        final String format = Main.loadString(override, this.configurationFile.getConfig(), "notifications." + type.name() + ".format", Notification.DEFAULT_FORMAT);
+    private Notification loadNotification(final Notification.Type type, final ConfigurationSection worldConfig, final ConfigurationSection defaultConfig) {
+        String path = "notifications." + type.name() + ".format";
+        final String format = worldConfig.getString(path, defaultConfig.getString(path, Notification.DEFAULT_FORMAT));
         if (format == null || format.length() == 0) return null;
 
-        final int maxFrequency = Main.loadInt(override, this.configurationFile.getConfig(), "notifications." + type.name() + ".maxFrequency", Notification.DEFAULT_MAX_FREQUENCY);
-        final boolean isTimestamped = Main.loadBoolean(override, this.configurationFile.getConfig(), "notifications." + type.name() + ".timestamp", Notification.DEFAULT_TIMESTAMP);
+        path = "notifications." + type.name() + ".maxFrequency";
+        final int maxFrequency = worldConfig.getInt(path, defaultConfig.getInt(path, Notification.DEFAULT_MAX_FREQUENCY));
+
+        path = "notifications." + type.name() + ".timestamp";
+        final boolean isTimestamped = worldConfig.getBoolean(path, defaultConfig.getBoolean(path, Notification.DEFAULT_TIMESTAMP));
 
         return new Notification(type, format, maxFrequency, isTimestamped);
-    }
-
-    /**
-     * Load integer from configuration file.
-     *
-     * @param override settings preferred over main
-     * @param main base settings
-     * @param path node path in configuration value exists at
-     * @param codeDefault value to use if neither main nor override exist
-     * @return value read from configuration
-     */
-    private static int loadInt(final FileConfiguration override, final FileConfiguration main, final String path, final int codeDefault) {
-        return override.getInt(path, main.getInt(path, codeDefault));
-    }
-
-    /**
-     * Load list of strings from configuration file.
-     *
-     * @param override settings preferred over main
-     * @param main base settings
-     * @param path node path in configuration value exists at
-     * @param codeDefault value to use if neither main nor override exist
-     * @return value read from configuration
-     */
-    private static List<String> loadStringList(final FileConfiguration override, final FileConfiguration main, final String path, final List<String> codeDefault) {
-        if (override.isSet(path)) return override.getStringList(path);
-        if (main.isSet(path)) return main.getStringList(path);
-        return codeDefault;
-    }
-
-    /**
-     * Load string from configuration file.
-     *
-     * @param override settings preferred over main
-     * @param main base settings
-     * @param path node path in configuration value exists at
-     * @param codeDefault value to use if neither main nor override exist
-     * @return value read from configuration
-     */
-    private static String loadString(final FileConfiguration override, final FileConfiguration main, final String path, final String codeDefault) {
-        return override.getString(path, main.getString(path, codeDefault));
-    }
-
-    /**
-     * Load boolean from configuration file.
-     *
-     * @param override settings preferred over main
-     * @param main base settings
-     * @param path node path in configuration value exists at
-     * @param codeDefault value to use if neither main nor override exist
-     * @return value read from configuration
-     */
-    private static boolean loadBoolean(final FileConfiguration override, final FileConfiguration main, final String path, final boolean codeDefault) {
-        return override.getBoolean(path, main.getBoolean(path, codeDefault));
     }
 
 }

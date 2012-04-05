@@ -1,6 +1,5 @@
 package edgruberman.bukkit.sleep;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -13,10 +12,7 @@ import java.util.logging.Level;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
-import org.bukkit.event.HandlerList;
-import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 
 import edgruberman.bukkit.messagemanager.MessageLevel;
@@ -25,13 +21,11 @@ import edgruberman.bukkit.playeractivity.Interpreter;
 import edgruberman.bukkit.playeractivity.PlayerActivity;
 import edgruberman.bukkit.playeractivity.PlayerIdle;
 import edgruberman.bukkit.playeractivity.consumers.AwayBack;
-import edgruberman.bukkit.playeractivity.consumers.PlayerAway;
-import edgruberman.bukkit.playeractivity.consumers.PlayerBack;
 
 /**
  * Sleep state for a specific world.
  */
-public final class State implements Observer, Listener {
+public final class State implements Observer {
 
     /**
      * True to allow players to cause sleep to occur. False to prevent sleep.
@@ -90,11 +84,11 @@ public final class State implements Observer, Listener {
     final public Map<Notification.Type, Notification> notifications = new HashMap<Notification.Type, Notification>();
     final public EventTracker tracker;
 
-    final public List<Player> players = new ArrayList<Player>();
-    final public List<Player> playersInBed = new ArrayList<Player>();
-    final public List<Player> playersIdle = new ArrayList<Player>();
-    final public List<Player> playersIgnored = new ArrayList<Player>();
-    final public List<Player> playersAway = new ArrayList<Player>();
+    final public Set<Player> players = new HashSet<Player>();
+    final public Set<Player> playersInBed = new HashSet<Player>();
+    final public Set<Player> playersIdle = new HashSet<Player>();
+    final public Set<Player> playersIgnored = new HashSet<Player>();
+    final public Set<Player> playersAway = new HashSet<Player>();
 
     private boolean hasGeneratedEnterBed = false;
     private boolean isForcingSleep = false;
@@ -109,19 +103,22 @@ public final class State implements Observer, Listener {
         this.forcePercent = forcePercent;
         this.awayIdle = awayIdle;
 
-        this.tracker = new EventTracker(plugin);
-        if (activity != null) {
+        if (this.idle > 0 && activity != null) {
+            this.tracker = new EventTracker(plugin);
             this.tracker.setDefaultPriority(EventPriority.HIGHEST); // One below Somnologist's MONITOR to ensure activity/idle status are updated before any processing in this State
             this.tracker.addInterpreters(activity);
             this.tracker.activityPublisher.addObserver(this);
             this.tracker.idlePublisher.setThreshold(this.idle * 1000);
             this.tracker.idlePublisher.addObserver(this);
+            this.tracker.idlePublisher.reset(this.world.getPlayers());
+        } else {
+            this.tracker = null;
         }
 
         for (final Player player : world.getPlayers()) {
             this.players.add(player);
             if (player.isSleeping()) this.playersInBed.add(player);
-            if (this.tracker.idlePublisher.getIdle().contains(player)) this.playersIdle.add(player);
+            if (this.tracker != null && this.tracker.idlePublisher.getIdle().contains(player)) this.playersIdle.add(player);
             if (this.awayIdle && this.getAwayBack() != null && this.getAwayBack().isAway(player)) this.playersAway.add(player);
             if (player.hasPermission(State.PERMISSION_IGNORE)) this.playersIgnored.add(player);
         }
@@ -144,8 +141,7 @@ public final class State implements Observer, Listener {
      * Ensure all object references have been released.
      */
     void clear() {
-        HandlerList.unregisterAll(this);
-        this.tracker.clear();
+        if (this.tracker != null) this.tracker.clear();
         this.notifications.clear();
         this.players.clear();
         this.playersInBed.clear();
@@ -157,19 +153,24 @@ public final class State implements Observer, Listener {
     // ---- Player Status Management ------------------------------------------
 
     /**
-     * Process a player joining this world.
+     * Factor in a player for sleep.
      *
      * @param joiner who joined this world
      */
-    void worldJoined(final Player joiner) {
+    void add(final Player joiner) {
         this.players.add(joiner);
-        if (this.tracker.idlePublisher.getIdle().contains(joiner)) this.playersIdle.add(joiner);
+        if (this.tracker != null && this.tracker.idlePublisher.getIdle().contains(joiner)) this.playersIdle.add(joiner);
         if (this.awayIdle && this.getAwayBack() != null && this.getAwayBack().isAway(joiner)) this.playersAway.add(joiner);
         if (joiner.hasPermission(State.PERMISSION_IGNORE)) this.playersIgnored.add(joiner);
 
         if (this.playersInBed.size() == 0) return;
 
-        this.plugin.getLogger().log(Level.FINEST, "[" + this.world.getName() + "] World Join: " + joiner.getName());
+        this.plugin.getLogger().log(Level.FINEST, "[" + this.world.getName() + "] Add: " + joiner.getName());
+
+        if (this.playersIdle.contains(joiner) || this.playersAway.contains(joiner) || this.playersIgnored.contains(joiner)) {
+            this.lull();
+            return;
+        }
 
         // Prevent interruption of forced sleep in progress
         if (this.isForcingSleep) {
@@ -229,6 +230,8 @@ public final class State implements Observer, Listener {
         this.plugin.getLogger().log(Level.FINEST, "[" + this.world.getName() + "] Bed Left: " + leaver.getName());
 
         if (this.isNight()) {
+            if (this.playersIdle.contains(leaver) || this.playersAway.contains(leaver) || this.playersIgnored.contains(leaver)) this.lull();
+
             // Night time bed leaves only occur because of a manual action
             this.notify(Notification.Type.LEAVE_BED, leaver, leaver.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible());
 
@@ -261,11 +264,11 @@ public final class State implements Observer, Listener {
     }
 
     /**
-     * Process a player leaving this world.
+     * Remove a player from consideration for sleep.
      *
      * @param leaver who left world
      */
-    void worldLeft(final Player leaver) {
+    void remove(final Player leaver) {
         this.players.remove(leaver);
         this.playersIdle.remove(leaver);
         this.playersAway.remove(leaver);
@@ -274,7 +277,7 @@ public final class State implements Observer, Listener {
 
         if (this.playersInBed.size() == 0) return;
 
-        this.plugin.getLogger().log(Level.FINEST, "[" + this.world.getName() + "] World Left: " + leaver.getName());
+        this.plugin.getLogger().log(Level.FINEST, "[" + this.world.getName() + "] Remove: " + leaver.getName());
         this.lull();
     }
 
@@ -287,6 +290,8 @@ public final class State implements Observer, Listener {
         // Player Idle
         if (arg instanceof PlayerIdle) {
             final PlayerIdle idle = (PlayerIdle) arg;
+            if (!idle.player.getWorld().equals(this.world)) return;
+
             this.playersIdle.add(idle.player);
             this.lull();
             return;
@@ -294,7 +299,7 @@ public final class State implements Observer, Listener {
 
         // Player Activity
         final PlayerActivity activity = (PlayerActivity) arg;
-        if (activity.player.getWorld() != this.world) return;
+        if (!activity.player.getWorld().equals(this.world)) return;
 
         this.playersIdle.remove(activity.player);
 
@@ -315,18 +320,20 @@ public final class State implements Observer, Listener {
         this.lull(); // Necessary in case player is idle before a natural sleep that would have caused a force
     }
 
-    @EventHandler
-    public void onPlayerAway(final PlayerAway event) {
-        if (!event.getPlayer().getWorld().equals(this.world)) return;
+    public void setAway(final Player player) {
+        if (!this.awayIdle) return;
 
-        this.playersAway.add(event.getPlayer());
+        this.playersAway.add(player);
+        this.lull();
     }
 
-    @EventHandler
-    public void onPlayerBack(final PlayerBack event) {
-        if (!event.getPlayer().getWorld().equals(this.world)) return;
+    public void setBack(final Player player) {
+        if (!this.awayIdle) return;
 
-        this.playersAway.remove(event.getPlayer());
+        this.playersAway.remove(player);
+        this.setSleepingIgnored(player, false, "Back");
+
+        this.add(player);
     }
 
     // ---- Sleep Management --------------------------------------------------
@@ -352,7 +359,7 @@ public final class State implements Observer, Listener {
         for (final Player player : this.playersAway)
             this.setSleepingIgnored(player, true, "Away");
 
-        if (this.plugin.getLogger().isLoggable(Level.FINE)) this.plugin.getLogger().log(Level.FINE, "[" + this.world.getName() + "] " + this.description());
+        if (this.plugin.getLogger().isLoggable(Level.FINER)) this.plugin.getLogger().log(Level.FINER, "[" + this.world.getName() + "] " + this.description());
 
         if (this.forceCount <= -1 && this.forcePercent <= -1) return;
 
@@ -385,7 +392,7 @@ public final class State implements Observer, Listener {
      * @param ignore true to set player to ignore sleeping; false otherwise
      * @param reason brief description for logging/troubleshooting purposes
      */
-    private void setSleepingIgnored(final Player player, final boolean ignore, final String reason) {
+    public void setSleepingIgnored(final Player player, final boolean ignore, final String reason) {
         // Don't modify players already set as expected
         if (player.isSleepingIgnored() == ignore) return;
 
@@ -474,7 +481,7 @@ public final class State implements Observer, Listener {
      *
      * @return true if time allows bed usage; otherwise false
      */
-    private boolean isNight() {
+    public boolean isNight() {
         final long now = this.world.getTime();
 
         if ((State.TIME_NIGHT_START <= now) && (now < State.TIME_NIGHT_END)) return true;
