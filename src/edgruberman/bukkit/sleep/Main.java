@@ -27,7 +27,7 @@ public final class Main extends JavaPlugin {
      */
     private static final String WORLD_SPECIFICS = "Worlds";
 
-    private static final String MINIMUM_VERSION_CONFIG = "5.1.0a5";
+    private static final String MINIMUM_VERSION_CONFIG = "5.1.0";
 
     public static Somnologist somnologist = null;
 
