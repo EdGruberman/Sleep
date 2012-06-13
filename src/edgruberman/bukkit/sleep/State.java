@@ -1,5 +1,6 @@
 package edgruberman.bukkit.sleep;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -14,6 +15,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventPriority;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.potion.PotionEffect;
 
 import edgruberman.bukkit.messagemanager.MessageLevel;
 import edgruberman.bukkit.playeractivity.EventTracker;
@@ -83,6 +85,9 @@ public final class State implements Observer {
     final public boolean awayIdle;
     final public Map<Notification.Type, Notification> notifications = new HashMap<Notification.Type, Notification>();
     final public EventTracker tracker;
+    public Collection<PotionEffect> rewardEffects = new HashSet<PotionEffect>();
+    public Float rewardAddSaturation = null;
+    public Float rewardSetExhaustion = null;
 
     final public Set<Player> players = new HashSet<Player>();
     final public Set<Player> playersInBed = new HashSet<Player>();
@@ -234,8 +239,16 @@ public final class State implements Observer {
 
             // Night time bed leaves only occur because of a manual action
             this.notify(Notification.Type.LEAVE_BED, leaver, leaver.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible());
+            return;
 
-        } else if (this.playersInBed.size() == 0) {
+        }
+
+        // Morning
+        leaver.addPotionEffects(this.rewardEffects);
+        if (this.rewardAddSaturation != null) leaver.setSaturation(leaver.getSaturation() + this.rewardAddSaturation);
+        if (this.rewardSetExhaustion != null) leaver.setExhaustion(this.rewardSetExhaustion);
+
+        if (this.playersInBed.size() == 0) {
             // Last player to leave bed during a morning awakening
             this.hasGeneratedEnterBed = false;
             for (final Player player : this.world.getPlayers())

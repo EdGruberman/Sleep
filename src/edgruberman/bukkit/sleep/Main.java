@@ -2,12 +2,16 @@ package edgruberman.bukkit.sleep;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 
 import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 import edgruberman.bukkit.playeractivity.EventTracker;
 import edgruberman.bukkit.playeractivity.Interpreter;
@@ -114,6 +118,13 @@ public final class Main extends JavaPlugin {
             }
         }
 
+        ConfigurationSection reward = worldConfig.getConfigurationSection("reward");
+        if (reward == null) reward = defaultConfig.getConfigurationSection("reward");
+        this.loadReward(state, reward);
+        for (final PotionEffect effect : state.rewardEffects) this.getLogger().config("Sleep state for [" + world.getName() + "] Reward Effect Type: " + effect.getType().getName() + "; Duration: " + effect.getDuration() + "; Amplifier: " + effect.getAmplifier());
+        this.getLogger().config("Sleep state for [" + world.getName() + "] Reward Add Saturation: " + state.rewardAddSaturation);
+        this.getLogger().config("Sleep state for [" + world.getName() + "] Reward Set Exhaustion: " + state.rewardSetExhaustion);
+
         // Ensure /away command is enabled if Sleep configuration needs it
         if (awayIdle && edgruberman.bukkit.playeractivity.Main.awayBack == null) {
             if (edgruberman.bukkit.playeractivity.Main.enable("awayBack")) {
@@ -124,6 +135,35 @@ public final class Main extends JavaPlugin {
         }
 
         return state;
+    }
+
+    private void loadReward(final State state, final ConfigurationSection reward) {
+        if (reward == null) return;
+
+        final ConfigurationSection effects = reward.getConfigurationSection("effects");
+        if (effects != null) {
+            final Set<PotionEffect> potionEffects = new HashSet<PotionEffect>();
+            for (final String type : effects.getKeys(false)) {
+                final PotionEffectType effect = PotionEffectType.getByName(type);
+                if (effect == null) {
+                    this.getLogger().warning("Unrecognized reward PotionEffectType: " + type);
+                    continue;
+                }
+
+                final ConfigurationSection entry = effects.getConfigurationSection(type);
+                final int duration = entry.getInt("duration", 4);
+                final int amplifier = entry.getInt("amplifier", 1);
+
+                potionEffects.add(new PotionEffect(effect, duration, amplifier));
+            }
+            state.rewardEffects.addAll(potionEffects);
+        }
+
+        final ConfigurationSection food = reward.getConfigurationSection("food");
+        if (food != null) {
+            if (food.isDouble("addSaturation")) state.rewardAddSaturation = (float) food.getDouble("addSaturation");
+            if (food.isDouble("setExhaustion")) state.rewardSetExhaustion = (float) food.getDouble("setExhaustion");
+        }
     }
 
     /**

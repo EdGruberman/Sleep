@@ -39,5 +39,13 @@ force:
     percent: -1
 sleep: true
 awayIdle: false
+reward:
+    food:
+        addSaturation: 9.6
+        setExhaustion: 0.0
+    effects:
+        REGENERATION:
+            duration: 80
+            amplifier: 1
 logLevel: INFO
 version: @VERSION@
