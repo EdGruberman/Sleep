@@ -134,6 +134,12 @@ public final class Main extends JavaPlugin {
             }
         }
 
+        ConfigurationSection temporaryBed = worldConfig.getConfigurationSection("temporaryBed");
+        if (temporaryBed == null) temporaryBed = defaultConfig.getConfigurationSection("temporaryBed");
+        this.loadTemporaryBed(state, temporaryBed);
+        if (state.temporaryBed != null)
+            this.getLogger().config("Sleep state for [" + world.getName() + "] Temporary Beds Enabled");
+
         return state;
     }
 
@@ -164,6 +170,16 @@ public final class Main extends JavaPlugin {
             if (food.isDouble("addSaturation")) state.rewardAddSaturation = (float) food.getDouble("addSaturation");
             if (food.isDouble("setExhaustion")) state.rewardSetExhaustion = (float) food.getDouble("setExhaustion");
         }
+    }
+
+    private void loadTemporaryBed(final State state, final ConfigurationSection temporaryBed) {
+        if (temporaryBed == null || !temporaryBed.getBoolean("enabled")) return;
+
+        final long duration = temporaryBed.getLong("duration");
+        final String instruction = temporaryBed.getString("instruction");
+        final String reverted = temporaryBed.getString("reverted");
+        final TemporaryBed tb = new TemporaryBed(state, duration, instruction, reverted);
+        state.temporaryBed = tb;
     }
 
     /**

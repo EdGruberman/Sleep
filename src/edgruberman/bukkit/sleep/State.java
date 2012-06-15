@@ -88,6 +88,7 @@ public final class State implements Observer {
     public Collection<PotionEffect> rewardEffects = new HashSet<PotionEffect>();
     public Float rewardAddSaturation = null;
     public Float rewardSetExhaustion = null;
+    public TemporaryBed temporaryBed = null;
 
     final public Set<Player> players = new HashSet<Player>();
     final public Set<Player> playersInBed = new HashSet<Player>();
@@ -147,6 +148,7 @@ public final class State implements Observer {
      */
     void clear() {
         if (this.tracker != null) this.tracker.clear();
+        if (this.temporaryBed != null) this.temporaryBed.clear();
         this.notifications.clear();
         this.players.clear();
         this.playersInBed.clear();

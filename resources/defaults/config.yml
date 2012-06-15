@@ -47,5 +47,10 @@ reward:
         REGENERATION:
             duration: 80
             amplifier: 1
+temporaryBed:
+    enabled: true
+    duration: 12000
+    instruction: "To revert to previous spawn, destroy this bed soon"
+    reverted: "Reverted spawn to previous bed; Temporary bed was removed"
 logLevel: INFO
 version: @VERSION@
