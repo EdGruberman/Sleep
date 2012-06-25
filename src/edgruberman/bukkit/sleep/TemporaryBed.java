@@ -92,7 +92,7 @@ public class TemporaryBed implements Listener {
 
     }
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onBlockBreak(final BlockBreakEvent broken) {
         if (!broken.getBlock().getWorld().equals(this.state.world)) return;
 
