@@ -44,6 +44,9 @@ public class TemporaryBed implements Listener {
     public void onPlayerBedEnter(final PlayerBedEnterEvent event) {
         if (!event.getPlayer().getWorld().equals(this.state.world)) return;
 
+        // Ignore if no previous bed spawn exists
+        if (event.getPlayer().getBedSpawnLocation() == null) return;
+
         // Ignore when bed is same as current spawn
         if (event.getPlayer().getBedSpawnLocation().equals(event.getBed().getLocation())) return;
 
