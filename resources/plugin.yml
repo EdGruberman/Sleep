@@ -45,6 +45,6 @@ permissions:
     sleep.notify.INTERRUPT:
         description: Will notify world that was just about to sleep that a new player joined
         default: false
-    sleep.force:
+    sleep.autoforce:
         description: Will automatically force sleep when entering bed
         default: false

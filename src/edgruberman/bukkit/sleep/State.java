@@ -211,7 +211,7 @@ public final class State implements Observer {
 
         this.setSleepingIgnored(enterer, false, "Entered Bed");
 
-        if (enterer.hasPermission(Main.PERMISSION_PREFIX + ".force")) {
+        if (enterer.hasPermission(Main.PERMISSION_PREFIX + ".autoforce")) {
             this.forceSleep(enterer);
             return;
         }
