@@ -22,11 +22,6 @@ import edgruberman.bukkit.sleep.dependencies.DependencyChecker;
 public final class Main extends JavaPlugin {
 
     /**
-     * Prefix for all permissions used in this plugin.
-     */
-    public static final String PERMISSION_PREFIX = "sleep";
-
-    /**
      * Base path, relative to plugin data folder, to look for world specific
      * configuration overrides in.
      */

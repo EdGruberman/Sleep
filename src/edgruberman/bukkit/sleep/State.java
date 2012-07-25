@@ -74,8 +74,6 @@ public final class State implements Observer {
      */
     private static final long TICKS_BEFORE_DEEP_SLEEP = 90;
 
-    private static final String PERMISSION_IGNORE = Main.PERMISSION_PREFIX + ".ignore";
-
     final public Plugin plugin;
     final public World world;
     final public boolean isSleepEnabled;
@@ -126,7 +124,7 @@ public final class State implements Observer {
             if (player.isSleeping()) this.playersInBed.add(player);
             if (this.tracker != null && this.tracker.idlePublisher.getIdle().contains(player)) this.playersIdle.add(player);
             if (this.awayIdle && this.getAwayBack() != null && this.getAwayBack().isAway(player)) this.playersAway.add(player);
-            if (player.hasPermission(State.PERMISSION_IGNORE)) this.playersIgnored.add(player);
+            if (player.hasPermission("sleep.ignore")) this.playersIgnored.add(player);
         }
     }
 
@@ -168,7 +166,7 @@ public final class State implements Observer {
         this.players.add(joiner);
         if (this.tracker != null && this.tracker.idlePublisher.getIdle().contains(joiner)) this.playersIdle.add(joiner);
         if (this.awayIdle && this.getAwayBack() != null && this.getAwayBack().isAway(joiner)) this.playersAway.add(joiner);
-        if (joiner.hasPermission(State.PERMISSION_IGNORE)) this.playersIgnored.add(joiner);
+        if (joiner.hasPermission("sleep.ignore")) this.playersIgnored.add(joiner);
 
         if (this.playersInBed.size() == 0) return;
 
@@ -211,7 +209,7 @@ public final class State implements Observer {
 
         this.setSleepingIgnored(enterer, false, "Entered Bed");
 
-        if (enterer.hasPermission(Main.PERMISSION_PREFIX + ".autoforce")) {
+        if (enterer.hasPermission("sleep.autoforce")) {
             this.forceSleep(enterer);
             return;
         }

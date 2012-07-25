@@ -99,7 +99,7 @@ public final class Notification {
      */
     private boolean isAllowed(final CommandSender sender) {
         // Check if sender has general permission for this notification.
-        if (sender.hasPermission(Main.PERMISSION_PREFIX + ".notify." + this.type.name()))
+        if (sender.hasPermission("sleep.notify." + this.type.name()))
             return true;
 
         if (!(sender instanceof Player))
@@ -107,7 +107,7 @@ public final class Notification {
 
         // Check if player has permission for this notification for current world.
         final Player player = (Player) sender;
-        return player.hasPermission(Main.PERMISSION_PREFIX + ".notify." + this.type.name() + "." + player.getWorld().getName());
+        return player.hasPermission("sleep.notify." + this.type.name() + "." + player.getWorld().getName());
     }
 
     /**
