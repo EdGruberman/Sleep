@@ -16,6 +16,7 @@ import org.bukkit.potion.PotionEffectType;
 import edgruberman.bukkit.playeractivity.EventTracker;
 import edgruberman.bukkit.playeractivity.Interpreter;
 import edgruberman.bukkit.sleep.commands.Sleep;
+import edgruberman.bukkit.sleep.commands.SleepForce;
 import edgruberman.bukkit.sleep.dependencies.DependencyChecker;
 
 public final class Main extends JavaPlugin {
@@ -56,7 +57,8 @@ public final class Main extends JavaPlugin {
 
         Main.somnologist = new Somnologist(this, excluded);
 
-        new Sleep(this);
+        this.getCommand("sleep:sleep").setExecutor(new Sleep());
+        this.getCommand("sleep:sleep.force").setExecutor(new SleepForce());
     }
 
     @Override

@@ -5,44 +5,23 @@ version: @VERSION@
 author: @AUTHOR@
 main: @MAIN@
 commands:
-    sleep:
-        description: Manages sleep functionality
+    'sleep:sleep':
+        aliases: sleep
+        description: Sleep requirements and who is preventing sleep
         permission: sleep.sleep
-        usage: |
-            /<command> - Who is preventing sleep
-            /<command> detail - Sleep requirements
-            /<command> force - Force sleep for one night
-            /<command> reload - Reload configuration
+        usage: /<command>[ <World>]
+    'sleep:sleep.force':
+        aliases: [sleep.force]
+        description: Force sleep for one night
+        permission: sleep.sleep.force
+        usage: /<command>[ <World>]
 permissions:
-    sleep.sleep.info:
-        description: Can use the basic information actions of the sleep command
-        default: true
-        children:
-            sleep.sleep.who: true
-            sleep.sleep.detail: true
     sleep.sleep:
         description: Can use sleep command
-        default: op
-    sleep.sleep.who:
-        description: Can use who action of sleep command
-        default: op
-        children:
-            sleep.sleep: true
-    sleep.sleep.detail:
-        description: Can use detail action of sleep command
-        default: op
-        children:
-            sleep.sleep: true
+        default: true
     sleep.sleep.force:
         description: Can use force action of sleep command
         default: op
-        children:
-            sleep.sleep: true
-    sleep.sleep.reload:
-        description: Can use reload action of sleep command
-        default: op
-        children:
-            sleep.sleep: true
     sleep.ignore:
         description: Will always be ignored for sleep
         default: false
