@@ -1,14 +1,15 @@
 package edgruberman.bukkit.sleep;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 
 import org.bukkit.World;
 import org.bukkit.World.Environment;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
@@ -21,12 +22,13 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.event.world.WorldUnloadEvent;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.potion.PotionEffect;
 
 import edgruberman.bukkit.playeractivity.consumers.PlayerAway;
 import edgruberman.bukkit.playeractivity.consumers.PlayerBack;
 
 /**
- * Sleep state management.
+ * Sleep state management
  */
 public final class Somnologist implements Listener {
 
@@ -42,23 +44,37 @@ public final class Somnologist implements Listener {
     }
 
     /**
-     * Create state based on configuration.
+     * Create state based on configuration
      *
      * @param world where sleep state applies to
      * @return initial sleep state
      */
     State loadState(final World world) {
         if (world.getEnvironment() != Environment.NORMAL) {
-            this.plugin.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] will not be tracked because its environment is " + world.getEnvironment().toString());
+            this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] will not be tracked because its environment is " + world.getEnvironment().toString());
             return null;
         }
 
         if (this.excluded.contains(world.getName())) {
-            this.plugin.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] will not be tracked because it is explicitly excluded");
+            this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] will not be tracked because it is explicitly excluded");
             return null;
         }
 
-        final State state = ((Main) this.plugin).loadState(world);
+        final YamlConfiguration config = YamlConfiguration.loadConfiguration(new File(this.plugin.getDataFolder(), "Worlds/" + world.getName() + "/config.yml"));
+        config.addDefaults(this.plugin.getConfig());
+
+        final State state = new State(this.plugin, world, config);
+        this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Sleep Enabled: " + state.isSleepEnabled);
+        this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Forced Sleep Minimum Count: " + state.forceCount);
+        this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Forced Sleep Minimum Percent: " + state.forcePercent);
+        this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Away Idle: " + state.awayIdle);
+        this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Idle Threshold (seconds): " + state.idle);
+        this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Monitored Activity: " + state.tracker.getInterpreters().size() + " events");
+        for (final PotionEffect effect : state.rewardEffects) this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Reward Effect Type: " + effect.getType().getName() + "; Duration: " + effect.getDuration() + "; Amplifier: " + effect.getAmplifier());
+        this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Reward Add Saturation: " + state.rewardAddSaturation);
+        this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Reward Set Exhaustion: " + state.rewardSetExhaustion);
+        if (state.temporaryBed != null) this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Temporary Beds Enabled");
+
         this.states.put(world, state);
         return state;
     }
@@ -68,7 +84,7 @@ public final class Somnologist implements Listener {
     }
 
     /**
-     * Disable sleep state tracking for all worlds.
+     * Disable sleep state tracking for all worlds
      */
     void clear() {
         HandlerList.unregisterAll(this);

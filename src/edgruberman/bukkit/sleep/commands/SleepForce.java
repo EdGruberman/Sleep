@@ -5,9 +5,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
-import edgruberman.bukkit.messagemanager.MessageLevel;
 import edgruberman.bukkit.sleep.Main;
-import edgruberman.bukkit.sleep.Message;
 import edgruberman.bukkit.sleep.State;
 
 public class SleepForce implements CommandExecutor {
@@ -16,22 +14,22 @@ public class SleepForce implements CommandExecutor {
     public boolean onCommand(final CommandSender sender, final Command command, final String label, final String[] args) {
         final World world = Sleep.parseWorld(sender, args);
         if (world == null) {
-            Message.manager.tell(sender, "Unable to determine world", MessageLevel.SEVERE, false);
+            Main.messenger.tell(sender, "worldNotFound", args[0]);
             return false;
         }
 
         final State state = Main.somnologist.getState(world);
         if (state == null) {
-            Message.manager.tell(sender, "Sleep state for [" + world.getName() + "] is not managed", MessageLevel.SEVERE, false);
+            Main.messenger.tell(sender, "sleepNotManaged", world.getName());
             return true;
         }
 
         if (state.playersInBed.size() == 0) {
-            Message.manager.tell(sender, "Need at least 1 person in bed to force sleep", MessageLevel.SEVERE, false);
+            Main.messenger.tell(sender, "requireSleeper");
             return true;
         }
 
-        Message.manager.tell(sender, "Forcing sleep in [" + world.getName() + "]...", MessageLevel.STATUS, false);
+        Main.messenger.tell(sender, "forceSuccess", world.getName());
         state.forceSleep(sender);
         return true;
     }

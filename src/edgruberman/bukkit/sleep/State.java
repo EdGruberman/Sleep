@@ -3,7 +3,6 @@ package edgruberman.bukkit.sleep;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
@@ -12,105 +11,92 @@ import java.util.logging.Level;
 
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.Configuration;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventPriority;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
-import edgruberman.bukkit.messagemanager.MessageLevel;
 import edgruberman.bukkit.playeractivity.EventTracker;
-import edgruberman.bukkit.playeractivity.Interpreter;
 import edgruberman.bukkit.playeractivity.PlayerActivity;
 import edgruberman.bukkit.playeractivity.PlayerIdle;
 import edgruberman.bukkit.playeractivity.consumers.AwayBack;
 
 /**
- * Sleep state for a specific world.
+ * Sleep state for a specific world
  */
 public final class State implements Observer {
 
     /**
-     * True to allow players to cause sleep to occur. False to prevent sleep.
-     */
-    static final boolean DEFAULT_SLEEP = true;
-
-    /**
-     * Time in seconds a player must not have any recorded activity in order to
-     * be considered away. (-1 will disable this feature and never treat a
-     * player as idle.)
-     */
-    static final int DEFAULT_IDLE = -1;
-
-    /**
-     * Minimum number of players needed in bed for sleep to be forced. (-1 will
-     * disable this feature.)
-     */
-    static final int DEFAULT_FORCE_COUNT = -1;
-
-    static final boolean DEFAULT_AWAY_IDLE = false;
-
-    /**
-     * Minimum percent of players in bed out of possible (active and not
-     * ignored) players that will force sleep. (-1 will disable this
-     * feature.)
-     */
-    static final int DEFAULT_FORCE_PERCENT = -1;
-
-    /**
      * First world relative time (hours * 1000) associated with ability to
-     * enter bed. (Derived empirically.)
+     * enter bed (Derived empirically)
      */
     private static final long TIME_NIGHT_START = 12540;
 
     /**
      * First world relative time (hours * 1000) associated with inability to
-     * enter bed. (Derived empirically.)
+     * enter bed (Derived empirically)
      */
     private static final long TIME_NIGHT_END = 23455;
 
     /**
-     * Number of ticks to wait before deep sleep will engage.
-     * Minecraft considers deep sleep to be 100 ticks in bed.
+     * Number of ticks to wait before deep sleep will engage
+     * Minecraft considers deep sleep to be 100 ticks in bed
      */
     private static final long TICKS_BEFORE_DEEP_SLEEP = 90;
 
-    final public Plugin plugin;
-    final public World world;
-    final public boolean isSleepEnabled;
-    final public int idle;
-    final public int forceCount;
-    final public int forcePercent;
-    final public boolean awayIdle;
-    final public Map<Notification.Type, Notification> notifications = new HashMap<Notification.Type, Notification>();
-    final public EventTracker tracker;
-    public Collection<PotionEffect> rewardEffects = new HashSet<PotionEffect>();
-    public Float rewardAddSaturation = null;
-    public Float rewardSetExhaustion = null;
-    public TemporaryBed temporaryBed = null;
+    public final Plugin plugin;
+    public final World world;
+    public final boolean isSleepEnabled;
+    public final int idle;
+    public final int forceCount;
+    public final int forcePercent;
+    public final boolean awayIdle;
+    public final int maxFrequency;
+    public final Collection<PotionEffect> rewardEffects = new HashSet<PotionEffect>();
+    public Float rewardAddSaturation;
+    public Float rewardSetExhaustion;
+    public TemporaryBed temporaryBed;
 
-    final public Set<Player> players = new HashSet<Player>();
-    final public Set<Player> playersInBed = new HashSet<Player>();
-    final public Set<Player> playersIdle = new HashSet<Player>();
-    final public Set<Player> playersIgnored = new HashSet<Player>();
-    final public Set<Player> playersAway = new HashSet<Player>();
+    public final EventTracker tracker;
+
+    public final Set<Player> players = new HashSet<Player>();
+    public final Set<Player> playersInBed = new HashSet<Player>();
+    public final Set<Player> playersIdle = new HashSet<Player>();
+    public final Set<Player> playersIgnored = new HashSet<Player>();
+    public final Set<Player> playersAway = new HashSet<Player>();
 
     private boolean hasGeneratedEnterBed = false;
     private boolean isForcingSleep = false;
     private CommandSender sleepForcer = null;
 
-    State(final Plugin plugin, final World world, final boolean sleep, final int idle, final int forceCount, final int forcePercent, final boolean awayIdle, final List<Interpreter> activity) {
+    private final Map<Player, Long> lastBedEnterMessage = new HashMap<Player, Long>();
+    private final Map<Player, Long> lastBedLeaveMessage = new HashMap<Player, Long>();
+
+    State(final Plugin plugin, final World world, final Configuration config) {
         this.plugin = plugin;
         this.world = world;
-        this.isSleepEnabled = sleep;
-        this.idle = idle;
-        this.forceCount = forceCount;
-        this.forcePercent = forcePercent;
-        this.awayIdle = awayIdle;
+        this.isSleepEnabled = config.getBoolean("sleep", true);
+        this.idle = config.getInt("idle", -1);
+        this.forceCount = config.getInt("force.count", -1);
+        this.forcePercent = config.getInt("force.percent", -1);
+        this.awayIdle = config.getBoolean("awayIdle");
+        this.maxFrequency = config.getInt("maxFrequency", -1);
+        this.loadReward(config.getConfigurationSection("reward"));
+        this.loadTemporaryBed(config.getConfigurationSection("temporaryBed"));
 
-        if (this.idle > 0 && activity != null) {
+        if (this.idle > 0) {
             this.tracker = new EventTracker(plugin);
             this.tracker.setDefaultPriority(EventPriority.HIGHEST); // One below Somnologist's MONITOR to ensure activity/idle status are updated before any processing in this State
-            this.tracker.addInterpreters(activity);
+            for (final String className : config.getStringList("activity"))
+                try {
+                    this.tracker.addInterpreter(EventTracker.newInterpreter(className));
+                } catch (final Exception e) {
+                    plugin.getLogger().warning("Unsupported activity for " + world.getName() + ": " + className + "; " + e.getClass().getName() + "; " + e.getMessage());
+                }
+
             this.tracker.activityPublisher.addObserver(this);
             this.tracker.idlePublisher.setThreshold(this.idle * 1000);
             this.tracker.idlePublisher.addObserver(this);
@@ -128,13 +114,39 @@ public final class State implements Observer {
         }
     }
 
-    /**
-     * Associate event message for this state.
-     *
-     * @param notification message and settings to associate
-     */
-    void addNotification(final Notification notification) {
-        this.notifications.put(notification.type, notification);
+    private void loadReward(final ConfigurationSection reward) {
+        if (reward == null) return;
+
+        final ConfigurationSection effects = reward.getConfigurationSection("effects");
+        if (effects != null) {
+            final Set<PotionEffect> potionEffects = new HashSet<PotionEffect>();
+            for (final String type : effects.getKeys(false)) {
+                final PotionEffectType effect = PotionEffectType.getByName(type);
+                if (effect == null) {
+                    this.plugin.getLogger().warning("Unrecognized reward PotionEffectType: " + type);
+                    continue;
+                }
+
+                final ConfigurationSection entry = effects.getConfigurationSection(type);
+                final int duration = entry.getInt("duration", 4);
+                final int amplifier = entry.getInt("amplifier", 1);
+
+                potionEffects.add(new PotionEffect(effect, duration, amplifier));
+            }
+            this.rewardEffects.addAll(potionEffects);
+        }
+
+        final ConfigurationSection food = reward.getConfigurationSection("food");
+        if (food != null) {
+            if (food.isDouble("addSaturation")) this.rewardAddSaturation = (float) food.getDouble("addSaturation");
+            if (food.isDouble("setExhaustion")) this.rewardSetExhaustion = (float) food.getDouble("setExhaustion");
+        }
+    }
+
+    private void loadTemporaryBed(final ConfigurationSection temporaryBed) {
+        if (temporaryBed == null || !temporaryBed.getBoolean("enabled")) return;
+
+        this.temporaryBed = new TemporaryBed(this, temporaryBed.getLong("duration") * 20);
     }
 
     private AwayBack getAwayBack() {
@@ -147,12 +159,13 @@ public final class State implements Observer {
     void clear() {
         if (this.tracker != null) this.tracker.clear();
         if (this.temporaryBed != null) this.temporaryBed.clear();
-        this.notifications.clear();
         this.players.clear();
         this.playersInBed.clear();
         this.playersIdle.clear();
         this.playersIgnored.clear();
         this.playersAway.clear();
+        this.lastBedEnterMessage.clear();
+        this.lastBedLeaveMessage.clear();
     }
 
     // ---- Player Status Management ------------------------------------------
@@ -164,6 +177,8 @@ public final class State implements Observer {
      */
     void add(final Player joiner) {
         this.players.add(joiner);
+        this.lastBedEnterMessage.put(joiner, 0L);
+        this.lastBedLeaveMessage.put(joiner, 0L);
         if (this.tracker != null && this.tracker.idlePublisher.getIdle().contains(joiner)) this.playersIdle.add(joiner);
         if (this.awayIdle && this.getAwayBack() != null && this.getAwayBack().isAway(joiner)) this.playersAway.add(joiner);
         if (joiner.hasPermission("sleep.ignore")) this.playersIgnored.add(joiner);
@@ -185,17 +200,14 @@ public final class State implements Observer {
 
         // Notify of interruption when a natural sleep is in progress
         if (this.sleepersNeeded() == 1) {
-            this.plugin.getLogger().log(Level.FINE, "[" + this.world.getName() + "] Interruption: " + joiner.getName());
-            this.notify(Notification.Type.INTERRUPT, joiner, joiner.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible());
+            this.plugin.getLogger().fine("[" + this.world.getName() + "] Interruption: " + joiner.getName());
+            Main.messenger.broadcast("interrupt", joiner, joiner.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible());
             return;
         }
 
         // Private notification of missed enter bed notification(s)
-        if (this.hasGeneratedEnterBed) {
-            final Notification notification = this.notifications.get(Notification.Type.STATUS);
-            final String message = notification.format(this.plugin.getName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible());
-            Message.manager.tell(joiner, message, MessageLevel.STATUS, notification.isTimestamped());
-        }
+        if (this.hasGeneratedEnterBed)
+            Main.messenger.tell(joiner, "status", this.plugin.getName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible());
     }
 
     /**
@@ -214,7 +226,11 @@ public final class State implements Observer {
             return;
         }
 
-        this.hasGeneratedEnterBed = this.notify(Notification.Type.ENTER_BED, enterer, enterer.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible());
+        if (System.currentTimeMillis() > (this.lastBedEnterMessage.get(enterer) + (this.maxFrequency * 1000))) {
+            this.lastBedEnterMessage.put(enterer, System.currentTimeMillis());
+            Main.messenger.broadcast("bedEnter", enterer, enterer.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible());
+            this.hasGeneratedEnterBed = true;
+        }
 
         if (!this.isSleepEnabled) {
             this.plugin.getServer().getScheduler().scheduleSyncDelayedTask(this.plugin, new Insomnia(enterer, this.plugin), State.TICKS_BEFORE_DEEP_SLEEP);
@@ -238,7 +254,10 @@ public final class State implements Observer {
             if (this.playersIdle.contains(leaver) || this.playersAway.contains(leaver) || this.playersIgnored.contains(leaver)) this.lull();
 
             // Night time bed leaves only occur because of a manual action
-            this.notify(Notification.Type.LEAVE_BED, leaver, leaver.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible());
+            if (System.currentTimeMillis() > (this.lastBedLeaveMessage.get(leaver) + (this.maxFrequency * 1000))) {
+                this.lastBedLeaveMessage.put(leaver, System.currentTimeMillis());
+                Main.messenger.broadcast("bedLeave", leaver, leaver.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible());
+            }
             return;
 
         }
@@ -257,16 +276,14 @@ public final class State implements Observer {
             if (!this.isForcingSleep) return;
 
             // Generate forced sleep notification
-            Notification.Type type = null;
+            String type = "forceConfig";
             String name = this.plugin.getName();
             if (this.sleepForcer != null) {
+                type = "forceCommand";
                 name = this.sleepForcer.getName();
                 if (this.sleepForcer instanceof Player) name = ((Player) this.sleepForcer).getDisplayName();
-                type = Notification.Type.FORCE_COMMAND;
-            } else {
-                type = Notification.Type.FORCE;
             }
-            this.notify(type, this.sleepForcer, name, this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible());
+            Main.messenger.broadcast(type, name, this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible());
 
             // Allow activity to again cancel idle status in order to remove ignored sleep
             this.sleepForcer = null;
@@ -287,6 +304,9 @@ public final class State implements Observer {
         this.playersAway.remove(leaver);
         this.playersIgnored.remove(leaver);
         this.bedLeft(leaver);
+
+        this.lastBedEnterMessage.remove(leaver);
+        this.lastBedLeaveMessage.remove(leaver);
 
         if (this.playersInBed.size() == 0) return;
 
@@ -372,7 +392,8 @@ public final class State implements Observer {
         for (final Player player : this.playersAway)
             this.setSleepingIgnored(player, true, "Away");
 
-        if (this.plugin.getLogger().isLoggable(Level.FINER)) this.plugin.getLogger().log(Level.FINER, "[" + this.world.getName() + "] " + this.description());
+        if (this.plugin.getLogger().isLoggable(Level.FINER))
+            this.plugin.getLogger().finer("[" + this.world.getName() + "] " + this.description());
 
         if (this.forceCount <= -1 && this.forcePercent <= -1) return;
 
@@ -469,13 +490,12 @@ public final class State implements Observer {
      *
      * @return text description of status
      */
-    public String description() {
+    private String description() {
         // Example output:
-        // "Sleep needs +4; 3 in bed out of 7 possible = 42% (need 100%)";
+        // "Sleep needs +4; 3 in bed out of 7 possible = 42%";
         // "Sleep needs +2; 3 in bed (forced when 5) out of 7 possible = 42% (forced when 50%)";
         // "Sleep needs +2; 3 in bed (forced when 5) out of 7 possible = 42%";
         // "Sleep needs +1; 3 in bed out of 7 possible = 42% (forced when 50%)";
-        // "Sleep needs no more; 5 in bed (need 5) out of 7 possible = 71% (forced when 50%)";
         final int need = this.sleepersNeeded();
         final int count = this.playersInBed.size();
         final int possible = this.sleepersPossible().size();
@@ -500,23 +520,6 @@ public final class State implements Observer {
         if ((State.TIME_NIGHT_START <= now) && (now < State.TIME_NIGHT_END)) return true;
 
         return false;
-    }
-
-    // ---- Utility Methods ---------------------------------------------------
-
-    /**
-     * Generate a notification to this world for an event if it is defined.
-     *
-     * @param type type to generate
-     * @param sender event originator, null for code logic; frequency tracking
-     * @param args parameters to substitute in message
-     * @return true if notification was sent; otherwise false
-     */
-    private boolean notify(final Notification.Type type, final CommandSender sender, final Object... args) {
-        final Notification notification = this.notifications.get(type);
-        if (notification == null) return false;
-
-        return notification.generate(this.world, sender, args);
     }
 
 }

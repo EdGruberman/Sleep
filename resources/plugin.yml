@@ -20,30 +20,10 @@ permissions:
         description: Can use sleep command
         default: true
     sleep.sleep.force:
-        description: Can use force action of sleep command
+        description: Can use sleep.force command
         default: op
     sleep.ignore:
         description: Will always be ignored for sleep
-        default: false
-    sleep.notify:
-        description: Messages will be generated for all sleep related activities and commands
-        default: true
-        children:
-            sleep.notify.ENTER_BED: true
-            sleep.notify.LEAVE_BED: true
-            sleep.notify.FORCE_COMMAND: true
-            sleep.notify.INTERRUPT: true
-    sleep.notify.ENTER_BED:
-        description: Will notify world in which player has entered bed
-        default: false
-    sleep.notify.LEAVE_BED:
-        description: Will notify world in which player has left bed manually
-        default: false
-    sleep.notify.FORCE_COMMAND:
-        description: Will notify world that has been forced to sleep from a player action or command
-        default: false
-    sleep.notify.INTERRUPT:
-        description: Will notify world that was just about to sleep that a new player joined
         default: false
     sleep.autoforce:
         description: Will automatically force sleep when entering bed

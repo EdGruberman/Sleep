@@ -16,23 +16,16 @@ import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerBedLeaveEvent;
 import org.bukkit.material.Bed;
 
-import edgruberman.bukkit.messagemanager.MessageLevel;
-import edgruberman.bukkit.messagemanager.MessageManager;
-
 public class TemporaryBed implements Listener {
 
     private final State state;
     private final long duration;
-    private final String instruction;
-    private final String reverted;
     private final Map<String, Location> previous = new HashMap<String, Location>();
     private final Map<String, Integer> committers = new HashMap<String, Integer>();
 
-    TemporaryBed(final State state, final long duration, final String instruction, final String reverted) {
+    TemporaryBed(final State state, final long duration) {
         this.state = state;
         this.duration = duration;
-        this.instruction = instruction;
-        this.reverted = reverted;
         state.plugin.getServer().getPluginManager().registerEvents(this, state.plugin);
     }
 
@@ -68,9 +61,7 @@ public class TemporaryBed implements Listener {
             return;
         }
 
-        // Instruction notification
-        if (this.instruction != null && this.instruction.length() > 0)
-            MessageManager.of(this.state.plugin).tell(event.getPlayer(), this.instruction, MessageLevel.NOTICE);
+        Main.messenger.tell(event.getPlayer(), "temporaryBedInstruction", TemporaryBed.readableDuration(this.duration / 20 * 1000));
 
         // Bed spawn changed, commit change after specified duration has elapsed
         final int taskId = this.state.plugin.getServer().getScheduler().scheduleSyncDelayedTask(this.state.plugin, new BedChangeCommitter(this, event.getPlayer()), this.duration);
@@ -115,9 +106,21 @@ public class TemporaryBed implements Listener {
         broken.getPlayer().setBedSpawnLocation(previous);
         this.previous.remove(broken.getPlayer().getName());
 
-        // Revert notification
-        if (this.reverted != null && this.reverted.length() > 0)
-            MessageManager.of(this.state.plugin).tell(broken.getPlayer(), this.reverted, MessageLevel.STATUS);
+        Main.messenger.tell(broken.getPlayer(), "temporaryBedReverted");
+    }
+
+    private static String readableDuration(final long total) {
+        final long totalSeconds = total / 1000;
+        final long days = totalSeconds / 86400;
+        final long hours = (totalSeconds % 86400) / 3600;
+        final long minutes = ((totalSeconds % 86400) % 3600) / 60;
+        final long seconds = totalSeconds % 60;
+        final StringBuilder sb = new StringBuilder();
+        if (days > 0) sb.append(Long.toString(days)).append("d");
+        if (hours > 0) sb.append((sb.length() > 0) ? " " : "").append(Long.toString(hours)).append("h");
+        if (minutes > 0) sb.append((sb.length() > 0) ? " " : "").append(Long.toString(minutes)).append("m");
+        if (seconds > 0) sb.append((sb.length() > 0) ? " " : "").append(Long.toString(seconds)).append("s");
+        return sb.toString();
     }
 
 }

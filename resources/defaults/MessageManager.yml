@@ -1,5 +1,0 @@
-WORLD:
-    format: '%1$s'
-    color:
-        EVENT: [YELLOW, ITALIC]
-version: 6.0.0

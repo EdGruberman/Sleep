@@ -1,21 +1,19 @@
 package edgruberman.bukkit.sleep.commands;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import edgruberman.bukkit.messagemanager.MessageLevel;
 import edgruberman.bukkit.sleep.Main;
-import edgruberman.bukkit.sleep.Message;
 import edgruberman.bukkit.sleep.State;
 
 public class Sleep implements CommandExecutor {
@@ -24,23 +22,23 @@ public class Sleep implements CommandExecutor {
     public boolean onCommand(final CommandSender sender, final Command command, final String label, final String[] args) {
         final World world = Sleep.parseWorld(sender, args);
         if (world == null) {
-            Message.manager.tell(sender, "Unable to determine world", MessageLevel.SEVERE, false);
+            Main.messenger.tell(sender, "worldNotFound", args[0]);
             return false;
         }
 
         final State state = Main.somnologist.getState(world);
         if (state == null) {
-            Message.manager.tell(sender, "Sleep state for [" + world.getName() + "] is not managed", MessageLevel.SEVERE, false);
+            Main.messenger.tell(sender, "sleepNotManaged", world.getName());
             return true;
         }
 
         if (!state.isSleepEnabled) {
-            Message.manager.tell(sender, "Sleep is disabled for this world", MessageLevel.STATUS, false);
+            Main.messenger.tell(sender, "sleepDisabled", world.getName());
             return true;
         }
 
         if (state.playersInBed.size() == 0) {
-            Message.manager.tell(sender, "No one is currently in bed", MessageLevel.STATUS, false);
+            Main.messenger.tell(sender, "noneInBed");
 
         } else {
             final List<Player> notSleeping = new ArrayList<Player>(state.players);
@@ -50,19 +48,16 @@ public class Sleep implements CommandExecutor {
             notSleeping.removeAll(state.playersIgnored);
             Collections.sort(notSleeping, new DisplayNameComparator());
 
-            String players = "";
-            for (final Player player : notSleeping)
-                players += ChatColor.WHITE + player.getDisplayName() + "&_, ";
+            final List<String> names = new ArrayList<String>();
+            for (final Player player : notSleeping) names.add(player.getDisplayName());
 
-            String who = notSleeping.size() + " player" + (notSleeping.size() != 1 ? "s" : "") + " preventing sleep";
-            if (state.forceCount >= 1 || state.forcePercent >= 1) who += " (need +" + state.sleepersNeeded() + ")";
-            who += ": " + players;
-            who = who.substring(0, who.length() - 2);
-
-            Message.manager.tell(sender, who, MessageLevel.STATUS, false);
+            Main.messenger.tell(sender, "notSleeping", names.size(), Sleep.join(names, Main.messenger.getFormat("notSleeping.delimiter")));
         }
 
-        Message.manager.tell(sender, state.description(), MessageLevel.STATUS, false);
+        final int count = state.playersInBed.size();
+        final int possible = state.sleepersPossible().size();
+        final int percent = (int) Math.floor((double) count / (possible > 0 ? possible : 1) * 100);
+        Main.messenger.tell(sender, "statusDetail", percent, state.sleepersNeeded(), count, possible);
         return true;
     }
 
@@ -78,13 +73,30 @@ public class Sleep implements CommandExecutor {
         return null;
     }
 
-    private class DisplayNameComparator implements Comparator<Player> {
+    private static class DisplayNameComparator implements Comparator<Player> {
 
         @Override
         public int compare(final Player o1, final Player o2) {
             return o1.getDisplayName().compareTo(o2.getDisplayName());
         }
 
+    }
+
+    /**
+     * Concatenate a collection with a delimiter
+     *
+     * @param col entries to concatenate
+     * @param delim placed between each entry
+     * @return entries concatenated; empty string if no entries
+     */
+    private static String join(final Collection<? extends String> col, final String delim) {
+        if (col == null || col.isEmpty()) return "";
+
+        final StringBuilder sb = new StringBuilder();
+        for (final String s : col) sb.append(s + delim);
+        sb.delete(sb.length() - delim.length(), sb.length());
+
+        return sb.toString();
     }
 
 }
