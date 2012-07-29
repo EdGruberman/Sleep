@@ -21,7 +21,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.event.world.WorldUnloadEvent;
-import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 
 import edgruberman.bukkit.playeractivity.consumers.PlayerAway;
@@ -32,13 +32,15 @@ import edgruberman.bukkit.playeractivity.consumers.PlayerBack;
  */
 public final class Somnologist implements Listener {
 
-    private final Plugin plugin;
+    private final JavaPlugin plugin;
     private final List<String> excluded = new ArrayList<String>();
     private final Map<World, State> states = new HashMap<World, State>();
 
-    Somnologist(final Plugin plugin, final List<String> excluded) {
+    Somnologist(final JavaPlugin plugin, final List<String> excluded) {
         this.plugin = plugin;
         if (excluded != null) this.excluded.addAll(excluded);
+        if (this.excluded.size() > 0 ) this.plugin.getLogger().config("Excluded Worlds: " + excluded);
+
         for (final World world : this.plugin.getServer().getWorlds()) this.loadState(world);
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
@@ -69,7 +71,7 @@ public final class Somnologist implements Listener {
         this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Forced Sleep Minimum Percent: " + state.forcePercent);
         this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Away Idle: " + state.awayIdle);
         this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Idle Threshold (seconds): " + state.idle);
-        this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Monitored Activity: " + state.tracker.getInterpreters().size() + " events");
+        if (state.tracker != null) this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Monitored Activity: " + state.tracker.getInterpreters().size() + " events");
         for (final PotionEffect effect : state.rewardEffects) this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Reward Effect Type: " + effect.getType().getName() + "; Duration: " + effect.getDuration() + "; Amplifier: " + effect.getAmplifier());
         this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Reward Add Saturation: " + state.rewardAddSaturation);
         this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Reward Set Exhaustion: " + state.rewardSetExhaustion);

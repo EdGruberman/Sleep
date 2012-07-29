@@ -1,3 +1,4 @@
+logLevel: INFO
 idle: 60 # Seconds
 activity:
     - PlayerMoveEvent
@@ -26,14 +27,20 @@ reward:
             amplifier: 1
 temporaryBed: 600 # Seconds
 maxFrequency: 10 # Seconds (bedEnter and bedLeave only)
+awayBack:
+    enabled: false
+    activity:
+        - PlayerChatEvent
+        - PlayerBedEnterEvent
+        - PlayerBedLeaveEvent
 messages:
     bedEnter: '§8%1$tH:%1$tM:%1$tS %2$s §dentered bed§8 (need §d+%3$d§8 to sleep)' # 2 = Player Display Name, 3 = Player Count Needed, 4 = Player Count In Bed, 5 = Player Count Possible
-    bedLeave: '§8%1$tH:%1$tM:%1$tS %2$s §5left bed§8 (need §d+%3d§8 to sleep; %4$d in bed)' # 2 = Player Display Name, 3 = Player Count Needed, 4 = Player Count In Bed, 5 = Player Count Possible
+    bedLeave: '§8%1$tH:%1$tM:%1$tS %2$s §5left bed§8 (need §d+%3$d§8 to sleep; %4$d in bed)' # 2 = Player Display Name, 3 = Player Count Needed, 4 = Player Count In Bed, 5 = Player Count Possible
     interrupt: '§8%1$tH:%1$tM:%1$tS %2$s §5interrupted sleep§8 (need §d+%3d§8 to sleep)' # 2 = Player Display Name, 3 = Player Count Needed, 4 = Player Count In Bed, 5 = Player Count Possible
     forceCommand: '§8%1$tH:%1$tM:%1$tS %2$s§8 forced the sun to rise' # 2 = Player Display Name, 3 = Player Count Needed, 4 = Player Count In Bed, 5 = Player Count Possible
     forceConfig: '§8%1$tH:%1$tM:%1$tS Sleep has forced the sun to rise' # 2 = Plugin Name, 3 = Player Count Needed, 4 = Player Count In Bed, 5 = Player Count Possible
     status: '-> %4$d player(s) in bed (need §d+%3d§8 to sleep)' # 2 = Plugin Name, 3 = Player Count Needed, 4 = Player Count In Bed, 5 = Player Count Possible
-    temporaryBedInstruction: '-> §9To revert to previous spawn, destroy this bed soon' # 2 = Duration
+    temporaryBedInstruction: '-> §9To revert to previous spawn, destroy this bed soon' # 2 = Duration Until Commit
     temporaryBedReverted: '-> §aReverted spawn to previous bed'
     worldNotFound: '-> World §enot found' # 2 = World
     sleepNotManaged: '-> Sleep state for [%2$s] is §enot managed' # 2 = World
@@ -43,8 +50,14 @@ messages:
     noneInBed: '-> No one is currently in bed'
     notSleeping:
         format: '-> %2$d players §5not in bed§r: %3$s' # 2 = Player Count Not Sleeping, 3 = Player Display Names Not In Bed
-        player: '%1$s§r' # 1 = Player Display Name
-        delimiter: ', '
+        +player: '%1$s§r' # 1 = Player Display Name
+        +delimiter: ', '
     statusDetail: '-> Sleep needs §d%3$d more§r in bed (%4$d in bed out of %5$d possible = %2$d%%)' # 2 = Percent In Bed, 3 = Player Count Needed, 4 = Player Count In Bed, 5 = Player Count Possible
-logLevel: INFO
+    commandDisabled: '-> Command §cdisabled' # 2 = Command , 3 = Label
+    requiresPlayer: '-> Command cancelled when §cnot in-game player'
+    awayAlready: '-> You have §ealready been away§r %2$s for %3$s' # 2 = Duration, 3 = Reason
+    awayDefaultReason: 'no reason'
+    awayBroadcast: '§8%1$tH:%1$tM:%1$tS %2$s§8 is §3away§8 for §7%3$s' # 2 = Player Display Name, 3 = Away Reason
+    backBroadcast: '§8%1$tH:%1$tM:%1$tS %2$s§8 is §6back§8 after §7%3$s§8 for §7%4$s' # 2 = Player Display Name, 3 = Away Reason, 4 = Away Duration
+    backNotAway: '-> You are §enot currently away'
 version: @VERSION@

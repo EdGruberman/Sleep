@@ -9,6 +9,7 @@ import java.util.Observer;
 import java.util.Set;
 import java.util.logging.Level;
 
+import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.Configuration;
@@ -16,6 +17,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventPriority;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
@@ -47,7 +49,7 @@ public final class State implements Observer {
      */
     private static final long TICKS_BEFORE_DEEP_SLEEP = 90;
 
-    public final Plugin plugin;
+    public final JavaPlugin plugin;
     public final World world;
     public final boolean isSleepEnabled;
     public final int idle;
@@ -61,6 +63,7 @@ public final class State implements Observer {
     public TemporaryBed temporaryBed;
 
     public final EventTracker tracker;
+    public final AwayBack awayBack;
 
     public final Set<Player> players = new HashSet<Player>();
     public final Set<Player> playersInBed = new HashSet<Player>();
@@ -75,15 +78,15 @@ public final class State implements Observer {
     private final Map<Player, Long> lastBedEnterMessage = new HashMap<Player, Long>();
     private final Map<Player, Long> lastBedLeaveMessage = new HashMap<Player, Long>();
 
-    State(final Plugin plugin, final World world, final Configuration config) {
+    State(final JavaPlugin plugin, final World world, final Configuration config) {
         this.plugin = plugin;
         this.world = world;
-        this.isSleepEnabled = config.getBoolean("sleep", true);
-        this.idle = config.getInt("idle", -1);
-        this.forceCount = config.getInt("force.count", -1);
-        this.forcePercent = config.getInt("force.percent", -1);
-        this.awayIdle = config.getBoolean("awayIdle");
-        this.maxFrequency = config.getInt("maxFrequency", -1);
+        this.isSleepEnabled = config.getBoolean("sleep");
+        this.idle = config.getInt("idle");
+        this.forceCount = config.getInt("force.count");
+        this.forcePercent = config.getInt("force.percent");
+        this.awayIdle = config.getBoolean("awayIdle.enabled");
+        this.maxFrequency = config.getInt("maxFrequency");
         this.loadReward(config.getConfigurationSection("reward"));
         this.loadTemporaryBed(config.getConfigurationSection("temporaryBed"));
 
@@ -105,11 +108,29 @@ public final class State implements Observer {
             this.tracker = null;
         }
 
+        if (this.awayIdle) {
+            final Plugin paPlugin = Bukkit.getPluginManager().getPlugin("PlayerActivity");
+            if (paPlugin != null) {
+                this.plugin.getLogger().config("Using PlayerActivity v" + paPlugin.getDescription().getVersion() + " awayBack for awayIdle");
+                final edgruberman.bukkit.playeractivity.Main playerActivity = (edgruberman.bukkit.playeractivity.Main) paPlugin;
+                this.awayBack = playerActivity.awayBack;
+                if (this.awayBack == null) plugin.getLogger().warning("Unable to activate awayIdle feature for [" + world.getName() + "]: PlayerActivity plugin's awayBack feature is not enabled");
+                // TODO reassign awayBack on PlayerActivity reload
+            } else {
+                this.awayBack = ((Main) this.plugin).awayBack;
+                if (this.awayBack == null) plugin.getLogger().warning("Unable to activate awayIdle feature for [" + world.getName() + "]: Sleep plugin's awayBack feature is not enabled");
+            }
+        } else {
+            this.awayBack = null;
+        }
+
         for (final Player player : world.getPlayers()) {
             this.players.add(player);
+            this.lastBedEnterMessage.put(player, 0L);
+            this.lastBedLeaveMessage.put(player, 0L);
             if (player.isSleeping()) this.playersInBed.add(player);
             if (this.tracker != null && this.tracker.idlePublisher.getIdle().contains(player)) this.playersIdle.add(player);
-            if (this.awayIdle && this.getAwayBack() != null && this.getAwayBack().isAway(player)) this.playersAway.add(player);
+            if (this.isAwayIdle(player)) this.playersAway.add(player);
             if (player.hasPermission("sleep.ignore")) this.playersIgnored.add(player);
         }
     }
@@ -149,8 +170,8 @@ public final class State implements Observer {
         this.temporaryBed = new TemporaryBed(this, temporaryBed.getLong("duration") * 20);
     }
 
-    private AwayBack getAwayBack() {
-        return edgruberman.bukkit.playeractivity.Main.awayBack;
+    private boolean isAwayIdle(final Player player) {
+        return this.awayIdle && this.awayBack != null && this.awayBack.isAway(player);
     }
 
     /**
@@ -180,7 +201,7 @@ public final class State implements Observer {
         this.lastBedEnterMessage.put(joiner, 0L);
         this.lastBedLeaveMessage.put(joiner, 0L);
         if (this.tracker != null && this.tracker.idlePublisher.getIdle().contains(joiner)) this.playersIdle.add(joiner);
-        if (this.awayIdle && this.getAwayBack() != null && this.getAwayBack().isAway(joiner)) this.playersAway.add(joiner);
+        if (this.isAwayIdle(joiner)) this.playersAway.add(joiner);
         if (joiner.hasPermission("sleep.ignore")) this.playersIgnored.add(joiner);
 
         if (this.playersInBed.size() == 0) return;
@@ -228,7 +249,7 @@ public final class State implements Observer {
 
         if (System.currentTimeMillis() > (this.lastBedEnterMessage.get(enterer) + (this.maxFrequency * 1000))) {
             this.lastBedEnterMessage.put(enterer, System.currentTimeMillis());
-            Main.messenger.broadcast("bedEnter", enterer, enterer.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible());
+            Main.messenger.broadcast("bedEnter", enterer.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible());
             this.hasGeneratedEnterBed = true;
         }
 
@@ -256,10 +277,9 @@ public final class State implements Observer {
             // Night time bed leaves only occur because of a manual action
             if (System.currentTimeMillis() > (this.lastBedLeaveMessage.get(leaver) + (this.maxFrequency * 1000))) {
                 this.lastBedLeaveMessage.put(leaver, System.currentTimeMillis());
-                Main.messenger.broadcast("bedLeave", leaver, leaver.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible());
+                Main.messenger.broadcast("bedLeave", leaver.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible());
             }
             return;
-
         }
 
         // Morning
@@ -289,7 +309,6 @@ public final class State implements Observer {
             this.sleepForcer = null;
             this.isForcingSleep = false;
         }
-
 
     }
 

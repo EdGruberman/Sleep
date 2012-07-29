@@ -14,9 +14,16 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import edgruberman.bukkit.sleep.Main;
+import edgruberman.bukkit.sleep.Somnologist;
 import edgruberman.bukkit.sleep.State;
 
 public class Sleep implements CommandExecutor {
+
+    private final Somnologist somnologist;
+
+    public Sleep(final Somnologist somnologist) {
+        this.somnologist = somnologist;
+    }
 
     @Override
     public boolean onCommand(final CommandSender sender, final Command command, final String label, final String[] args) {
@@ -26,7 +33,7 @@ public class Sleep implements CommandExecutor {
             return false;
         }
 
-        final State state = Main.somnologist.getState(world);
+        final State state = this.somnologist.getState(world);
         if (state == null) {
             Main.messenger.tell(sender, "sleepNotManaged", world.getName());
             return true;
@@ -49,9 +56,10 @@ public class Sleep implements CommandExecutor {
             Collections.sort(notSleeping, new DisplayNameComparator());
 
             final List<String> names = new ArrayList<String>();
-            for (final Player player : notSleeping) names.add(player.getDisplayName());
+            for (final Player player : notSleeping)
+                names.add(String.format(Main.messenger.getFormat("notSleeping.+player"), player.getDisplayName()));
 
-            Main.messenger.tell(sender, "notSleeping", names.size(), Sleep.join(names, Main.messenger.getFormat("notSleeping.delimiter")));
+            Main.messenger.tell(sender, "notSleeping", names.size(), Sleep.join(names, Main.messenger.getFormat("notSleeping.+delimiter")));
         }
 
         final int count = state.playersInBed.size();

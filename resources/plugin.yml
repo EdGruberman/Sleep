@@ -11,10 +11,20 @@ commands:
         permission: sleep.sleep
         usage: /<command>[ <World>]
     'sleep:sleep.force':
-        aliases: [sleep.force]
+        aliases: sleep.force
         description: Force sleep for one night
         permission: sleep.sleep.force
         usage: /<command>[ <World>]
+    'sleep:away':
+        aliases: [away, afk]
+        description: Configure your status as not active
+        permission: sleep.away
+        usage: /<command>[ <Reason>]
+    'sleep:back':
+        aliases: back
+        description: Configure your status as no longer away
+        permission: sleep.back
+        usage: /<command>
 permissions:
     sleep.sleep:
         description: Can use sleep command
@@ -28,3 +38,24 @@ permissions:
     sleep.autoforce:
         description: Will automatically force sleep when entering bed
         default: false
+    sleep.away:
+        description: Can use away command
+        default: true
+    sleep.back:
+        description: Can use back command
+        default: true
+    sleep.away:
+        description: Can use away command
+        default: false
+    sleep.back:
+        description: Can use back command
+        default: false
+    sleep.who:
+        description: Can use who command
+        default: false
+    sleep.awayback:
+        description: Can use away and back commands
+        default: true
+        children:
+            sleep.away: true
+            sleep.back: true

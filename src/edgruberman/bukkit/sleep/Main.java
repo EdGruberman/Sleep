@@ -1,104 +1,131 @@
 package edgruberman.bukkit.sleep;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.ByteBuffer;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.Date;
-import java.util.List;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 
+import org.bukkit.Bukkit;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import edgruberman.bukkit.playeractivity.commands.Away;
+import edgruberman.bukkit.playeractivity.commands.Back;
+import edgruberman.bukkit.playeractivity.consumers.AwayBack;
 import edgruberman.bukkit.sleep.commands.Sleep;
 import edgruberman.bukkit.sleep.commands.SleepForce;
-import edgruberman.bukkit.sleep.dependencies.DependencyChecker;
 
 public final class Main extends JavaPlugin {
 
-    private static final Version MINIMUM_CONFIGURATION_VERSION = new Version("6.0.0");
+    private static final Version MINIMUM_CONFIGURATION = new Version("6.0.0a0");
 
-    public static Somnologist somnologist = null;
     public static Messenger messenger;
 
-    @Override
-    public void onLoad() {
-        new DependencyChecker(this);
-    }
+    private Somnologist somnologist = null;
+    AwayBack awayBack = null;
 
     @Override
     public void onEnable() {
+        final DependencyManager dm = new DependencyManager(this);
+        if (!dm.isValidPlugin("PlayerActivity", "edgruberman.bukkit.playeractivity", "2.0.0a0")) {
+            if (Bukkit.getPluginManager().getPlugin("PlayerActivity") != null) {
+                this.getLogger().severe("Outdated PlayerActivity plugin;  Stop server, delete \"plugins/PlayerActivity.jar\", and then restart server");
+                throw new IllegalStateException("PlayerActivity plugin outdated");
+            }
+            dm.installUtility("PlayerActivity.jar");
+        }
+
         this.reloadConfig();
         Main.messenger = Messenger.load(this);
 
-        final List<String> excluded = this.getConfig().getStringList("excluded");
-        this.getLogger().log(Level.CONFIG, "Excluded Worlds: " + excluded);
+        if (this.getConfig().getBoolean("awayBack.enabled")) {
+            final edgruberman.bukkit.playeractivity.Messenger messenger = edgruberman.bukkit.playeractivity.Messenger.load(this);
+            this.awayBack = new AwayBack(this, this.getConfig().getConfigurationSection("awayBack"), messenger);
+            this.getCommand("sleep:away").setExecutor(new Away(messenger, this.awayBack));
+            this.getCommand("sleep:back").setExecutor(new Back(messenger, this.awayBack));
+        }
 
-        Main.somnologist = new Somnologist(this, excluded);
+        this.somnologist = new Somnologist(this, this.getConfig().getStringList("excluded"));
 
-        this.getCommand("sleep:sleep").setExecutor(new Sleep());
-        this.getCommand("sleep:sleep.force").setExecutor(new SleepForce());
+        this.getCommand("sleep:sleep").setExecutor(new Sleep(this.somnologist));
+        this.getCommand("sleep:sleep.force").setExecutor(new SleepForce(this.somnologist));
     }
 
     @Override
     public void onDisable() {
-        Main.somnologist.clear();
+        this.somnologist.clear();
+        Main.messenger = null;
         HandlerList.unregisterAll(this);
     }
 
     @Override
-    public void reloadConfig() {
-        // Extract default if not existing
-        this.saveDefaultConfig();
+    public boolean onCommand(final CommandSender sender, final Command command, final String label, final String[] args) {
+        Main.messenger.tell(sender, "commandDisabled", command.getName(), label);
+        return true;
+    }
 
-        // Verify required or later version
+    @Override
+    public void reloadConfig() {
+        this.saveDefaultConfig();
         super.reloadConfig();
+
         final Version version = new Version(this.getConfig().getString("version"));
-        if (version.compareTo(Main.MINIMUM_CONFIGURATION_VERSION) >= 0) {
+        if (version.compareTo(Main.MINIMUM_CONFIGURATION) >= 0) {
             this.setLogLevel(this.getConfig().getString("logLevel"));
             return;
         }
 
-        // Backup out-dated configuration
-        final String backupName = "config - Backup version %1$s - %2$tY%2$tm%2$tdT%2$tH%2$tM%2$tS.yml";
-        final File backup = new File(this.getDataFolder(), String.format(backupName, version, new Date()));
-        final File existing = new File(this.getDataFolder(), "config.yml");
-        this.getLogger().warning("Existing configuration file \"" + existing.getPath() + "\" with version \"" + version + "\" is out of date; Required minimum version is \"" + Main.MINIMUM_CONFIGURATION_VERSION + "\"; Backing up existing file to \"" + backup.getPath() + "\"...");
-        if (!existing.renameTo(backup))
-            throw new IllegalStateException("Unable to backup existing configuration file \"" + existing.getPath() + "\" to \"" + backup.getPath() + "\"");
-
-        // Extract default and reload
+        this.archiveConfig("config.yml", version);
         this.saveDefaultConfig();
         super.reloadConfig();
     }
 
     @Override
     public void saveDefaultConfig() {
+        this.extractConfig("config.yml", false);
+    }
+
+    private void archiveConfig(final String resource, final Version version) {
+        final String backupName = "%1$s - Archive version %2$s - %3$tY%3$tm%3$tdT%3$tH%3$tM%3$tS.yml";
+        final File backup = new File(this.getDataFolder(), String.format(backupName, resource.replaceAll("(?i)\\.yml$", ""), version, new Date()));
+        final File existing = new File(this.getDataFolder(), resource);
+
+        if (!existing.renameTo(backup))
+            throw new IllegalStateException("Unable to archive configuration file \"" + existing.getPath() + "\" with version \"" + version + "\" to \"" + backup.getPath() + "\"");
+
+        this.getLogger().warning("Archived configuration file \"" + existing.getPath() + "\" with version \"" + version + "\" to \"" + backup.getPath() + "\"");
+    }
+
+    private void extractConfig(final String resource, final boolean replace) {
         final Charset source = Charset.forName("UTF-8");
         final Charset target = Charset.defaultCharset();
         if (target.equals(source)) {
-            super.saveDefaultConfig();
+            super.saveResource(resource, replace);
             return;
         }
 
-        final File config = new File(this.getDataFolder(), "config.yml");
+        final File config = new File(this.getDataFolder(), resource);
         if (config.exists()) return;
 
-        final byte[] buffer = new byte[1024]; int read;
+        final char[] cbuf = new char[1024]; int read;
         try {
-            final InputStream in = new BufferedInputStream(this.getResource("config.yml"));
-            final OutputStream out = new BufferedOutputStream(new FileOutputStream(config));
-            while((read = in.read(buffer)) > 0) out.write(target.encode(source.decode(ByteBuffer.wrap(buffer, 0, read))).array());
+            final Reader in = new BufferedReader(new InputStreamReader(this.getResource(resource), source));
+            final Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(config), target));
+            while((read = in.read(cbuf)) > 0) out.write(cbuf, 0, read);
             out.close(); in.close();
 
         } catch (final Exception e) {
-            this.getLogger().severe("Could not save \"config.yml\" to " + config.getPath() + "\";" + e.getClass().getName() + ": " + e.getMessage());
+            throw new IllegalArgumentException("Could not extract configuration file \"" + resource + "\" to " + config.getPath() + "\";" + e.getClass().getName() + ": " + e.getMessage());
         }
     }
 

@@ -12,7 +12,7 @@ public final class Version implements Comparable<Version> {
     public final String type;
     public final Integer build;
 
-    Version(final String version) {
+    public Version(final String version) {
         this.original = version;
         if (this.original == null) {
             this.major = null;

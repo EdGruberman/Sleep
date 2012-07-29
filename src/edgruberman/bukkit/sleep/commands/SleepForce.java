@@ -6,9 +6,16 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
 import edgruberman.bukkit.sleep.Main;
+import edgruberman.bukkit.sleep.Somnologist;
 import edgruberman.bukkit.sleep.State;
 
 public class SleepForce implements CommandExecutor {
+
+    private final Somnologist somnologist;
+
+    public SleepForce(final Somnologist somnologist) {
+        this.somnologist = somnologist;
+    }
 
     @Override
     public boolean onCommand(final CommandSender sender, final Command command, final String label, final String[] args) {
@@ -18,7 +25,7 @@ public class SleepForce implements CommandExecutor {
             return false;
         }
 
-        final State state = Main.somnologist.getState(world);
+        final State state = this.somnologist.getState(world);
         if (state == null) {
             Main.messenger.tell(sender, "sleepNotManaged", world.getName());
             return true;
