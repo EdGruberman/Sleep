@@ -27,12 +27,6 @@ reward:
             amplifier: 1
 temporaryBed: 600 # Seconds
 maxFrequency: 10 # Seconds (bedEnter and bedLeave only)
-awayBack:
-    enabled: false
-    activity:
-        - PlayerChatEvent
-        - PlayerBedEnterEvent
-        - PlayerBedLeaveEvent
 messages:
     bedEnter: '§8%1$tH:%1$tM:%1$tS %2$s §dentered bed§8 (need §d+%3$d§8 to sleep)' # 2 = Player Display Name, 3 = Player Count Needed, 4 = Player Count In Bed, 5 = Player Count Possible
     bedLeave: '§8%1$tH:%1$tM:%1$tS %2$s §5left bed§8 (need §d+%3$d§8 to sleep; %4$d in bed)' # 2 = Player Display Name, 3 = Player Count Needed, 4 = Player Count In Bed, 5 = Player Count Possible
@@ -55,9 +49,17 @@ messages:
     statusDetail: '-> Sleep needs §d%3$d more§r in bed (%4$d in bed out of %5$d possible = %2$d%%)' # 2 = Percent In Bed, 3 = Player Count Needed, 4 = Player Count In Bed, 5 = Player Count Possible
     commandDisabled: '-> Command §cdisabled' # 2 = Command , 3 = Label
     requiresPlayer: '-> Command cancelled when §cnot in-game player'
-    awayAlready: '-> You have §ealready been away§r %2$s for %3$s' # 2 = Duration, 3 = Reason
-    awayDefaultReason: 'no reason'
-    awayBroadcast: '§8%1$tH:%1$tM:%1$tS %2$s§8 is §3away§8 for §7%3$s' # 2 = Player Display Name, 3 = Away Reason
-    backBroadcast: '§8%1$tH:%1$tM:%1$tS %2$s§8 is §6back§8 after §7%3$s§8 for §7%4$s' # 2 = Player Display Name, 3 = Away Reason, 4 = Away Duration
-    backNotAway: '-> You are §enot currently away'
+    reload: '-> Sleep plugin §2reloaded'
+awayBack:
+    enabled: false
+    activity:
+        - PlayerChatEvent
+        - PlayerBedEnterEvent
+        - PlayerBedLeaveEvent
+    messages:
+        awayAlready: '-> You have §ealready been away§r %2$s for %3$s' # 2 = Duration, 3 = Reason
+        +awayDefaultReason: 'no reason'
+        awayBroadcast: '§8%1$tH:%1$tM:%1$tS %2$s§8 is §3away§8 for §7%3$s' # 2 = Player Display Name, 3 = Away Reason
+        backBroadcast: '§8%1$tH:%1$tM:%1$tS %2$s§8 is §6back§8 after §7%3$s§8 for §7%4$s' # 2 = Player Display Name, 3 = Away Reason, 4 = Away Duration
+        backNotAway: '-> You are §enot currently away'
 version: @VERSION@

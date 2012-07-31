@@ -20,7 +20,7 @@ import edgruberman.bukkit.messagemanager.channels.Recipient;
 public class Messenger {
 
     public static Messenger load(final Plugin plugin) {
-        return Messenger.load(plugin, "messages");
+        return Messenger.load(plugin, null);
     }
 
     public static Messenger load(final Plugin plugin, final String formats) {
@@ -75,6 +75,8 @@ public class Messenger {
     public void tell(final CommandSender target, final String path, final Object... args) {
         final Level level = (target instanceof ConsoleCommandSender? Level.FINEST : Level.FINER);
         for (final String format : this.getFormatList(path)) {
+            if (format == null) continue;
+
             final String message = this.tellMessage(target, format, args);
             this.plugin.getLogger().log(level, "#TELL@" + target.getName() + "# " + message);
         }
@@ -98,6 +100,8 @@ public class Messenger {
     public void publish(final String permission, final String path, final Object... args) {
         final Calendar now = new GregorianCalendar(this.zone);
         for (final String format : this.getFormatList(path)) {
+            if (format == null) continue;
+
             final int count = this.publishMessage(permission, format, args);
             final String message = this.format(format, now, args);
             this.plugin.getLogger().finer("#PUBLISH@" + permission + "(" + count + ")# " + message);
@@ -124,6 +128,8 @@ public class Messenger {
     public void broadcast(final String path, final Object... args) {
         final Calendar now = new GregorianCalendar(this.zone);
         for (final String format : this.getFormatList(path)) {
+            if (format == null) continue;
+
             final int count = this.broadcastMessage(format, args);
             final String message = this.format(format, now, args);
             this.plugin.getLogger().finest("#BROADCAST(" + count + ")# " + message);

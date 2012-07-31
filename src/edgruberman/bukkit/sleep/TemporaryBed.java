@@ -3,6 +3,7 @@ package edgruberman.bukkit.sleep;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -18,6 +19,9 @@ import org.bukkit.material.Bed;
 
 public class TemporaryBed implements Listener {
 
+    /** Ticks in bed when Minecraft reassigns bed spawn */
+    private static final int BED_CHANGE_TICKS = 100;
+
     private final State state;
     private final long duration;
     private final Map<String, Location> previous = new HashMap<String, Location>();
@@ -31,6 +35,9 @@ public class TemporaryBed implements Listener {
 
     void clear() {
         HandlerList.unregisterAll(this);
+        for (final int taskId : this.committers.values()) Bukkit.getScheduler().cancelTask(taskId);
+        this.previous.clear();
+        this.committers.clear();
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -52,10 +59,13 @@ public class TemporaryBed implements Listener {
         if (!event.getPlayer().getWorld().equals(this.state.world)) return;
 
         // Ignore if bed spawn did not change
+        if (event.getPlayer().getSleepTicks() < TemporaryBed.BED_CHANGE_TICKS) return;
+
         final Location previous = this.previous.get(event.getPlayer().getName());
         if (previous == null) return;
 
-        if (event.getPlayer().getBedSpawnLocation().equals(previous)) {
+        // NB: Bed spawn for player will not be updated until event finishes processing
+        if (event.getBed().getLocation().equals(previous)) {
             // Since bed spawn did not change, remove tracking of bed spawn
             this.previous.remove(event.getPlayer().getName());
             return;

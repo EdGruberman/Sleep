@@ -15,7 +15,12 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
+import org.bukkit.event.HandlerList;
+import org.bukkit.event.Listener;
+import org.bukkit.event.server.PluginDisableEvent;
+import org.bukkit.event.server.PluginEnableEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
@@ -29,7 +34,7 @@ import edgruberman.bukkit.playeractivity.consumers.AwayBack;
 /**
  * Sleep state for a specific world
  */
-public final class State implements Observer {
+public final class State implements Observer, Listener {
 
     /**
      * First world relative time (hours * 1000) associated with ability to
@@ -49,6 +54,8 @@ public final class State implements Observer {
      */
     private static final long TICKS_BEFORE_DEEP_SLEEP = 90;
 
+    private static final long TICKS_PER_SECOND = 20;
+
     public final JavaPlugin plugin;
     public final World world;
     public final boolean isSleepEnabled;
@@ -63,7 +70,7 @@ public final class State implements Observer {
     public TemporaryBed temporaryBed;
 
     public final EventTracker tracker;
-    public final AwayBack awayBack;
+    public AwayBack awayBack;
 
     public final Set<Player> players = new HashSet<Player>();
     public final Set<Player> playersInBed = new HashSet<Player>();
@@ -88,7 +95,12 @@ public final class State implements Observer {
         this.awayIdle = config.getBoolean("awayIdle.enabled");
         this.maxFrequency = config.getInt("maxFrequency");
         this.loadReward(config.getConfigurationSection("reward"));
-        this.loadTemporaryBed(config.getConfigurationSection("temporaryBed"));
+
+        if (config.getLong("temporaryBed") > 0) {
+            this.temporaryBed = new TemporaryBed(this, config.getLong("temporaryBed") * State.TICKS_PER_SECOND);
+        } else {
+            this.temporaryBed = null;
+        }
 
         if (this.idle > 0) {
             this.tracker = new EventTracker(plugin);
@@ -115,7 +127,7 @@ public final class State implements Observer {
                 final edgruberman.bukkit.playeractivity.Main playerActivity = (edgruberman.bukkit.playeractivity.Main) paPlugin;
                 this.awayBack = playerActivity.awayBack;
                 if (this.awayBack == null) plugin.getLogger().warning("Unable to activate awayIdle feature for [" + world.getName() + "]: PlayerActivity plugin's awayBack feature is not enabled");
-                // TODO reassign awayBack on PlayerActivity reload
+                Bukkit.getPluginManager().registerEvents(this, plugin);
             } else {
                 this.awayBack = ((Main) this.plugin).awayBack;
                 if (this.awayBack == null) plugin.getLogger().warning("Unable to activate awayIdle feature for [" + world.getName() + "]: Sleep plugin's awayBack feature is not enabled");
@@ -133,6 +145,21 @@ public final class State implements Observer {
             if (this.isAwayIdle(player)) this.playersAway.add(player);
             if (player.hasPermission("sleep.ignore")) this.playersIgnored.add(player);
         }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onPluginDisable(final PluginDisableEvent disabled) {
+        if (!disabled.getPlugin().getName().equals("PlayerActivity")) return;
+
+        this.awayBack = null;
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onPluginEnable(final PluginEnableEvent disabled) {
+        if (!disabled.getPlugin().getName().equals("PlayerActivity")) return;
+
+        final edgruberman.bukkit.playeractivity.Main playerActivity = (edgruberman.bukkit.playeractivity.Main) disabled.getPlugin();
+        this.awayBack = playerActivity.awayBack;
     }
 
     private void loadReward(final ConfigurationSection reward) {
@@ -164,12 +191,6 @@ public final class State implements Observer {
         }
     }
 
-    private void loadTemporaryBed(final ConfigurationSection temporaryBed) {
-        if (temporaryBed == null || !temporaryBed.getBoolean("enabled")) return;
-
-        this.temporaryBed = new TemporaryBed(this, temporaryBed.getLong("duration") * 20);
-    }
-
     private boolean isAwayIdle(final Player player) {
         return this.awayIdle && this.awayBack != null && this.awayBack.isAway(player);
     }
@@ -178,6 +199,7 @@ public final class State implements Observer {
      * Ensure all object references have been released.
      */
     void clear() {
+        HandlerList.unregisterAll(this);
         if (this.tracker != null) this.tracker.clear();
         if (this.temporaryBed != null) this.temporaryBed.clear();
         this.players.clear();

@@ -1,17 +1,17 @@
 name: @NAME@
 description: Manages sleep criteria and notifications
-softdepend: [MessageManager, PlayerActivity]
+softdepend: [PlayerActivity, MessageManager]
 version: @VERSION@
 author: @AUTHOR@
 main: @MAIN@
 commands:
     'sleep:sleep':
-        aliases: sleep
+        aliases: [sleep]
         description: Sleep requirements and who is preventing sleep
         permission: sleep.sleep
         usage: /<command>[ <World>]
-    'sleep:sleep.force':
-        aliases: sleep.force
+    'sleep:force':
+        aliases: [sleep.force]
         description: Force sleep for one night
         permission: sleep.sleep.force
         usage: /<command>[ <World>]
@@ -21,9 +21,13 @@ commands:
         permission: sleep.away
         usage: /<command>[ <Reason>]
     'sleep:back':
-        aliases: back
+        aliases: [back]
         description: Configure your status as no longer away
         permission: sleep.back
+        usage: /<command>
+    'sleep:reload':
+        description: Reload Sleep plugin
+        permission: sleep.reload
         usage: /<command>
 permissions:
     sleep.sleep:
@@ -59,3 +63,6 @@ permissions:
         children:
             sleep.away: true
             sleep.back: true
+    sleep.reload:
+        description: Can use reload command
+        default: op

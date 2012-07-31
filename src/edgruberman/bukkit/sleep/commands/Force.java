@@ -9,11 +9,11 @@ import edgruberman.bukkit.sleep.Main;
 import edgruberman.bukkit.sleep.Somnologist;
 import edgruberman.bukkit.sleep.State;
 
-public class SleepForce implements CommandExecutor {
+public class Force implements CommandExecutor {
 
     private final Somnologist somnologist;
 
-    public SleepForce(final Somnologist somnologist) {
+    public Force(final Somnologist somnologist) {
         this.somnologist = somnologist;
     }
 
