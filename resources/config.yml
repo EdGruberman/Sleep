@@ -30,10 +30,10 @@ maxFrequency: 10 # Seconds (bedEnter and bedLeave only)
 messages:
     bedEnter: '§8%1$tH:%1$tM:%1$tS %2$s §dentered bed§8 (need §d+%3$d§8 to sleep)' # 2 = Player Display Name, 3 = Player Count Needed, 4 = Player Count In Bed, 5 = Player Count Possible
     bedLeave: '§8%1$tH:%1$tM:%1$tS %2$s §5left bed§8 (need §d+%3$d§8 to sleep; %4$d in bed)' # 2 = Player Display Name, 3 = Player Count Needed, 4 = Player Count In Bed, 5 = Player Count Possible
-    interrupt: '§8%1$tH:%1$tM:%1$tS %2$s §5interrupted sleep§8 (need §d+%3d§8 to sleep)' # 2 = Player Display Name, 3 = Player Count Needed, 4 = Player Count In Bed, 5 = Player Count Possible
+    interrupt: '§8%1$tH:%1$tM:%1$tS %2$s §5interrupted sleep§8 (need §d+%3$d§8 to sleep)' # 2 = Player Display Name, 3 = Player Count Needed, 4 = Player Count In Bed, 5 = Player Count Possible
     forceCommand: '§8%1$tH:%1$tM:%1$tS %2$s§8 forced the sun to rise' # 2 = Player Display Name, 3 = Player Count Needed, 4 = Player Count In Bed, 5 = Player Count Possible
     forceConfig: '§8%1$tH:%1$tM:%1$tS Sleep has forced the sun to rise' # 2 = Plugin Name, 3 = Player Count Needed, 4 = Player Count In Bed, 5 = Player Count Possible
-    status: '-> %4$d player(s) in bed (need §d+%3d§8 to sleep)' # 2 = Plugin Name, 3 = Player Count Needed, 4 = Player Count In Bed, 5 = Player Count Possible
+    status: '-> %4$d player(s) in bed (need §d+%3$d§8 to sleep)' # 2 = Plugin Name, 3 = Player Count Needed, 4 = Player Count In Bed, 5 = Player Count Possible
     temporaryBedInstruction: '-> §9To revert to previous spawn, destroy this bed soon' # 2 = Duration Until Commit
     temporaryBedReverted: '-> §aReverted spawn to previous bed'
     worldNotFound: '-> World §enot found' # 2 = World
