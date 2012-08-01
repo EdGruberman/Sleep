@@ -28,7 +28,7 @@ import edgruberman.bukkit.sleep.commands.Sleep;
 
 public final class Main extends JavaPlugin {
 
-    private static final Version MINIMUM_CONFIGURATION = new Version("6.0.0b0");
+    private static final Version MINIMUM_CONFIGURATION = new Version("6.0.0b7");
 
     public static Messenger messenger;
 

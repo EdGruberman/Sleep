@@ -69,8 +69,8 @@ public final class Somnologist implements Listener {
         this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Sleep Enabled: " + state.isSleepEnabled);
         this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Forced Sleep Minimum Count: " + state.forceCount);
         this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Forced Sleep Minimum Percent: " + state.forcePercent);
-        this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Away Idle: " + state.awayIdle);
-        this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Idle Threshold (seconds): " + state.idle);
+        this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Away Idle: " + (state.awayBack != null));
+        this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Idle Threshold (seconds): " + (state.tracker.idlePublisher.getThreshold() / 1000));
         if (state.tracker != null) this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Monitored Activity: " + state.tracker.getInterpreters().size() + " events");
         for (final PotionEffect effect : state.rewardEffects) this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Reward Effect Type: " + effect.getType().getName() + "; Duration: " + effect.getDuration() + "; Amplifier: " + effect.getAmplifier());
         this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Reward Add Saturation: " + state.rewardAddSaturation);

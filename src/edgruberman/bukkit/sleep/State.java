@@ -59,15 +59,13 @@ public final class State implements Observer, Listener {
     public final JavaPlugin plugin;
     public final World world;
     public final boolean isSleepEnabled;
-    public final int idle;
     public final int forceCount;
     public final int forcePercent;
-    public final boolean awayIdle;
-    public final int maxFrequency;
+    public final int bedNoticeLimit;
     public final Collection<PotionEffect> rewardEffects = new HashSet<PotionEffect>();
+    public final TemporaryBed temporaryBed;
     public Float rewardAddSaturation;
     public Float rewardSetExhaustion;
-    public TemporaryBed temporaryBed;
 
     public final EventTracker tracker;
     public AwayBack awayBack;
@@ -88,24 +86,29 @@ public final class State implements Observer, Listener {
     State(final JavaPlugin plugin, final World world, final Configuration config) {
         this.plugin = plugin;
         this.world = world;
+
         this.isSleepEnabled = config.getBoolean("sleep");
-        this.idle = config.getInt("idle");
-        this.forceCount = config.getInt("force.count");
-        this.forcePercent = config.getInt("force.percent");
-        this.awayIdle = config.getBoolean("awayIdle.enabled");
-        this.maxFrequency = config.getInt("maxFrequency");
+        this.bedNoticeLimit = config.getInt("bedNoticeLimit");
         this.loadReward(config.getConfigurationSection("reward"));
 
-        if (config.getLong("temporaryBed") > 0) {
-            this.temporaryBed = new TemporaryBed(this, config.getLong("temporaryBed") * State.TICKS_PER_SECOND);
+        if (config.getBoolean("force.enabled")) {
+            this.forceCount = config.getInt("force.count");
+            this.forcePercent = config.getInt("force.percent");
+        } else {
+            this.forceCount = -1;
+            this.forcePercent = -1;
+        }
+
+        if (config.getBoolean("temporaryBed.enabled")) {
+            this.temporaryBed = new TemporaryBed(this, config.getLong("temporaryBed.duration") * State.TICKS_PER_SECOND);
         } else {
             this.temporaryBed = null;
         }
 
-        if (this.idle > 0) {
+        if (config.getBoolean("idle.enabled")) {
             this.tracker = new EventTracker(plugin);
             this.tracker.setDefaultPriority(EventPriority.HIGHEST); // One below Somnologist's MONITOR to ensure activity/idle status are updated before any processing in this State
-            for (final String className : config.getStringList("activity"))
+            for (final String className : config.getStringList("idle.activity"))
                 try {
                     this.tracker.addInterpreter(EventTracker.newInterpreter(className));
                 } catch (final Exception e) {
@@ -113,14 +116,14 @@ public final class State implements Observer, Listener {
                 }
 
             this.tracker.activityPublisher.addObserver(this);
-            this.tracker.idlePublisher.setThreshold(this.idle * 1000);
+            this.tracker.idlePublisher.setThreshold(config.getLong("idle.duration") * 1000);
             this.tracker.idlePublisher.addObserver(this);
             this.tracker.idlePublisher.reset(this.world.getPlayers());
         } else {
             this.tracker = null;
         }
 
-        if (this.awayIdle) {
+        if (config.getBoolean("idle.awayIdle") && config.getBoolean("idle.enabled")) {
             final Plugin paPlugin = Bukkit.getPluginManager().getPlugin("PlayerActivity");
             if (paPlugin != null) {
                 this.plugin.getLogger().config("Using PlayerActivity v" + paPlugin.getDescription().getVersion() + " awayBack for awayIdle");
@@ -163,7 +166,7 @@ public final class State implements Observer, Listener {
     }
 
     private void loadReward(final ConfigurationSection reward) {
-        if (reward == null) return;
+        if (reward == null || !reward.getBoolean("enabled")) return;
 
         final ConfigurationSection effects = reward.getConfigurationSection("effects");
         if (effects != null) {
@@ -192,7 +195,7 @@ public final class State implements Observer, Listener {
     }
 
     private boolean isAwayIdle(final Player player) {
-        return this.awayIdle && this.awayBack != null && this.awayBack.isAway(player);
+        return this.awayBack != null && this.awayBack.isAway(player);
     }
 
     /**
@@ -269,7 +272,7 @@ public final class State implements Observer, Listener {
             return;
         }
 
-        if (System.currentTimeMillis() > (this.lastBedEnterMessage.get(enterer) + (this.maxFrequency * 1000))) {
+        if (System.currentTimeMillis() > (this.lastBedEnterMessage.get(enterer) + (this.bedNoticeLimit * 1000))) {
             this.lastBedEnterMessage.put(enterer, System.currentTimeMillis());
             Main.messenger.broadcast("bedEnter", enterer.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible());
             this.hasGeneratedEnterBed = true;
@@ -297,7 +300,7 @@ public final class State implements Observer, Listener {
             if (this.playersIdle.contains(leaver) || this.playersAway.contains(leaver) || this.playersIgnored.contains(leaver)) this.lull();
 
             // Night time bed leaves only occur because of a manual action
-            if (System.currentTimeMillis() > (this.lastBedLeaveMessage.get(leaver) + (this.maxFrequency * 1000))) {
+            if (System.currentTimeMillis() > (this.lastBedLeaveMessage.get(leaver) + (this.bedNoticeLimit * 1000))) {
                 this.lastBedLeaveMessage.put(leaver, System.currentTimeMillis());
                 Main.messenger.broadcast("bedLeave", leaver.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible());
             }
@@ -395,14 +398,14 @@ public final class State implements Observer, Listener {
     }
 
     public void setAway(final Player player) {
-        if (!this.awayIdle) return;
+        if (this.awayBack == null) return;
 
         this.playersAway.add(player);
         this.lull();
     }
 
     public void setBack(final Player player) {
-        if (!this.awayIdle) return;
+        if (this.awayBack == null) return;
 
         this.playersAway.remove(player);
         this.setSleepingIgnored(player, false, "Back");
