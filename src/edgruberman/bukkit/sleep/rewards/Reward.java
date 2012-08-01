@@ -31,18 +31,6 @@ public abstract class Reward {
         return Class.forName(className).asSubclass(Reward.class);
     }
 
-    protected static int restrict(final int value, final int min, final int max) {
-        if (value < min) return min;
-        if (value > max) return max;
-        return value;
-    }
-
-    protected static float restrict(final float value, final float min, final float max) {
-        if (value < min) return min;
-        if (value > max) return max;
-        return value;
-    }
-
     public String name;
     public float factor;
 

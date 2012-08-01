@@ -22,7 +22,7 @@ public class Health extends Reward {
     public void apply(final Player player, final int participants) {
         if (this.health != 0) {
             final int result = (int) (this.health * this.factorFor(participants));
-            player.setHealth(Reward.restrict(player.getHealth() + result, 0, 20));
+            player.setHealth(Math.max(0, Math.min(20, player.getHealth() + result)));
             Main.messenger.plugin.getLogger().finest("Rewarded " + player.getName() + " by adding " + result
                     + " to health which set it to " + player.getHealth());
         }

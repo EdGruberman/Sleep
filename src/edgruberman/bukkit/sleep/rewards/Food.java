@@ -22,14 +22,14 @@ public class Food extends Reward {
     public void apply(final Player player, final int participants) {
         if (this.level != 0) {
             final int result = (int) (this.level * this.factorFor(participants));
-            player.setFoodLevel(Reward.restrict(player.getFoodLevel() + result, 0, 20));
+            player.setFoodLevel(Math.max(0, Math.min(20, player.getFoodLevel() + result)));
             Main.messenger.plugin.getLogger().finest("Rewarded " + player.getName() + " by adding " + result
                     + " to food level which set it to " + player.getFoodLevel());
         }
 
         if (this.saturation != 0) {
             final float result = this.saturation * this.factorFor(participants);
-            player.setSaturation(Reward.restrict(player.getSaturation() + result, 0, player.getFoodLevel()));
+            player.setSaturation(Math.max(0, Math.min(player.getFoodLevel(), player.getSaturation() + result)));
             Main.messenger.plugin.getLogger().finest("Rewarded " + player.getName() + " by adding " + Reward.DECIMAL_FORMAT.format(result)
                     + " to saturation which set it to " + Reward.DECIMAL_FORMAT.format(player.getSaturation()));
         }
