@@ -22,10 +22,10 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.event.world.WorldUnloadEvent;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.potion.PotionEffect;
 
 import edgruberman.bukkit.playeractivity.consumers.PlayerAway;
 import edgruberman.bukkit.playeractivity.consumers.PlayerBack;
+import edgruberman.bukkit.sleep.rewards.Reward;
 
 /**
  * Sleep state management
@@ -64,17 +64,18 @@ public final class Somnologist implements Listener {
 
         final YamlConfiguration config = YamlConfiguration.loadConfiguration(new File(this.plugin.getDataFolder(), "Worlds/" + world.getName() + "/config.yml"));
         config.addDefaults(this.plugin.getConfig());
+        config.options().copyDefaults(true);
 
         final State state = new State(this.plugin, world, config);
         this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Sleep Enabled: " + state.isSleepEnabled);
         this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Forced Sleep Minimum Count: " + state.forceCount);
         this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Forced Sleep Minimum Percent: " + state.forcePercent);
         this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Away Idle: " + (state.awayBack != null));
-        this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Idle Threshold (seconds): " + (state.tracker.idlePublisher.getThreshold() / 1000));
-        if (state.tracker != null) this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Monitored Activity: " + state.tracker.getInterpreters().size() + " events");
-        for (final PotionEffect effect : state.rewardEffects) this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Reward Effect Type: " + effect.getType().getName() + "; Duration: " + effect.getDuration() + "; Amplifier: " + effect.getAmplifier());
-        this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Reward Add Saturation: " + state.rewardAddSaturation);
-        this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Reward Set Exhaustion: " + state.rewardSetExhaustion);
+        if (state.tracker != null) {
+            this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Idle Threshold (seconds): " + (state.tracker.idlePublisher.getThreshold() / 1000));
+            this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Monitored Activity: " + state.tracker.getInterpreters().size() + " events");
+        }
+        for (final Reward reward : state.rewards) this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Reward: " + reward.toString());
         if (state.temporaryBed != null) this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Temporary Beds Enabled");
 
         this.states.put(world, state);

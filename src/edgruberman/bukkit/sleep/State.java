@@ -1,5 +1,6 @@
 package edgruberman.bukkit.sleep;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,7 +13,6 @@ import java.util.logging.Level;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -23,13 +23,12 @@ import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.event.server.PluginEnableEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
 
 import edgruberman.bukkit.playeractivity.EventTracker;
 import edgruberman.bukkit.playeractivity.PlayerActivity;
 import edgruberman.bukkit.playeractivity.PlayerIdle;
 import edgruberman.bukkit.playeractivity.consumers.AwayBack;
+import edgruberman.bukkit.sleep.rewards.Reward;
 
 /**
  * Sleep state for a specific world
@@ -62,10 +61,8 @@ public final class State implements Observer, Listener {
     public final int forceCount;
     public final int forcePercent;
     public final int bedNoticeLimit;
-    public final Collection<PotionEffect> rewardEffects = new HashSet<PotionEffect>();
+    public final Collection<Reward> rewards = new ArrayList<Reward>();
     public final TemporaryBed temporaryBed;
-    public Float rewardAddSaturation;
-    public Float rewardSetExhaustion;
 
     public final EventTracker tracker;
     public AwayBack awayBack;
@@ -79,11 +76,12 @@ public final class State implements Observer, Listener {
     private boolean hasGeneratedEnterBed = false;
     private boolean isForcingSleep = false;
     private CommandSender sleepForcer = null;
+    private Integer participants = null;
 
     private final Map<Player, Long> lastBedEnterMessage = new HashMap<Player, Long>();
     private final Map<Player, Long> lastBedLeaveMessage = new HashMap<Player, Long>();
 
-    State(final JavaPlugin plugin, final World world, final Configuration config) {
+    State(final JavaPlugin plugin, final World world, final ConfigurationSection config) {
         this.plugin = plugin;
         this.world = world;
 
@@ -168,29 +166,14 @@ public final class State implements Observer, Listener {
     private void loadReward(final ConfigurationSection reward) {
         if (reward == null || !reward.getBoolean("enabled")) return;
 
-        final ConfigurationSection effects = reward.getConfigurationSection("effects");
-        if (effects != null) {
-            final Set<PotionEffect> potionEffects = new HashSet<PotionEffect>();
-            for (final String type : effects.getKeys(false)) {
-                final PotionEffectType effect = PotionEffectType.getByName(type);
-                if (effect == null) {
-                    this.plugin.getLogger().warning("Unrecognized reward PotionEffectType: " + type);
-                    continue;
-                }
+        for (final String name : reward.getKeys(false)) {
+            if (name.equals("enabled")) continue;
 
-                final ConfigurationSection entry = effects.getConfigurationSection(type);
-                final int duration = entry.getInt("duration", 4);
-                final int amplifier = entry.getInt("amplifier", 1);
-
-                potionEffects.add(new PotionEffect(effect, duration, amplifier));
+            try {
+                this.rewards.add(Reward.create(reward.getConfigurationSection(name)));
+            } catch (final Exception e) {
+                this.plugin.getLogger().warning("Unable to create reward for [" + this.world.getName() + "]: " + name + "; " + e.getClass().getName() + "; " + e.getMessage());
             }
-            this.rewardEffects.addAll(potionEffects);
-        }
-
-        final ConfigurationSection food = reward.getConfigurationSection("food");
-        if (food != null) {
-            if (food.isDouble("addSaturation")) this.rewardAddSaturation = (float) food.getDouble("addSaturation");
-            if (food.isDouble("setExhaustion")) this.rewardSetExhaustion = (float) food.getDouble("setExhaustion");
         }
     }
 
@@ -294,7 +277,7 @@ public final class State implements Observer, Listener {
     void bedLeft(final Player leaver) {
         if (!this.playersInBed.remove(leaver)) return;
 
-        this.plugin.getLogger().log(Level.FINEST, "[" + this.world.getName() + "] Bed Left: " + leaver.getName());
+        this.plugin.getLogger().finest("[" + this.world.getName() + "] Bed Left: " + leaver.getName());
 
         if (this.isNight()) {
             if (this.playersIdle.contains(leaver) || this.playersAway.contains(leaver) || this.playersIgnored.contains(leaver)) this.lull();
@@ -308,15 +291,16 @@ public final class State implements Observer, Listener {
         }
 
         // Morning
-        leaver.addPotionEffects(this.rewardEffects);
-        if (this.rewardAddSaturation != null) leaver.setSaturation(leaver.getSaturation() + this.rewardAddSaturation);
-        if (this.rewardSetExhaustion != null) leaver.setExhaustion(this.rewardSetExhaustion);
+        if (this.participants == null) this.participants = this.playersInBed.size() + 1;
+        for (final Reward reward : this.rewards) reward.apply(leaver, this.participants);
 
         if (this.playersInBed.size() == 0) {
             // Last player to leave bed during a morning awakening
             this.hasGeneratedEnterBed = false;
             for (final Player player : this.world.getPlayers())
                 this.setSleepingIgnored(player, false, "Awakening World");
+
+            this.participants = null;
 
             if (!this.isForcingSleep) return;
 

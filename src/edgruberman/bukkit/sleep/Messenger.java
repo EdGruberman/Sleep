@@ -34,7 +34,8 @@ public class Messenger {
         return messenger;
     }
 
-    protected final Plugin plugin;
+    public final Plugin plugin;
+
     protected final String formats;
     protected final TimeZone zone = TimeZone.getDefault();
 

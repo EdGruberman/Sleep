@@ -24,13 +24,32 @@ temporaryBed:
     duration: 600 # Seconds
 reward:
     enabled: false
-    food:
-        addSaturation: 9.6
-        setExhaustion: 0.0
-    effects:
-        REGENERATION:
-            duration: 80
-            amplifier: 1
+    Golden Apple Nutrition:
+        class: Food
+        saturation: 9.6
+        level: 0
+        factor: 0.0
+    Golden Apple Regeneration:
+        class: PotionEffect
+        type: REGENERATION
+        duration: 4
+        amplifier: 1
+        factor: 0.0
+    Exhaustion Reset:
+        class: Health
+        health: 0
+        exhaustion: -100.0
+        factor: 0.0
+    Minor Experience:
+        class: Experience
+        total: 5
+        level: 1
+        factor: 0.0
+    Floaty Orbies:
+        class: ExperienceOrb
+        quantity: 5
+        experience: 10
+        factor: 1.0
 sleep: true
 bedNoticeLimit: 10 # Seconds (bedEnter and bedLeave only)
 messages:
