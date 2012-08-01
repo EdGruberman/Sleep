@@ -59,7 +59,7 @@ public class Sleep implements CommandExecutor {
             for (final Player player : notSleeping)
                 names.add(String.format(Main.messenger.getFormat("notSleeping.+player"), player.getDisplayName()));
 
-            Main.messenger.tell(sender, "notSleeping", names.size(), Sleep.join(names, Main.messenger.getFormat("notSleeping.+delimiter")));
+            Main.messenger.tell(sender, "notSleeping.format", names.size(), Sleep.join(names, Main.messenger.getFormat("notSleeping.+delimiter")));
         }
 
         final int count = state.playersInBed.size();
