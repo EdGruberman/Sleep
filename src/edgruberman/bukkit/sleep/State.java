@@ -420,8 +420,8 @@ public final class State implements Observer, Listener {
         for (final Player player : this.playersAway)
             this.setSleepingIgnored(player, true, "Away");
 
-        if (this.plugin.getLogger().isLoggable(Level.FINER))
-            this.plugin.getLogger().finer("[" + this.world.getName() + "] " + this.description());
+        if (this.plugin.getLogger().isLoggable(Level.FINEST))
+            this.plugin.getLogger().finest("[" + this.world.getName() + "] " + this.description());
 
         if (this.forceCount <= -1 && this.forcePercent <= -1) return;
 
