@@ -24,7 +24,7 @@ temporaryBed:
     duration: 600 # Seconds
 reward:
     enabled: false
-    Golden Apple Nutrition:
+    Golden Apple Satiation:
         class: Food
         saturation: 9.6
         level: 0
@@ -40,15 +40,10 @@ reward:
         health: 0
         exhaustion: -100.0
         factor: 0.0
-    Minor Experience:
-        class: Experience
-        total: 5
-        level: 1
-        factor: 0.0
-    Floaty Orbies:
+    Experience Orbs:
         class: ExperienceOrb
         quantity: 5
-        experience: 10
+        experience: 3
         factor: 1.0
 sleep: true
 bedNoticeLimit: 10 # Seconds (bedEnter and bedLeave only)
