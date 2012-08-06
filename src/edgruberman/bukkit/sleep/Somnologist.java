@@ -72,7 +72,7 @@ public final class Somnologist implements Listener {
         this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Forced Sleep Minimum Percent: " + state.forcePercent);
         this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Away Idle: " + (state.awayBack != null));
         if (state.tracker != null) {
-            this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Idle Threshold (seconds): " + (state.tracker.idlePublisher.getThreshold() / 1000));
+            this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Idle Threshold (seconds): " + (state.tracker.getIdleThreshold() / 1000));
             this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Monitored Activity: " + state.tracker.getInterpreters().size() + " events");
         }
         for (final Reward reward : state.rewards) this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Reward: " + reward.toString());

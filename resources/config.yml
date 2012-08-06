@@ -8,7 +8,7 @@ idle:
     duration: 60 # Seconds
     activity:
         - PlayerMoveEvent
-        - PlayerChatEvent
+        - AsyncPlayerChatEvent
         - PlayerInteractEvent
         - PlayerDropItemEvent
         - PlayerToggleSneakEvent
@@ -73,7 +73,7 @@ messages:
 awayBack:
     enabled: false
     activity:
-        - PlayerChatEvent
+        - AsyncPlayerChatEvent
         - PlayerBedEnterEvent
         - PlayerBedLeaveEvent
     messages:

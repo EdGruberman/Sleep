@@ -24,10 +24,11 @@ import org.bukkit.event.server.PluginEnableEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import edgruberman.bukkit.playeractivity.EventTracker;
-import edgruberman.bukkit.playeractivity.PlayerActivity;
+import edgruberman.bukkit.playeractivity.PlayerActive;
 import edgruberman.bukkit.playeractivity.PlayerIdle;
+import edgruberman.bukkit.playeractivity.StatusTracker;
 import edgruberman.bukkit.playeractivity.consumers.AwayBack;
+import edgruberman.bukkit.playeractivity.interpreters.Interpreter;
 import edgruberman.bukkit.sleep.rewards.Reward;
 
 /**
@@ -64,7 +65,7 @@ public final class State implements Observer, Listener {
     public final Collection<Reward> rewards = new ArrayList<Reward>();
     public final TemporaryBed temporaryBed;
 
-    public final EventTracker tracker;
+    public final StatusTracker tracker;
     public AwayBack awayBack;
 
     public final Set<Player> players = new HashSet<Player>();
@@ -104,19 +105,18 @@ public final class State implements Observer, Listener {
         }
 
         if (config.getBoolean("idle.enabled")) {
-            this.tracker = new EventTracker(plugin);
-            this.tracker.setDefaultPriority(EventPriority.HIGHEST); // One below Somnologist's MONITOR to ensure activity/idle status are updated before any processing in this State
+            this.tracker = new StatusTracker(plugin);
             for (final String className : config.getStringList("idle.activity"))
                 try {
-                    this.tracker.addInterpreter(EventTracker.newInterpreter(className));
+                    this.tracker.addInterpreter(Interpreter.create(className));
                 } catch (final Exception e) {
                     plugin.getLogger().warning("Unsupported activity for " + world.getName() + ": " + className + "; " + e.getClass().getName() + "; " + e.getMessage());
                 }
 
-            this.tracker.activityPublisher.addObserver(this);
-            this.tracker.idlePublisher.setThreshold(config.getLong("idle.duration") * 1000);
-            this.tracker.idlePublisher.addObserver(this);
-            this.tracker.idlePublisher.reset(this.world.getPlayers());
+            this.tracker.register(this, PlayerActive.class);
+            this.tracker.setIdleThreshold(config.getLong("idle.duration") * 1000);
+            this.tracker.register(this, PlayerIdle.class);
+            this.tracker.resetIdle(this.world.getPlayers());
         } else {
             this.tracker = null;
         }
@@ -142,7 +142,7 @@ public final class State implements Observer, Listener {
             this.lastBedEnterMessage.put(player, 0L);
             this.lastBedLeaveMessage.put(player, 0L);
             if (player.isSleeping()) this.playersInBed.add(player);
-            if (this.tracker != null && this.tracker.idlePublisher.getIdle().contains(player)) this.playersIdle.add(player);
+            if (this.tracker != null && this.tracker.getIdle().contains(player)) this.playersIdle.add(player);
             if (this.isAwayIdle(player)) this.playersAway.add(player);
             if (player.hasPermission("sleep.ignore")) this.playersIgnored.add(player);
         }
@@ -208,7 +208,7 @@ public final class State implements Observer, Listener {
         this.players.add(joiner);
         this.lastBedEnterMessage.put(joiner, 0L);
         this.lastBedLeaveMessage.put(joiner, 0L);
-        if (this.tracker != null && this.tracker.idlePublisher.getIdle().contains(joiner)) this.playersIdle.add(joiner);
+        if (this.tracker != null && this.tracker.getIdle().contains(joiner)) this.playersIdle.add(joiner);
         if (this.isAwayIdle(joiner)) this.playersAway.add(joiner);
         if (joiner.hasPermission("sleep.ignore")) this.playersIgnored.add(joiner);
 
@@ -359,7 +359,7 @@ public final class State implements Observer, Listener {
         }
 
         // Player Activity
-        final PlayerActivity activity = (PlayerActivity) arg;
+        final PlayerActive activity = (PlayerActive) arg;
         if (!activity.player.getWorld().equals(this.world)) return;
 
         this.playersIdle.remove(activity.player);
@@ -376,7 +376,7 @@ public final class State implements Observer, Listener {
         // Activity should not remove ignore status for away players
         if (this.playersAway.contains(activity.player)) return;
 
-        this.setSleepingIgnored(activity.player, false, "Activity: " + activity.event.getEventName());
+        this.setSleepingIgnored(activity.player, false, "Activity: " + activity.event.getSimpleName());
 
         this.lull(); // Necessary in case player is idle before a natural sleep that would have caused a force
     }
