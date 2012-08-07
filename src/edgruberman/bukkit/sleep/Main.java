@@ -38,7 +38,7 @@ public final class Main extends JavaPlugin {
     @Override
     public void onLoad() {
         final DependencyManager dm = new DependencyManager(this);
-        if (!dm.isValidPlugin("PlayerActivity", "edgruberman.bukkit.playeractivity", "3.0.0b1")) {
+        if (!dm.isValidPlugin("PlayerActivity", "edgruberman.bukkit.playeractivity", "3.0.0b4")) {
             if (Bukkit.getPluginManager().getPlugin("PlayerActivity") != null) {
                 this.getLogger().severe("Outdated PlayerActivity plugin;  Stop server, delete \"plugins/PlayerActivity.jar\", and then restart server");
                 throw new IllegalStateException("PlayerActivity plugin outdated");

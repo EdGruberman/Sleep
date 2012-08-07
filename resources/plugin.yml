@@ -1,6 +1,6 @@
 name: @NAME@
 description: Manages sleep criteria and notifications
-softdepend: [PlayerActivity, MessageManager]
+softdepend: [PlayerActivity, TimeService]
 version: @VERSION@
 author: @AUTHOR@
 main: @MAIN@

@@ -1,14 +1,10 @@
 package edgruberman.bukkit.sleep;
 
-import java.util.logging.Level;
-
 import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
-/**
- * Prevents deep sleep from occurring which would cause Minecraft to change the time to morning.
- */
+/** prevents deep sleep from occurring which would cause Minecraft to change the time to morning */
 public class Insomnia implements Runnable {
 
     private final Player player;
@@ -21,13 +17,13 @@ public class Insomnia implements Runnable {
 
     @Override
     public void run() {
-        // Do not proceed if player is no longer in bed.
+        // Do not proceed if player is no longer in bed
         if (!this.player.isSleeping()) {
-            this.plugin.getLogger().log(Level.FINE, "Cancelling insomnia for " + this.player.getName() + "; No longer in bed");
+            this.plugin.getLogger().fine("Cancelling insomnia for " + this.player.getName() + "; No longer in bed");
             return;
         }
 
-        this.plugin.getLogger().log(Level.FINE, this.player.getName() + " has insomnia. Setting spawn point then removing player from bed...");
+        this.plugin.getLogger().fine(this.player.getName() + " has insomnia; Setting spawn point then removing player from bed...");
 
         // Eject player from bed before sleep can complete, but set player's spawn point.
         final CraftPlayer craftEnterer = (CraftPlayer) this.player;

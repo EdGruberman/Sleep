@@ -25,7 +25,7 @@ public class ExperienceOrb extends Reward {
         final int result = (int) (this.quantity * this.factorFor(participants));
 
         for (int i = 1; i < result; i++) {
-            final org.bukkit.entity.ExperienceOrb orb = (org.bukkit.entity.ExperienceOrb) player.getWorld().spawnEntity(player.getLocation().add(player.getLocation().getDirection().setY(0).multiply(4).setY(.5)), EntityType.EXPERIENCE_ORB);
+            final org.bukkit.entity.ExperienceOrb orb = (org.bukkit.entity.ExperienceOrb) player.getWorld().spawnEntity(player.getLocation().add(player.getLocation().getDirection().setY(0).multiply(2).setY(.5)), EntityType.EXPERIENCE_ORB);
             orb.setExperience(result);
         }
 
