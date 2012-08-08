@@ -21,14 +21,14 @@ public class Health extends Reward {
     @Override
     public void apply(final Player player, final int participants) {
         if (this.health != 0) {
-            final int result = this.health + (int) (this.health * this.factor * participants);
+            final int result = this.factorFor(this.health, participants);
             player.setHealth(Math.max(0, Math.min(20, player.getHealth() + result)));
             Main.messenger.plugin.getLogger().finest("Rewarded " + player.getName() + " by adding " + result
                     + " to health which set it to " + player.getHealth());
         }
 
         if (this.exhaustion != 0) {
-            final float result = this.exhaustion + (this.exhaustion * this.factor * participants);
+            final float result = this.factorFor(this.exhaustion, participants);
             player.setExhaustion(Math.max(0, player.getExhaustion() + result));
             Main.messenger.plugin.getLogger().finest("Rewarded " + player.getName() + " by adding " + Reward.DECIMAL_FORMAT.format(result)
                     + " to exhaustion which set it to " + Reward.DECIMAL_FORMAT.format(player.getExhaustion()));

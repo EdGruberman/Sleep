@@ -21,7 +21,7 @@ public class ConsoleCommand extends Reward {
 
     @Override
     public void apply(final Player player, final int participants) {
-        final int result = this.value + (int) (this.value * this.factor * participants);
+        final int result = this.factorFor(this.value, participants);
         final String command = String.format(this.format, player.getName(), result);
         Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), command);
         Main.messenger.plugin.getLogger().finest("Rewarded " + player.getName() + " by dispatching console command \"" + command + "\"");

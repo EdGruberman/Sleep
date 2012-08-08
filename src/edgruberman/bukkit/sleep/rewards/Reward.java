@@ -42,6 +42,14 @@ public abstract class Reward {
         return this;
     }
 
+    public int factorFor(final int value, final int participants) {
+        return value + (int) (value * this.factor * (participants - 1));
+    }
+
+    public int factorFor(final float value, final int participants) {
+        return (int) (value + (value * this.factor * (participants - 1)));
+    }
+
     public abstract void apply(Player player, int participants);
 
     @Override

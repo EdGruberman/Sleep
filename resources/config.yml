@@ -43,7 +43,7 @@ reward:
     Experience Orbs:
         class: ExperienceOrb
         quantity: 3
-        experience: 3
+        experience: 5
         factor: 0.5
 sleep: true
 bedNoticeLimit: 10 # Seconds (bedEnter and bedLeave only)
