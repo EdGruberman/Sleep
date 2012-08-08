@@ -1,5 +1,6 @@
 package edgruberman.bukkit.sleep.rewards;
 
+import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
@@ -19,7 +20,7 @@ public class Food extends Reward {
     }
 
     @Override
-    public void apply(final Player player, final int participants) {
+    public void apply(final Player player, final Block bed, final int participants) {
         if (this.level != 0) {
             final int result = this.factorFor(this.level, participants);
             player.setFoodLevel(Math.max(0, Math.min(20, player.getFoodLevel() + result)));

@@ -1,5 +1,6 @@
 package edgruberman.bukkit.sleep.rewards;
 
+import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -21,11 +22,11 @@ public class ExperienceOrb extends Reward {
     }
 
     @Override
-    public void apply(final Player player, final int participants) {
+    public void apply(final Player player, final Block bed, final int participants) {
         final int result = this.factorFor(this.quantity, participants);
 
         for (int i = 1; i < result; i++) {
-            final org.bukkit.entity.ExperienceOrb orb = (org.bukkit.entity.ExperienceOrb) player.getWorld().spawnEntity(player.getLocation().add(player.getLocation().getDirection().setY(0).multiply(2).setY(.5)), EntityType.EXPERIENCE_ORB);
+            final org.bukkit.entity.ExperienceOrb orb = (org.bukkit.entity.ExperienceOrb) player.getWorld().spawnEntity(bed.getLocation(), EntityType.EXPERIENCE_ORB);
             orb.setExperience(this.experience);
         }
 

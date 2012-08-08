@@ -162,7 +162,7 @@ public final class Somnologist implements Listener {
         final State state = this.states.get(event.getPlayer().getWorld());
         if (state == null) return;
 
-        state.bedLeft(event.getPlayer());
+        state.bedLeft(event.getPlayer(), event.getBed());
     }
 
     @EventHandler

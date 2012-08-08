@@ -1,5 +1,6 @@
 package edgruberman.bukkit.sleep.rewards;
 
+import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
@@ -19,7 +20,7 @@ public class Experience extends Reward {
     }
 
     @Override
-    public void apply(final Player player, final int participants) {
+    public void apply(final Player player, final Block bed, final int participants) {
         if (this.total != 0) {
             final int result = this.factorFor(this.total, participants);
             player.setTotalExperience(Math.max(0, player.getTotalExperience() + result));

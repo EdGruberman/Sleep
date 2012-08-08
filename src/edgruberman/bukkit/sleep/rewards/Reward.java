@@ -2,6 +2,7 @@ package edgruberman.bukkit.sleep.rewards;
 
 import java.text.DecimalFormat;
 
+import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
@@ -50,7 +51,7 @@ public abstract class Reward {
         return (int) (value + (value * this.factor * (participants - 1)));
     }
 
-    public abstract void apply(Player player, int participants);
+    public abstract void apply(final Player player, final Block bed, final int participants);
 
     @Override
     public abstract String toString();

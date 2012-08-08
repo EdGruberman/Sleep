@@ -1,6 +1,7 @@
 package edgruberman.bukkit.sleep.rewards;
 
 import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -25,7 +26,7 @@ public class Item extends Reward {
     }
 
     @Override
-    public void apply(final Player player, final int participants) {
+    public void apply(final Player player, final Block bed, final int participants) {
         final int result = this.factorFor(this.quantity, participants);
 
         for (final ItemStack remaining : player.getInventory().addItem(new ItemStack(this.material, result, this.data)).values())

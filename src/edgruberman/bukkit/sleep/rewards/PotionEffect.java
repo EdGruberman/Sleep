@@ -1,5 +1,6 @@
 package edgruberman.bukkit.sleep.rewards;
 
+import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffectType;
@@ -25,7 +26,7 @@ public class PotionEffect extends Reward {
     }
 
     @Override
-    public void apply(final Player player, final int participants) {
+    public void apply(final Player player, final Block bed, final int participants) {
         final int result = this.factorFor(this.duration * PotionEffect.TICKS_PER_SECOND, participants);
         player.addPotionEffect(this.type.createEffect((int) (result * (1 / this.type.getDurationModifier())), this.amplifier));
         Main.messenger.plugin.getLogger().finest("Rewarded " + player.getName() + " by adding " + this.type.getName()

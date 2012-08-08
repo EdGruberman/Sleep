@@ -12,6 +12,7 @@ import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
@@ -274,7 +275,7 @@ public final class State implements Observer, Listener {
      *
      * @param leaver who left bed
      */
-    void bedLeft(final Player leaver) {
+    void bedLeft(final Player leaver, final Block bed) {
         if (!this.playersInBed.remove(leaver)) return;
 
         this.plugin.getLogger().finest("[" + this.world.getName() + "] Bed Left: " + leaver.getName());
@@ -292,7 +293,7 @@ public final class State implements Observer, Listener {
 
         // Morning
         if (this.participants == null) this.participants = this.playersInBed.size() + 1;
-        for (final Reward reward : this.rewards) reward.apply(leaver, this.participants);
+        for (final Reward reward : this.rewards) reward.apply(leaver, bed, this.participants);
 
         if (this.playersInBed.size() == 0) {
             // Last player to leave bed during a morning awakening
@@ -331,7 +332,7 @@ public final class State implements Observer, Listener {
         this.playersIdle.remove(leaver);
         this.playersAway.remove(leaver);
         this.playersIgnored.remove(leaver);
-        this.bedLeft(leaver);
+        this.bedLeft(leaver, null);
 
         this.lastBedEnterMessage.remove(leaver);
         this.lastBedLeaveMessage.remove(leaver);
