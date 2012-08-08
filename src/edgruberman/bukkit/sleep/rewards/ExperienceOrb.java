@@ -22,11 +22,11 @@ public class ExperienceOrb extends Reward {
 
     @Override
     public void apply(final Player player, final int participants) {
-        final int result = (int) (this.quantity * this.factorFor(participants));
+        final int result = this.quantity + (int) (this.quantity * this.factor * participants);
 
         for (int i = 1; i < result; i++) {
             final org.bukkit.entity.ExperienceOrb orb = (org.bukkit.entity.ExperienceOrb) player.getWorld().spawnEntity(player.getLocation().add(player.getLocation().getDirection().setY(0).multiply(2).setY(.5)), EntityType.EXPERIENCE_ORB);
-            orb.setExperience(result);
+            orb.setExperience(this.experience);
         }
 
         Main.messenger.plugin.getLogger().finest("Rewarded " + player.getName() + " by creating " + result

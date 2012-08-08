@@ -42,12 +42,6 @@ public abstract class Reward {
         return this;
     }
 
-    public float factorFor(final int participants) {
-        if (this.factor == 0.0F) return 1.0F;
-
-        return participants * this.factor;
-    }
-
     public abstract void apply(Player player, int participants);
 
     @Override

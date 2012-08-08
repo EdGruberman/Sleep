@@ -26,7 +26,7 @@ public class PotionEffect extends Reward {
 
     @Override
     public void apply(final Player player, final int participants) {
-        final int result = (int) (this.duration * PotionEffect.TICKS_PER_SECOND * this.factorFor(participants));
+        final int result = (this.duration * PotionEffect.TICKS_PER_SECOND) + (int) (this.duration * PotionEffect.TICKS_PER_SECOND * this.factor * participants);
         player.addPotionEffect(this.type.createEffect((int) (result * (1 / this.type.getDurationModifier())), this.amplifier));
         Main.messenger.plugin.getLogger().finest("Rewarded " + player.getName() + " by adding " + this.type.getName()
                 + " potion effect for " + result + " ticks with an amplifier of " + this.amplifier);
