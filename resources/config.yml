@@ -69,6 +69,7 @@ messages:
     statusDetail: '-> Sleep needs §d%3$d more§r in bed (%4$d in bed out of %5$d possible = %2$d%%)' # 2 = Percent In Bed, 3 = Player Count Needed, 4 = Player Count In Bed, 5 = Player Count Possible
     commandDisabled: '-> Command §cdisabled' # 2 = Command , 3 = Label
     requiresPlayer: '-> Command cancelled when §cnot in-game player'
+    requiresArgument: '-> Required §cargument missing§r: %2$s' # 2 = Argument
     reload: '-> Sleep plugin §2reloaded'
 awayBack:
     enabled: false

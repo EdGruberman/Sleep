@@ -25,8 +25,14 @@ public class Sleep implements CommandExecutor {
         this.somnologist = somnologist;
     }
 
+    // usage: /<command>[ <World>]
     @Override
     public boolean onCommand(final CommandSender sender, final Command command, final String label, final String[] args) {
+        if (!(sender instanceof Player) && args.length == 0) {
+            Main.courier.send(sender, "requiresArgument", "<World>");
+            return false;
+        }
+
         final World world = Sleep.parseWorld(sender, args);
         if (world == null) {
             Main.courier.send(sender, "worldNotFound", args[0]);
