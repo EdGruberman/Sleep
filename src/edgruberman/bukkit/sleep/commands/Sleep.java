@@ -29,23 +29,23 @@ public class Sleep implements CommandExecutor {
     public boolean onCommand(final CommandSender sender, final Command command, final String label, final String[] args) {
         final World world = Sleep.parseWorld(sender, args);
         if (world == null) {
-            Main.messenger.tell(sender, "worldNotFound", args[0]);
+            Main.courier.send(sender, "worldNotFound", args[0]);
             return false;
         }
 
         final State state = this.somnologist.getState(world);
         if (state == null) {
-            Main.messenger.tell(sender, "sleepNotManaged", world.getName());
+            Main.courier.send(sender, "sleepNotManaged", world.getName());
             return true;
         }
 
         if (!state.isSleepEnabled) {
-            Main.messenger.tell(sender, "sleepDisabled", world.getName());
+            Main.courier.send(sender, "sleepDisabled", world.getName());
             return true;
         }
 
         if (state.playersInBed.size() == 0) {
-            Main.messenger.tell(sender, "noneInBed");
+            Main.courier.send(sender, "noneInBed");
 
         } else {
             final List<Player> notSleeping = new ArrayList<Player>(state.players);
@@ -57,15 +57,15 @@ public class Sleep implements CommandExecutor {
 
             final List<String> names = new ArrayList<String>();
             for (final Player player : notSleeping)
-                names.add(String.format(Main.messenger.getFormat("notSleeping.+player"), player.getDisplayName()));
+                names.add(String.format(Main.courier.format("notSleeping.+player"), player.getDisplayName()));
 
-            Main.messenger.tell(sender, "notSleeping.format", names.size(), Sleep.join(names, Main.messenger.getFormat("notSleeping.+delimiter")));
+            Main.courier.send(sender, "notSleeping.format", names.size(), Sleep.join(names, Main.courier.format("notSleeping.+delimiter")));
         }
 
         final int count = state.playersInBed.size();
         final int possible = state.sleepersPossible().size();
         final int percent = (int) Math.floor((double) count / (possible > 0 ? possible : 1) * 100);
-        Main.messenger.tell(sender, "statusDetail", percent, state.sleepersNeeded(), count, possible);
+        Main.courier.send(sender, "statusDetail", percent, state.sleepersNeeded(), count, possible);
         return true;
     }
 

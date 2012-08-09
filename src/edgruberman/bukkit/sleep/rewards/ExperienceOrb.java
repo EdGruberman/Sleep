@@ -30,7 +30,7 @@ public class ExperienceOrb extends Reward {
             orb.setExperience(this.experience);
         }
 
-        Main.messenger.plugin.getLogger().finest("Rewarded " + player.getName() + " by creating " + result
+        Main.courier.plugin.getLogger().finest("Rewarded " + player.getName() + " by creating " + result
                 + " experience orbs with " + this.experience + " experience each");
     }
 

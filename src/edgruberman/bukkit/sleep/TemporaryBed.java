@@ -71,7 +71,7 @@ public class TemporaryBed implements Listener {
             return;
         }
 
-        Main.messenger.tell(event.getPlayer(), "temporaryBedInstruction", TemporaryBed.readableDuration(this.duration / 20 * 1000));
+        Main.courier.send(event.getPlayer(), "temporaryBedInstruction", TemporaryBed.readableDuration(this.duration / 20 * 1000));
 
         // Bed spawn changed, commit change after specified duration has elapsed
         final int taskId = this.state.plugin.getServer().getScheduler().scheduleSyncDelayedTask(this.state.plugin, new BedChangeCommitter(this, event.getPlayer()), this.duration);
@@ -116,7 +116,7 @@ public class TemporaryBed implements Listener {
         broken.getPlayer().setBedSpawnLocation(previous);
         this.previous.remove(broken.getPlayer().getName());
 
-        Main.messenger.tell(broken.getPlayer(), "temporaryBedReverted");
+        Main.courier.send(broken.getPlayer(), "temporaryBedReverted");
     }
 
     private static String readableDuration(final long total) {

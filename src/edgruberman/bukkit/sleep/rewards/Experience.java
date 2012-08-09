@@ -24,14 +24,14 @@ public class Experience extends Reward {
         if (this.total != 0) {
             final int result = this.factorFor(this.total, participants);
             player.setTotalExperience(Math.max(0, player.getTotalExperience() + result));
-            Main.messenger.plugin.getLogger().finest("Rewarded " + player.getName() + " by adding " + result
+            Main.courier.plugin.getLogger().finest("Rewarded " + player.getName() + " by adding " + result
                     + " to total experience which set it to " + player.getTotalExperience());
         }
 
         if (this.level != 0) {
             final int result = this.factorFor(this.level, participants);
             player.setLevel(Math.max(0, player.getLevel() + result));
-            Main.messenger.plugin.getLogger().finest("Rewarded " + player.getName() + " by adding " + result
+            Main.courier.plugin.getLogger().finest("Rewarded " + player.getName() + " by adding " + result
                     + " to experience level which set it to " + player.getLevel());
         }
     }

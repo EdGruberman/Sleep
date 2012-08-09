@@ -231,13 +231,13 @@ public final class State implements Observer, Listener {
         // Notify of interruption when a natural sleep is in progress
         if (this.sleepersNeeded() == 1) {
             this.plugin.getLogger().fine("[" + this.world.getName() + "] Interruption: " + joiner.getName());
-            Main.messenger.world(joiner.getWorld(), "interrupt", joiner, joiner.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible().size());
+            Main.courier.world(joiner.getWorld(), "interrupt", joiner, joiner.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible().size());
             return;
         }
 
         // Private notification of missed enter bed notification(s)
         if (this.hasGeneratedEnterBed)
-            Main.messenger.tell(joiner, "status", this.plugin.getName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible().size());
+            Main.courier.send(joiner, "status", this.plugin.getName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible().size());
     }
 
     /**
@@ -258,7 +258,7 @@ public final class State implements Observer, Listener {
 
         if (System.currentTimeMillis() > (this.lastBedEnterMessage.get(enterer) + (this.bedNoticeLimit * 1000))) {
             this.lastBedEnterMessage.put(enterer, System.currentTimeMillis());
-            Main.messenger.world(enterer.getWorld(), "bedEnter", enterer.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible().size());
+            Main.courier.world(enterer.getWorld(), "bedEnter", enterer.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible().size());
             this.hasGeneratedEnterBed = true;
         }
 
@@ -286,7 +286,7 @@ public final class State implements Observer, Listener {
             // Night time bed leaves only occur because of a manual action
             if (System.currentTimeMillis() > (this.lastBedLeaveMessage.get(leaver) + (this.bedNoticeLimit * 1000))) {
                 this.lastBedLeaveMessage.put(leaver, System.currentTimeMillis());
-                Main.messenger.world(leaver.getWorld(), "bedLeave", leaver.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible().size());
+                Main.courier.world(leaver.getWorld(), "bedLeave", leaver.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible().size());
             }
             return;
         }
@@ -313,7 +313,7 @@ public final class State implements Observer, Listener {
                 name = this.sleepForcer.getName();
                 if (this.sleepForcer instanceof Player) name = ((Player) this.sleepForcer).getDisplayName();
             }
-            Main.messenger.world(leaver.getWorld(), type, name, this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible().size());
+            Main.courier.world(leaver.getWorld(), type, name, this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible().size());
 
             // Allow activity to again cancel idle status in order to remove ignored sleep
             this.sleepForcer = null;

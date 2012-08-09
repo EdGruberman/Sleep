@@ -32,7 +32,7 @@ public class Item extends Reward {
         for (final ItemStack remaining : player.getInventory().addItem(new ItemStack(this.material, result, this.data)).values())
             player.getWorld().dropItemNaturally(player.getLocation(), remaining);
 
-        Main.messenger.plugin.getLogger().finest("Rewarded " + player.getName() + " by giving " + result
+        Main.courier.plugin.getLogger().finest("Rewarded " + player.getName() + " by giving " + result
                 + " " + this.material.name() + " with data " + this.data);
     }
 

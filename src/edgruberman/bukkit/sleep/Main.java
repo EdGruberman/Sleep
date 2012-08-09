@@ -19,6 +19,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import edgruberman.bukkit.messaging.couriers.ConfigurationCourier;
+import edgruberman.bukkit.messaging.couriers.TimestampedConfigurationCourier;
 import edgruberman.bukkit.playeractivity.commands.Away;
 import edgruberman.bukkit.playeractivity.commands.Back;
 import edgruberman.bukkit.playeractivity.consumers.AwayBack;
@@ -30,7 +32,7 @@ public final class Main extends JavaPlugin {
 
     private static final Version MINIMUM_CONFIGURATION = new Version("6.0.0b43");
 
-    public static Messenger messenger;
+    public static ConfigurationCourier courier;
 
     private Somnologist somnologist = null;
     AwayBack awayBack = null;
@@ -38,7 +40,7 @@ public final class Main extends JavaPlugin {
     @Override
     public void onLoad() {
         final DependencyManager dm = new DependencyManager(this);
-        if (!dm.isValidPlugin("PlayerActivity", "edgruberman.bukkit.playeractivity", "3.0.0b4")) {
+        if (!dm.isValidPlugin("PlayerActivity", "edgruberman.bukkit.playeractivity", "3.0.0b6")) {
             if (Bukkit.getPluginManager().getPlugin("PlayerActivity") != null) {
                 this.getLogger().severe("Outdated PlayerActivity plugin;  Stop server, delete \"plugins/PlayerActivity.jar\", and then restart server");
                 throw new IllegalStateException("PlayerActivity plugin outdated");
@@ -50,13 +52,13 @@ public final class Main extends JavaPlugin {
     @Override
     public void onEnable() {
         this.reloadConfig();
-        Main.messenger = Messenger.load(this, "messages");
+        Main.courier = new TimestampedConfigurationCourier(this, "messages");
 
         if (this.getConfig().getBoolean("awayBack.enabled")) {
-            final edgruberman.bukkit.playeractivity.Messenger messenger = edgruberman.bukkit.playeractivity.Messenger.load(this, "awayBack.messages");
-            this.awayBack = new AwayBack(this, this.getConfig().getConfigurationSection("awayBack"), messenger);
-            this.getCommand("sleep:away").setExecutor(new Away(messenger, this.awayBack));
-            this.getCommand("sleep:back").setExecutor(new Back(messenger, this.awayBack));
+            final ConfigurationCourier courier = new TimestampedConfigurationCourier(this, "awayBack.messages");
+            this.awayBack = new AwayBack(this, this.getConfig().getConfigurationSection("awayBack"), courier);
+            this.getCommand("sleep:away").setExecutor(new Away(courier, this.awayBack));
+            this.getCommand("sleep:back").setExecutor(new Back(courier, this.awayBack));
         }
 
         this.somnologist = new Somnologist(this, this.getConfig().getStringList("excluded"));
@@ -71,12 +73,12 @@ public final class Main extends JavaPlugin {
         HandlerList.unregisterAll(this);
         Bukkit.getScheduler().cancelTasks(this);
         this.somnologist.clear();
-        Main.messenger = null;
+        Main.courier = null;
     }
 
     @Override
     public boolean onCommand(final CommandSender sender, final Command command, final String label, final String[] args) {
-        Main.messenger.tell(sender, "commandDisabled", command.getName(), label);
+        Main.courier.send(sender, "commandDisabled", command.getName(), label);
         return true;
     }
 
