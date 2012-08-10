@@ -1,4 +1,4 @@
-package edgruberman.bukkit.messaging.messages;
+package edgruberman.bukkit.sleep.messaging.messages;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -9,7 +9,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.metadata.Metadatable;
 
-import edgruberman.bukkit.messaging.Message;
+import edgruberman.bukkit.sleep.messaging.Message;
 
 public class TimestampedMessage extends Message {
 

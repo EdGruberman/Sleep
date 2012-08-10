@@ -1,11 +1,11 @@
-package edgruberman.bukkit.messaging.recipients;
+package edgruberman.bukkit.sleep.messaging.recipients;
 
 import java.util.logging.Level;
 
 import org.bukkit.Server;
 
-import edgruberman.bukkit.messaging.Message;
-import edgruberman.bukkit.messaging.messages.Confirmation;
+import edgruberman.bukkit.sleep.messaging.Message;
+import edgruberman.bukkit.sleep.messaging.messages.Confirmation;
 
 public class ServerPlayers extends PermissionSubscribers {
 

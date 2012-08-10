@@ -1,13 +1,13 @@
-package edgruberman.bukkit.messaging.recipients;
+package edgruberman.bukkit.sleep.messaging.recipients;
 
 import java.util.logging.Level;
 
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import edgruberman.bukkit.messaging.Message;
-import edgruberman.bukkit.messaging.Recipients;
-import edgruberman.bukkit.messaging.messages.Confirmation;
+import edgruberman.bukkit.sleep.messaging.Message;
+import edgruberman.bukkit.sleep.messaging.Recipients;
+import edgruberman.bukkit.sleep.messaging.messages.Confirmation;
 
 public class Sender implements Recipients {
 

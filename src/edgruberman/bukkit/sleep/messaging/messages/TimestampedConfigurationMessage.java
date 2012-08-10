@@ -1,4 +1,4 @@
-package edgruberman.bukkit.messaging.messages;
+package edgruberman.bukkit.sleep.messaging.messages;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,7 +9,7 @@ import java.util.TimeZone;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 
-import edgruberman.bukkit.messaging.Message;
+import edgruberman.bukkit.sleep.messaging.Message;
 
 public class TimestampedConfigurationMessage extends ConfigurationMessage {
 
