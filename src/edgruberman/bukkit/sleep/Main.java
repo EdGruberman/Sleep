@@ -17,6 +17,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.HandlerList;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import edgruberman.bukkit.messaging.couriers.ConfigurationCourier;
@@ -33,6 +34,7 @@ public final class Main extends JavaPlugin {
     private static final Version MINIMUM_CONFIGURATION = new Version("6.0.0b54");
 
     public static ConfigurationCourier courier;
+    public static Plugin plugin;
 
     private Somnologist somnologist = null;
     AwayBack awayBack = null;
@@ -40,7 +42,7 @@ public final class Main extends JavaPlugin {
     @Override
     public void onLoad() {
         final DependencyManager dm = new DependencyManager(this);
-        if (!dm.isValidPlugin("PlayerActivity", "edgruberman.bukkit.playeractivity", "3.0.0b6")) {
+        if (!dm.isValidPlugin("PlayerActivity", "edgruberman.bukkit.playeractivity", "3.0.0b7")) {
             if (Bukkit.getPluginManager().getPlugin("PlayerActivity") != null) {
                 this.getLogger().severe("Outdated PlayerActivity plugin;  Stop server, delete \"plugins/PlayerActivity.jar\", and then restart server");
                 throw new IllegalStateException("PlayerActivity plugin outdated");
@@ -52,6 +54,7 @@ public final class Main extends JavaPlugin {
     @Override
     public void onEnable() {
         this.reloadConfig();
+        Main.plugin = this;
         Main.courier = new TimestampedConfigurationCourier(this, "messages");
 
         if (this.getConfig().getBoolean("awayBack.enabled")) {
@@ -74,6 +77,7 @@ public final class Main extends JavaPlugin {
         Bukkit.getScheduler().cancelTasks(this);
         this.somnologist.clear();
         Main.courier = null;
+        Main.plugin = null;
     }
 
     @Override

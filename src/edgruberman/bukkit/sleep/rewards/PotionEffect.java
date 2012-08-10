@@ -29,7 +29,7 @@ public class PotionEffect extends Reward {
     public void apply(final Player player, final Block bed, final int participants) {
         final int result = this.factorFor(this.duration * PotionEffect.TICKS_PER_SECOND, participants);
         player.addPotionEffect(this.type.createEffect((int) (result * (1 / this.type.getDurationModifier())), this.amplifier));
-        Main.courier.plugin.getLogger().finest("Rewarded " + player.getName() + " by adding " + this.type.getName()
+        Main.plugin.getLogger().finest("Rewarded " + player.getName() + " by adding " + this.type.getName()
                 + " potion effect for " + result + " ticks with an amplifier of " + this.amplifier);
     }
 

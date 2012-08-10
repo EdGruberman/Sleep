@@ -24,14 +24,14 @@ public class Food extends Reward {
         if (this.level != 0) {
             final int result = this.factorFor(this.level, participants);
             player.setFoodLevel(Math.max(0, Math.min(20, player.getFoodLevel() + result)));
-            Main.courier.plugin.getLogger().finest("Rewarded " + player.getName() + " by adding " + result
+            Main.plugin.getLogger().finest("Rewarded " + player.getName() + " by adding " + result
                     + " to food level which set it to " + player.getFoodLevel());
         }
 
         if (this.saturation != 0) {
             final float result = this.factorFor(this.saturation, participants);
             player.setSaturation(Math.max(0, Math.min(player.getFoodLevel(), player.getSaturation() + result)));
-            Main.courier.plugin.getLogger().finest("Rewarded " + player.getName() + " by adding " + Reward.DECIMAL_FORMAT.format(result)
+            Main.plugin.getLogger().finest("Rewarded " + player.getName() + " by adding " + Reward.DECIMAL_FORMAT.format(result)
                     + " to saturation which set it to " + Reward.DECIMAL_FORMAT.format(player.getSaturation()));
         }
     }
