@@ -63,7 +63,7 @@ public class Sleep implements CommandExecutor {
 
             final List<String> names = new ArrayList<String>();
             for (final Player player : notSleeping)
-                names.add(String.format(Main.courier.format("notSleeping.+player"), player.getDisplayName()));
+                names.add(Main.courier.format("notSleeping.+player", player.getDisplayName()));
 
             Main.courier.send(sender, "notSleeping.format", names.size(), Sleep.join(names, Main.courier.format("notSleeping.+delimiter")));
         }
