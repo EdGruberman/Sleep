@@ -4,6 +4,7 @@ import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 
 import edgruberman.bukkit.sleep.Main;
 import edgruberman.bukkit.sleep.Somnologist;
@@ -19,6 +20,11 @@ public class Force implements CommandExecutor {
 
     @Override
     public boolean onCommand(final CommandSender sender, final Command command, final String label, final String[] args) {
+        if (!(sender instanceof Player) && args.length == 0) {
+            Main.courier.send(sender, "requiresArgument", "<World>");
+            return false;
+        }
+
         final World world = Sleep.parseWorld(sender, args);
         if (world == null) {
             Main.courier.send(sender, "worldNotFound", args[0]);
