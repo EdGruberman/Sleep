@@ -21,7 +21,7 @@ idle:
     awayIdle: false
 temporaryBed:
     enabled: false
-    duration: 600 # Seconds
+    duration: 500 # seconds (<1 day cycle)
 reward:
     enabled: false
     Golden Apple Satiation:

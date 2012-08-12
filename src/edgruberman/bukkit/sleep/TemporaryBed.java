@@ -2,6 +2,7 @@ package edgruberman.bukkit.sleep;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -71,7 +72,10 @@ public class TemporaryBed implements Listener {
             return;
         }
 
-        Main.courier.send(event.getPlayer(), "temporaryBedInstruction", TemporaryBed.readableDuration(this.duration / 20 * 1000));
+        this.state.plugin.getLogger().log(Level.FINEST, "Temporary bed used by {0} at {2}; Previous: {1}", new Object[]{event.getPlayer().getName(), previous, event.getBed()});
+        Main.courier.send(event.getPlayer(), "temporaryBedInstruction", TemporaryBed.readableDuration(this.duration / 20 * 1000)
+                , previous.getWorld().getName(), previous.getBlockX(), previous.getBlockY(), previous.getBlockZ()
+                , event.getBed().getWorld().getName(), event.getBed().getX(), event.getBed().getY(), event.getBed().getZ());
 
         // Bed spawn changed, commit change after specified duration has elapsed
         final int taskId = this.state.plugin.getServer().getScheduler().scheduleSyncDelayedTask(this.state.plugin, new BedChangeCommitter(this, event.getPlayer()), this.duration);
@@ -116,7 +120,10 @@ public class TemporaryBed implements Listener {
         broken.getPlayer().setBedSpawnLocation(previous);
         this.previous.remove(broken.getPlayer().getName());
 
-        Main.courier.send(broken.getPlayer(), "temporaryBedReverted");
+        this.state.plugin.getLogger().log(Level.FINEST, "Temporary bed reverted by {0} to {1}; Temporary: {2}", new Object[]{broken.getPlayer().getName(), previous, head});
+        Main.courier.send(broken.getPlayer(), "temporaryBedReverted"
+                , previous.getWorld().getName(), previous.getBlockX(), previous.getBlockY(), previous.getBlockZ()
+                , head.getWorld().getName(), head.getX(), head.getY(), head.getZ());
     }
 
     private static String readableDuration(final long total) {
