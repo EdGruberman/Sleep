@@ -214,7 +214,7 @@ public final class State implements Observer, Listener {
 
         if (this.playersInBed.size() == 0) return;
 
-        this.plugin.getLogger().log(Level.FINEST, "[" + this.world.getName() + "] Add: " + joiner.getName());
+        this.plugin.getLogger().finest("[" + this.world.getName() + "] Add: " + joiner.getName());
 
         if (this.playersIdle.contains(joiner) || this.playersAway.contains(joiner) || this.playersIgnored.contains(joiner)) {
             this.lull();
@@ -335,7 +335,7 @@ public final class State implements Observer, Listener {
 
         if (this.playersInBed.size() == 0) return;
 
-        this.plugin.getLogger().log(Level.FINEST, "[" + this.world.getName() + "] Remove: " + leaver.getName());
+        this.plugin.getLogger().finest("[" + this.world.getName() + "] Remove: " + leaver.getName());
         this.lull();
     }
 
@@ -458,7 +458,7 @@ public final class State implements Observer, Listener {
         // Don't ignore players in bed
         if (ignore && this.playersInBed.contains(player)) return;
 
-        this.plugin.getLogger().log(Level.FINE, "[" + this.world.getName() + "] Setting " + player.getName() + " to" + (ignore ? "" : " not") + " ignore sleep (" + reason + ")");
+        this.plugin.getLogger().finest("[" + this.world.getName() + "] Setting " + player.getName() + " to" + (ignore ? "" : " not") + " ignore sleep (" + reason + ")");
         player.setSleepingIgnored(ignore);
     }
 
