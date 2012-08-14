@@ -7,6 +7,12 @@ import org.bukkit.Server;
 import edgruberman.bukkit.sleep.messaging.Message;
 import edgruberman.bukkit.sleep.messaging.messages.Confirmation;
 
+/**
+ * all players in server at message delivery time
+ *
+ * @author EdGruberman (ed@rjump.com)
+ * @version 1.0.0
+ */
 public class ServerPlayers extends PermissionSubscribers {
 
     public ServerPlayers() {
@@ -14,20 +20,10 @@ public class ServerPlayers extends PermissionSubscribers {
     }
 
     @Override
-    public Confirmation send(final Message message) {
-        final Confirmation confirmation = super.send(message);
-        return new ServerConfirmation(message.toString(), confirmation.getReceived());
-    }
-
-
-
-    public class ServerConfirmation extends Confirmation {
-
-        public ServerConfirmation(final String message, final int count) {
-            super(Level.FINEST, count, "[BROADCAST(%2$d)] %1$s", message, count);
-
-        }
-
+    public Confirmation deliver(final Message message) {
+        final Confirmation confirmation = super.deliver(message);
+        return new Confirmation(Level.FINEST, confirmation.getReceived()
+                , "[BROADCAST({1})] {0}", message, confirmation.getReceived());
     }
 
 }

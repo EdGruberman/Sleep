@@ -10,45 +10,58 @@ import edgruberman.bukkit.sleep.messaging.recipients.Sender;
 import edgruberman.bukkit.sleep.messaging.recipients.ServerPlayers;
 import edgruberman.bukkit.sleep.messaging.recipients.WorldPlayers;
 
-/** handles plugin registration to log message delivery */
+/**
+ * handles message delivery and logging
+ *
+ * @author EdGruberman (ed@rjump.com)
+ * @version 1.0.0
+ */
 public class Courier {
 
-    public final Plugin plugin;
+    protected final Plugin plugin;
 
     public Courier(final Plugin plugin) {
         this.plugin = plugin;
     }
 
-    public void deliver(final Recipients recipients, final Message message) {
-        if (message.format == null) return;
+    /** deliver a message to recipients and record log entry */
+    public void submit(final Recipients recipients, final Message message) {
+        if (message.original == null) return;
 
-        final Confirmation confirmation = recipients.send(message);
-        if (this.plugin.getLogger().isLoggable(confirmation.getLevel()))
-            this.plugin.getLogger().log(confirmation.toLogRecord());
+        final Confirmation confirmation = recipients.deliver(message);
+        this.plugin.getLogger().log(confirmation.toLogRecord());
     }
 
-    public void send(final CommandSender sender, final String format, final Object... args) {
+
+
+    // ---- convenience methods ----
+
+    /** deliver message to individual player */
+    public void send(final CommandSender sender, final String format, final Object... arguments) {
         final Recipients recipients = new Sender(sender);
-        final Message message = new Message(format, args);
-        this.deliver(recipients, message);
+        final Message message = new Message(format, arguments);
+        this.submit(recipients, message);
     }
 
-    public void broadcast(final String format, final Object... args) {
+    /** deliver message to all players on server */
+    public void broadcast(final String format, final Object... arguments) {
         final Recipients recipients = new ServerPlayers();
-        final Message message = new Message(format, args);
-        this.deliver(recipients, message);
+        final Message message = new Message(format, arguments);
+        this.submit(recipients, message);
     }
 
-    public void world(final World world, final String format, final Object... args) {
+    /** deliver message to players in a world */
+    public void world(final World world, final String format, final Object... arguments) {
         final Recipients recipients = new WorldPlayers(world);
-        final Message message = new Message(format, args);
-        this.deliver(recipients, message);
+        final Message message = new Message(format, arguments);
+        this.submit(recipients, message);
     }
 
-    public void publish(final String permission, final String format, final Object... args) {
+    /** deliver message to players with a permission */
+    public void publish(final String permission, final String format, final Object... arguments) {
         final Recipients recipients = new PermissionSubscribers(permission);
-        final Message message = new Message(format, args);
-        this.deliver(recipients, message);
+        final Message message = new Message(format, arguments);
+        this.submit(recipients, message);
     }
 
 }

@@ -10,6 +10,12 @@ import edgruberman.bukkit.sleep.messaging.Message;
 import edgruberman.bukkit.sleep.messaging.Recipients;
 import edgruberman.bukkit.sleep.messaging.messages.Confirmation;
 
+/**
+ * players in a world at message delivery time
+ *
+ * @author EdGruberman (ed@rjump.com)
+ * @version 1.0.0
+ */
 public class WorldPlayers implements Recipients {
 
     protected final World world;
@@ -19,23 +25,14 @@ public class WorldPlayers implements Recipients {
     }
 
     @Override
-    public WorldConfirmation send(final Message message) {
+    public Confirmation deliver(final Message message) {
         final List<Player> players = this.world.getPlayers();
         for (final Player player : players)
-                player.sendMessage(message.formatFor(player));
+                player.sendMessage(message.format(player).toString());
 
-        return new WorldConfirmation(message.toString(), players.size());
-    }
-
-
-
-    public class WorldConfirmation extends Confirmation {
-
-        public WorldConfirmation(final String message, final int count) {
-            super(Level.FINER, count, "[WORLD%%%2$s(%3$d)] %1$s", message, WorldPlayers.this.world.getName(), count);
-
-        }
-
+        final int count = players.size();
+        return new Confirmation(Level.FINE, count
+                , "[WORLD%{1}({2})] {0}", message, WorldPlayers.this.world.getName(), count);
     }
 
 }

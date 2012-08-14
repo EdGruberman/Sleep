@@ -8,31 +8,43 @@ import org.bukkit.configuration.ConfigurationSection;
 
 import edgruberman.bukkit.sleep.messaging.Message;
 
+/**
+ * message pattern string pulled from a {@link org.bukkit.configuration.ConfigurationSection ConfigurationSection}
+ * (allows for easy user customization using a config.yml file)
+ *
+ * @author EdGruberman (ed@rjump.com)
+ * @version 1.0.0
+ */
 public class ConfigurationMessage extends Message {
 
-    // ---- Static Factory ----
+    private static final long serialVersionUID = 1L;
 
-    public static List<? extends Message> create(final ConfigurationSection base, final String path, final Object... args) {
+    // ---- static factory ----
+
+    /** multiple messages will be created, each with the same arguments, if the configuration entry is a list of strings */
+    public static List<? extends Message> create(final ConfigurationSection base, final String path, final Object... arguments) {
         if (!base.isList(path))
-            return Arrays.asList(new ConfigurationMessage(base, path, args));
+            return Arrays.asList(new ConfigurationMessage(base, path, arguments));
 
         final List<ConfigurationMessage> messages = new ArrayList<ConfigurationMessage>();
         for (final String item : base.getStringList(path))
-            messages.add(new ConfigurationMessage(item, args));
+            messages.add(new ConfigurationMessage(item, arguments));
 
         return messages;
     }
 
 
 
-    // ---- Instance ----
+    // ---- instance ----
 
-    public ConfigurationMessage(final ConfigurationSection base, final String path, final Object... args) {
-        super(base.getString(path), args);
+    /** single string entry in configuration; use {@link #create} to allow entry to be either a single string or string list*/
+    public ConfigurationMessage(final ConfigurationSection base, final String path, final Object... arguments) {
+        super(base.getString(path), arguments);
     }
 
-    protected ConfigurationMessage(final String format, final Object... args) {
-        super(format, args);
+    /** used internally to pass a single string from a list as an individual message pattern */
+    protected ConfigurationMessage(final String pattern, final Object... arguments) {
+        super(pattern, arguments);
     }
 
 }

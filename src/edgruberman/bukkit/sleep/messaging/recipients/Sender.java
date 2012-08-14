@@ -9,6 +9,12 @@ import edgruberman.bukkit.sleep.messaging.Message;
 import edgruberman.bukkit.sleep.messaging.Recipients;
 import edgruberman.bukkit.sleep.messaging.messages.Confirmation;
 
+/**
+ * individual {@link org.bukkit.command.CommandSender CommandSender}
+ *
+ * @author EdGruberman (ed@rjump.com)
+ * @version 1.0.0
+ */
 public class Sender implements Recipients {
 
     protected CommandSender target;
@@ -18,24 +24,16 @@ public class Sender implements Recipients {
     }
 
     @Override
-    public Confirmation send(final Message message) {
-        final String formatted = message.formatFor(this.target);
+    public Confirmation deliver(final Message message) {
+        final String formatted = message.format(this.target).toString();
         this.target.sendMessage(formatted);
-        return new SenderConfirmation(formatted);
+        return new Confirmation(this.level(), 1
+                , "[SEND@{1}] {0}", message, Sender.this.target.getName());
     }
 
-    private Level getLevel() {
+    /** console messages will be FINEST to allow for easier filtering of messages that will already appear in console */
+    private Level level() {
         return (this.target instanceof Player ? Level.FINER : Level.FINEST);
-    }
-
-
-
-    public class SenderConfirmation extends Confirmation {
-
-        public SenderConfirmation(final String message) {
-            super(Sender.this.getLevel(), 1, "[SEND@%2$s] %1$s", message, Sender.this.target.getName());
-        }
-
     }
 
 }

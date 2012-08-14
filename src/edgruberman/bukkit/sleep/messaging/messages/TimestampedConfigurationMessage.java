@@ -2,47 +2,53 @@ package edgruberman.bukkit.sleep.messaging.messages;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
+import java.util.Collections;
 import java.util.List;
-import java.util.TimeZone;
 
-import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 
 import edgruberman.bukkit.sleep.messaging.Message;
 
-public class TimestampedConfigurationMessage extends ConfigurationMessage {
+/**
+ * message pattern string pulled from a {@link org.bukkit.configuration.ConfigurationSection ConfigurationSection}
+ * (allows for easy user customization using a config.yml file)
+ * and prepends a timestamp argument who's time zone is customized for target
+ *
+ * @author EdGruberman (ed@rjump.com)
+ * @version 1.0.0
+ */
+public class TimestampedConfigurationMessage extends TimestampedMessage {
 
-    // ---- Static Factory ----
+    private static final long serialVersionUID = 1L;
 
-    public static List<? extends Message> create(final ConfigurationSection base, final String path, final Object... args) {
-        if (!base.isList(path))
-            return Arrays.asList(new TimestampedConfigurationMessage(base, path, args));
+    // ---- static factory ----
+
+    /** multiple messages will be created, each with the same arguments, if the configuration entry is a list of strings */
+    public static List<? extends Message> create(final ConfigurationSection base, final String path, final Object... arguments) {
+        if (base.isString(path))
+            return Arrays.asList(new TimestampedConfigurationMessage(base, path, arguments));
+
+        if (!base.isList(path)) return Collections.emptyList();
 
         final List<TimestampedConfigurationMessage> messages = new ArrayList<TimestampedConfigurationMessage>();
         for (final String item : base.getStringList(path))
-            messages.add(new TimestampedConfigurationMessage(item, args));
+            messages.add(new TimestampedConfigurationMessage(item, arguments));
 
         return messages;
     }
 
 
 
-    // ---- Instance ----
+    // ---- instance ----
 
-    public TimestampedConfigurationMessage(final ConfigurationSection base, final String path, final Object... args) {
-        super(base, path, TimestampedMessage.prependTimestamp(args));
+    /** single string entry in configuration; use {@link #create} to allow entry to be either a single string or string list */
+    public TimestampedConfigurationMessage(final ConfigurationSection base, final String path, final Object... arguments) {
+        super(base.getString(path), arguments);
     }
 
-    protected TimestampedConfigurationMessage(final String format, final Object... args) {
-        super(format, TimestampedMessage.prependTimestamp(args));
-    }
-
-    @Override
-    public String formatFor(final CommandSender target) {
-        final TimeZone timeZone = TimestampedMessage.getTimeZone(target);
-        ((Calendar) this.args[0]).setTimeZone(timeZone);
-        return super.formatFor(target);
+    /** used internally to pass a single string from a list as an individual message pattern */
+    protected TimestampedConfigurationMessage(final String pattern, final Object... arguments) {
+        super(pattern, arguments);
     }
 
 }

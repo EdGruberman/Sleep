@@ -1,26 +1,45 @@
 package edgruberman.bukkit.sleep.messaging;
 
+import java.text.MessageFormat;
+
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 
-/** message format string and arguments that are able to be customized for each target */
-public class Message {
+/**
+ * {@link java.text.MessageFormat MessageFormat} with customizable arguments for each target
+ *
+ * @author EdGruberman (ed@rjump.com)
+ * @version 1.0.0
+ */
+public class Message extends MessageFormat {
 
-    protected final String format;
-    protected final Object[] args;
+    private static final long serialVersionUID = 1L;
 
-    public Message(final String format, final Object... args) {
-        this.format = format;
-        this.args = args;
+    /** original pattern */
+    protected String original;
+
+    /** arguments to format pattern with upon delivery */
+    protected Object[] arguments;
+
+    /**
+     * @param pattern {@link java.text.MessageFormat MessageFormat} pattern
+     * @param arguments pattern arguments
+     */
+    public Message(final String pattern, final Object... arguments) {
+        super(pattern);
+        this.original = pattern;
+        this.arguments = arguments;
     }
 
-    public String formatFor(final CommandSender target) {
-        return String.format(this.format, this.args);
+    /** resolve arguments and apply to pattern adjusting as necessary for target */
+    public StringBuffer format(final CommandSender target) {
+        return this.format(this.arguments, new StringBuffer(), null);
     }
 
+    /** format message for sending to a generic target */
     @Override
     public String toString() {
-        return this.formatFor(Bukkit.getConsoleSender());
+        return this.format(Bukkit.getConsoleSender()).toString();
     }
 
 }
