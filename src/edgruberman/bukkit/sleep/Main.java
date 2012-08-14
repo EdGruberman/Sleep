@@ -31,7 +31,7 @@ import edgruberman.bukkit.sleep.messaging.couriers.TimestampedConfigurationCouri
 
 public final class Main extends JavaPlugin {
 
-    private static final Version MINIMUM_CONFIGURATION = new Version("6.0.0b64");
+    private static final Version MINIMUM_CONFIGURATION = new Version("6.0.0b65");
 
     public static ConfigurationCourier courier;
     public static Plugin plugin;
