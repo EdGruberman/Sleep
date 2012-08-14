@@ -117,7 +117,6 @@ public final class State implements Observer, Listener {
             this.tracker.register(this, PlayerActive.class);
             this.tracker.setIdleThreshold(config.getLong("idle.duration") * 1000);
             this.tracker.register(this, PlayerIdle.class);
-            this.tracker.resetIdle(this.world.getPlayers());
         } else {
             this.tracker = null;
         }
@@ -306,14 +305,11 @@ public final class State implements Observer, Listener {
             if (!this.isForcingSleep) return;
 
             // Generate forced sleep notification
-            String type = "forceConfig";
-            String name = this.plugin.getName();
-            if (this.sleepForcer != null) {
-                type = "forceCommand";
-                name = this.sleepForcer.getName();
-                if (this.sleepForcer instanceof Player) name = ((Player) this.sleepForcer).getDisplayName();
+            if (this.sleepForcer == null) {
+                Main.courier.world(leaver.getWorld(), "forceConfig", this.plugin.getName());
+            } else {
+                Main.courier.world(leaver.getWorld(), "forceCommand", (this.sleepForcer instanceof Player ? ((Player) this.sleepForcer).getDisplayName() : this.sleepForcer.getName()));
             }
-            Main.courier.world(leaver.getWorld(), type, name, this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible().size());
 
             // Allow activity to again cancel idle status in order to remove ignored sleep
             this.sleepForcer = null;

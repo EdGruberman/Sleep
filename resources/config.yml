@@ -48,27 +48,26 @@ reward:
 sleep: true
 bedNoticeLimit: 10 # Seconds (bedEnter and bedLeave only)
 messages:
-    bedEnter: '§8{0,time,HH:mm:ss} {1} §dentered bed§8 (need §d+{2}§8 to sleep)' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
-    bedLeave: '§8{0,time,HH:mm:ss} {1} §5left bed§8 (need §d+{2}§8 to sleep; {3} in bed)' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
-    interrupt: '§8{0,time,HH:mm:ss} {1} §5interrupted sleep§8 (need §d+{2}§8 to sleep)' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
-    forceCommand: '§8{0,time,HH:mm:ss} {1}§8 forced the sun to rise' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
-    forceConfig: '§8{0,time,HH:mm:ss} {1} has forced the sun to rise' # 1 = Plugin Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
-    status: '-> {3} player(s) in bed (need §d+{2}§8 to sleep)' # 1 = Plugin Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
-    temporaryBedInstruction: '-> §9To revert to previous spawn, destroy this bed soon' # 1 = Duration Until Commit
-    temporaryBedReverted: '-> §aReverted spawn to previous bed'
-    worldNotFound: '-> World §enot found' # 1 = World
-    sleepNotManaged: '-> Sleep state for [{1}] is §enot managed' # 1 = World
+    bedEnter: '§8{0,time,HH:mm:ss} {1} entered bed ({2,choice,0#everyone is §5asleep§8|1#§dneed +{2} to sleep§8})' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
+    bedLeave: '§8{0,time,HH:mm:ss} {1} {3,choice,0#|1#§d}left bed§8 ({3,choice,0#§5no one in bed§8|1#§dneed +{2} to sleep§8})' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
+    interrupt: '§8{0,time,HH:mm:ss} {1} §5interrupted sleep§8 (§dneed +{2}§8 to sleep)' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
+    forceCommand: '§8{0,time,HH:mm:ss} {1}§8 forced the sun to rise' # 1 = Player Display Name
+    forceConfig: '§8{0,time,HH:mm:ss} {1} has forced the sun to rise' # 1 = Plugin Name
+    status: '-> {3} player(s) in bed ({2,choice,0#everyone is asleep|1#§dneed +{2}§8 to sleep})' # 1 = Plugin Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
+    temporaryBedInstruction: '-> §8To §5revert§8 to previous spawn, §5destroy§8 this bed soon' # 1 = Duration Until Commit
+    temporaryBedReverted: '-> §2Reverted§8 spawn to previous bed'
+    worldNotFound: '-> World §enot found: {1}' # 1 = World
+    sleepNotManaged: '-> Sleep state is §enot managed for {1}' # 1 = World
     sleepDisabled: '-> Sleep is §edisabled§r for {1}' # 1 = World
     requireSleeper: '-> §eNeed at least one§r player in bed to force sleep'
-    forceSuccess: '-> §aForcing§r sleep in [{1}]...' # 1 = World
+    forceSuccess: '-> §aForcing§r sleep in {1}...' # 1 = World
     noneInBed: '-> No one is currently in bed'
     notSleeping:
-        format: '-> {1} players §5not in bed§r: {2}' # 1 = Player Count Not Sleeping, 2 = Player Display Names Not In Bed
+        format: '-> {1,choice,0#Everyone is asleep|1#§d{1} players§r not in bed: {2}}' # 1 = Player Count Not Sleeping, 2 = Player Display Names Not In Bed
         +player: '{0}§r' # 0 = Player Display Name
         +delimiter: ', '
-    statusDetail: '-> Sleep needs §d{2} more§r in bed ({3} in bed out of {4} possible = {1}%)' # 1 = Percent In Bed, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
-    commandDisabled: '-> Command §cdisabled' # 1 = Command , 2 = Label
-    requiresPlayer: '-> Command cancelled when §cnot in-game player'
+    statusDetail: '-> {1,choice,0#Sleep §dneeds {2} more§r in bed: |100#}{3} in bed / {4} possible = {1}%' # 1 = Percent In Bed, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
+    commandDisabled: '-> {2} command is currently §cdisabled' # 1 = Command , 2 = Label
     requiresArgument: '-> Required §cargument missing§r: {1}' # 1 = Argument
     reload: '-> {1} plugin §2reloaded' # 1 = Plugin Name
 awayBack:
