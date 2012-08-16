@@ -25,7 +25,7 @@ public class Force implements CommandExecutor {
             return false;
         }
 
-        final World world = Sleep.parseWorld(sender, args);
+        final World world = Status.parseWorld(sender, args);
         if (world == null) {
             Main.courier.send(sender, "worldNotFound", args[0]);
             return false;

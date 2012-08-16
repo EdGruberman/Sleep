@@ -17,11 +17,11 @@ import edgruberman.bukkit.sleep.Main;
 import edgruberman.bukkit.sleep.Somnologist;
 import edgruberman.bukkit.sleep.State;
 
-public class Sleep implements CommandExecutor {
+public class Status implements CommandExecutor {
 
     private final Somnologist somnologist;
 
-    public Sleep(final Somnologist somnologist) {
+    public Status(final Somnologist somnologist) {
         this.somnologist = somnologist;
     }
 
@@ -33,7 +33,7 @@ public class Sleep implements CommandExecutor {
             return false;
         }
 
-        final World world = Sleep.parseWorld(sender, args);
+        final World world = Status.parseWorld(sender, args);
         if (world == null) {
             Main.courier.send(sender, "worldNotFound", args[0]);
             return false;
@@ -65,13 +65,13 @@ public class Sleep implements CommandExecutor {
             for (final Player player : notSleeping)
                 names.add(Main.courier.format("notSleeping.+player", player.getDisplayName()));
 
-            Main.courier.send(sender, "notSleeping.format", names.size(), Sleep.join(names, Main.courier.format("notSleeping.+delimiter")));
+            Main.courier.send(sender, "notSleeping.format", names.size(), Status.join(names, Main.courier.format("notSleeping.+delimiter")));
         }
 
         final int count = state.playersInBed.size();
         final int possible = state.sleepersPossible().size();
         final int percent = (int) Math.floor((double) count / (possible > 0 ? possible : 1) * 100);
-        Main.courier.send(sender, "statusDetail", percent, state.sleepersNeeded(), count, possible);
+        Main.courier.send(sender, "status", percent, state.sleepersNeeded(), count, possible);
         return true;
     }
 

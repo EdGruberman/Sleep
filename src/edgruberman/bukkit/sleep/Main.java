@@ -25,13 +25,13 @@ import edgruberman.bukkit.playeractivity.commands.Back;
 import edgruberman.bukkit.playeractivity.consumers.AwayBack;
 import edgruberman.bukkit.sleep.commands.Force;
 import edgruberman.bukkit.sleep.commands.Reload;
-import edgruberman.bukkit.sleep.commands.Sleep;
+import edgruberman.bukkit.sleep.commands.Status;
 import edgruberman.bukkit.sleep.messaging.couriers.ConfigurationCourier;
 import edgruberman.bukkit.sleep.messaging.couriers.TimestampedConfigurationCourier;
 
 public final class Main extends JavaPlugin {
 
-    private static final Version MINIMUM_CONFIGURATION = new Version("6.0.0b65");
+    private static final Version MINIMUM_CONFIGURATION = new Version("6.0.0b68");
 
     public static ConfigurationCourier courier;
     public static Plugin plugin;
@@ -66,7 +66,7 @@ public final class Main extends JavaPlugin {
 
         this.somnologist = new Somnologist(this, this.getConfig().getStringList("excluded"));
 
-        this.getCommand("sleep:sleep").setExecutor(new Sleep(this.somnologist));
+        this.getCommand("sleep:sleep").setExecutor(new Status(this.somnologist));
         this.getCommand("sleep:force").setExecutor(new Force(this.somnologist));
         this.getCommand("sleep:reload").setExecutor(new Reload(this));
     }
