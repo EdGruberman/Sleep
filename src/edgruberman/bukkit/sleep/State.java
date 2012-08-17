@@ -224,8 +224,8 @@ public final class State implements Observer, Listener {
         }
 
         // notify of interruption when sleep is in progress
-        if (this.hasGeneratedEnterBed)
-            Main.courier.world(joiner.getWorld(), "join", joiner.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible().size());
+        if (this.affectsSleep(joiner))
+            Main.courier.world(joiner.getWorld(), "add", joiner.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible().size());
     }
 
     /** process a player entering a bed */
@@ -242,7 +242,7 @@ public final class State implements Observer, Listener {
 
         if (System.currentTimeMillis() > (this.lastBedEnterMessage.get(enterer) + (this.bedNoticeLimit * 1000))) {
             this.lastBedEnterMessage.put(enterer, System.currentTimeMillis());
-            Main.courier.world(enterer.getWorld(), "enter", enterer.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible().size());
+            if (this.affectsSleep(enterer)) Main.courier.world(enterer.getWorld(), "enter", enterer.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible().size());
             this.hasGeneratedEnterBed = true;
         }
 
@@ -266,7 +266,7 @@ public final class State implements Observer, Listener {
             // Night time bed leaves only occur because of a manual action
             if (System.currentTimeMillis() > (this.lastBedLeaveMessage.get(leaver) + (this.bedNoticeLimit * 1000))) {
                 this.lastBedLeaveMessage.put(leaver, System.currentTimeMillis());
-                Main.courier.world(leaver.getWorld(), "leave", leaver.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible().size());
+                if (this.affectsSleep(leaver)) Main.courier.world(leaver.getWorld(), "leave", leaver.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible().size());
             }
 
             // Clear generated notification tracking if no one is left in bed
@@ -316,6 +316,9 @@ public final class State implements Observer, Listener {
         if (this.playersInBed.size() == 0) return;
 
         this.plugin.getLogger().finest("[" + this.world.getName() + "] Remove: " + leaver.getName());
+        if (this.affectsSleep(leaver))
+            Main.courier.world(leaver.getWorld(), "remove", leaver.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible().size());
+
         this.lull();
     }
 
@@ -328,7 +331,7 @@ public final class State implements Observer, Listener {
 
             this.playersIdle.add(idle.player);
 
-            if (this.hasGeneratedEnterBed && !idle.player.isSleepingIgnored() && !this.isForcingSleep && !this.playersIgnored.contains(idle.player) && !this.playersAway.contains(idle.player) && !this.playersInBed.contains(idle.player))
+            if (this.affectsSleep(idle.player))
                 Main.courier.world(this.world, "idle", idle.player.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible().size());
 
             this.lull();
@@ -355,10 +358,17 @@ public final class State implements Observer, Listener {
         this.setSleepingIgnored(activity.player, false, "Activity: " + activity.event.getSimpleName());
 
         // notify of sleepers needed change
-        if (this.hasGeneratedEnterBed)
+        if (this.affectsSleep(activity.player))
             Main.courier.world(this.world, "active", activity.player.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible().size());
 
         this.lull(); // necessary in case player is idle before a natural sleep that would have caused a force
+    }
+
+    public boolean affectsSleep(final Player player) {
+        if (!this.hasGeneratedEnterBed || this.isForcingSleep) return false;
+
+        return !(player.isSleepingIgnored() || this.playersIgnored.contains(player)
+                || this.playersAway.contains(player) || this.playersInBed.contains(player));
     }
 
     public void setAway(final Player player) {

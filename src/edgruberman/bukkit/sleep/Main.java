@@ -31,7 +31,7 @@ import edgruberman.bukkit.sleep.messaging.Courier;
 
 public final class Main extends JavaPlugin {
 
-    private static final Version MINIMUM_CONFIGURATION = new Version("6.0.0b68");
+    private static final Version MINIMUM_CONFIGURATION = new Version("6.0.0b72");
 
     public static Courier courier;
     public static Plugin plugin;

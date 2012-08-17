@@ -50,7 +50,8 @@ bedNoticeLimit: 10 # Seconds (enter and leave only)
 messages:
     enter: '§8{0,time,HH:mm:ss} {1} entered bed ({2,choice,0#§5everyone is asleep§8|1#§dneed +{2} to sleep§8})' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
     leave: '§8{0,time,HH:mm:ss} {1} left bed ({3,choice,0#§5no one in bed§8|1#§dneed +{2} to sleep§8})' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
-    join: '§8{0,time,HH:mm:ss} {1} joined the world (§dneed +{2}§8 to sleep)' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
+    add: '§8{0,time,HH:mm:ss} {1} joined the world (§dneed +{2}§8 to sleep)' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
+    remove: '§8{0,time,HH:mm:ss} {1} left the world ({2,choice,0#§5everyone is asleep§8|1#§dneed +{2} to sleep§8})' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
     idle: '§8{0,time,HH:mm:ss} {1} is now idle ({2,choice,0#§5everyone is asleep§8|1#§dneed +{2} to sleep§8})' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
     active: '§8{0,time,HH:mm:ss} {1} is no longer idle (§dneed +{2}§8 to sleep)' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
     forceCommand: '§8{0,time,HH:mm:ss} {1}§8 forced the sun to rise' # 1 = Player Display Name
