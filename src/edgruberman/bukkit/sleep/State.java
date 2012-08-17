@@ -242,7 +242,7 @@ public final class State implements Observer, Listener {
 
         if (System.currentTimeMillis() > (this.lastBedEnterMessage.get(enterer) + (this.bedNoticeLimit * 1000))) {
             this.lastBedEnterMessage.put(enterer, System.currentTimeMillis());
-            if (this.affectsSleep(enterer)) Main.courier.world(enterer.getWorld(), "enter", enterer.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible().size());
+            Main.courier.world(enterer.getWorld(), "enter", enterer.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible().size());
             this.hasGeneratedEnterBed = true;
         }
 
@@ -266,7 +266,7 @@ public final class State implements Observer, Listener {
             // Night time bed leaves only occur because of a manual action
             if (System.currentTimeMillis() > (this.lastBedLeaveMessage.get(leaver) + (this.bedNoticeLimit * 1000))) {
                 this.lastBedLeaveMessage.put(leaver, System.currentTimeMillis());
-                if (this.affectsSleep(leaver)) Main.courier.world(leaver.getWorld(), "leave", leaver.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible().size());
+                Main.courier.world(leaver.getWorld(), "leave", leaver.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible().size());
             }
 
             // Clear generated notification tracking if no one is left in bed

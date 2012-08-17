@@ -59,7 +59,7 @@ messages:
     temporaryBedInstruction: '-> §8To §5revert§8 to previous spawn, §5destroy§8 this bed soon' # 1 = Duration Until Commit
     temporaryBedReverted: '-> §2Reverted§8 spawn to previous bed'
     worldNotFound: '-> World §enot found: {1}' # 1 = World
-    sleepNotManaged: '-> Sleep state is §enot managed for {1}' # 1 = World
+    sleepNotManaged: '-> Sleep state is §enot managed§r for {1}' # 1 = World
     sleepDisabled: '-> Sleep is §edisabled§r for {1}' # 1 = World
     requireSleeper: '-> §eNeed at least one§r player in bed to force sleep'
     forceSuccess: '-> §aForcing§r sleep in {1}...' # 1 = World
