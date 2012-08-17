@@ -328,7 +328,7 @@ public final class State implements Observer, Listener {
 
             this.playersIdle.add(idle.player);
 
-            if (this.hasGeneratedEnterBed)
+            if (this.hasGeneratedEnterBed && !idle.player.isSleepingIgnored() && !this.isForcingSleep && !this.playersIgnored.contains(idle.player) && !this.playersAway.contains(idle.player) && !this.playersInBed.contains(idle.player))
                 Main.courier.world(this.world, "idle", idle.player.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible().size());
 
             this.lull();
