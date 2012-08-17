@@ -26,14 +26,14 @@ import edgruberman.bukkit.playeractivity.consumers.AwayBack;
 import edgruberman.bukkit.sleep.commands.Force;
 import edgruberman.bukkit.sleep.commands.Reload;
 import edgruberman.bukkit.sleep.commands.Status;
-import edgruberman.bukkit.sleep.messaging.couriers.ConfigurationCourier;
-import edgruberman.bukkit.sleep.messaging.couriers.TimestampedConfigurationCourier;
+import edgruberman.bukkit.sleep.messaging.ConfigurationCourier;
+import edgruberman.bukkit.sleep.messaging.Courier;
 
 public final class Main extends JavaPlugin {
 
     private static final Version MINIMUM_CONFIGURATION = new Version("6.0.0b68");
 
-    public static ConfigurationCourier courier;
+    public static Courier courier;
     public static Plugin plugin;
 
     private Somnologist somnologist = null;
@@ -55,7 +55,7 @@ public final class Main extends JavaPlugin {
     public void onEnable() {
         this.reloadConfig();
         Main.plugin = this;
-        Main.courier = new TimestampedConfigurationCourier(this, "messages");
+        Main.courier = ConfigurationCourier.Factory.create(this).setBase("messages").build();
 
         if (this.getConfig().getBoolean("awayBack.enabled")) {
             final edgruberman.bukkit.playeractivity.messaging.couriers.ConfigurationCourier courier = new edgruberman.bukkit.playeractivity.messaging.couriers.TimestampedConfigurationCourier(this, "awayBack.messages");
