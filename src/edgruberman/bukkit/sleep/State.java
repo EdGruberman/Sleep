@@ -356,7 +356,7 @@ public final class State implements Observer, Listener {
 
         // notify of sleepers needed change
         if (this.hasGeneratedEnterBed)
-            Main.courier.world(this.world, "idle", activity.player.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible().size());
+            Main.courier.world(this.world, "active", activity.player.getDisplayName(), this.sleepersNeeded(), this.playersInBed.size(), this.sleepersPossible().size());
 
         this.lull(); // necessary in case player is idle before a natural sleep that would have caused a force
     }
