@@ -7,7 +7,7 @@ idle:
     enabled: true
     duration: 60 # seconds
     activity:
-        - PlayerMoveEvent
+        - PlayerMoveBlockEvent
         - AsyncPlayerChatEvent
         - PlayerInteractEvent
         - PlayerDropItemEvent
@@ -18,7 +18,6 @@ idle:
         - EnchantItemEvent
         - PrepareItemEnchantEvent
         - InventoryClickEvent
-    awayIdle: false # requires awayBack.enabled: true
 temporaryBed:
     enabled: false
     duration: 500 # seconds (<1 day cycle)
@@ -45,17 +44,19 @@ reward:
         quantity: 3
         experience: 5
         factor: 0.5
+away: false # requires PlayerActivity plugin
 sleep: true
 bedNoticeLimit: 10 # Seconds (enter and leave only)
 messages:
-    enter: '§8{0,time,HH:mm:ss} {1} entered bed ({2,choice,0#§5everyone is asleep§8|1#§dneed +{2} to sleep§8})' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
+    enter: '§8{0,time,HH:mm:ss} {1} entered bed ({2,choice,0#§5no more needed to sleep§8|1#§dneed +{2} to sleep§8})' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
     leave: '§8{0,time,HH:mm:ss} {1} left bed ({3,choice,0#§5no one in bed§8|1#§dneed +{2} to sleep§8})' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
-    add: '§8{0,time,HH:mm:ss} {1} joined the world (§dneed +{2}§8 to sleep)' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
-    remove: '§8{0,time,HH:mm:ss} {1} left the world ({2,choice,0#§5everyone is asleep§8|1#§dneed +{2} to sleep§8})' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
-    idle: '§8{0,time,HH:mm:ss} {1} is now idle ({2,choice,0#§5everyone is asleep§8|1#§dneed +{2} to sleep§8})' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
-    active: '§8{0,time,HH:mm:ss} {1} is no longer idle (§dneed +{2}§8 to sleep)' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
-    forceCommand: '§8{0,time,HH:mm:ss} {1}§8 forced the sun to rise' # 1 = Player Display Name
-    forceConfig: '§8{0,time,HH:mm:ss} {1} has forced the sun to rise' # 1 = Plugin Name
+    add: '§8{0,time,HH:mm:ss} {1} joined the world (§dneed +{2} to sleep§8)' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
+    remove: '§8{0,time,HH:mm:ss} {1} left the world ({2,choice,0#§5no more needed to sleep§8|1#§dneed +{2} to sleep§8})' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
+    idle: '§8{0,time,HH:mm:ss} {1} is now idle ({2,choice,0#§5no more needed to sleep§8|1#§dneed +{2} to sleep§8})' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
+    active: '§8{0,time,HH:mm:ss} {1} is no longer idle (§dneed +{2}to sleep§8)' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
+    away: '§8{0,time,HH:mm:ss} {1} is now away ({2,choice,0#§5no more needed to sleep§8|1#§dneed +{2} to sleep§8})' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
+    back: '§8{0,time,HH:mm:ss} {1} is no longer away (§dneed +{2} to sleep§8)' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
+    force: '§8{0,time,HH:mm:ss} {1}§8 is §5forcing§8 the sun to rise' # 1 = Player Display Name / Plugin Name
     temporaryBedInstruction: '-> §8To §5revert§8 to previous spawn, §5destroy§8 this bed soon' # 1 = Duration Until Commit
     temporaryBedReverted: '-> §2Reverted§8 spawn to previous bed'
     worldNotFound: '-> World §enot found: {1}' # 1 = World
@@ -72,16 +73,4 @@ messages:
     commandDisabled: '-> {2} command is currently §cdisabled' # 1 = Command, 2 = Label
     requiresArgument: '-> Required §cargument missing§r: {1}' # 1 = Argument
     reload: '-> {1} plugin §2reloaded' # 1 = Plugin Name
-awayBack:
-    enabled: false
-    activity:
-        - AsyncPlayerChatEvent
-        - PlayerBedEnterEvent
-        - PlayerBedLeaveEvent
-    messages:
-        awayAlready: '-> You have §ealready been away§r {1} for {2}' # 1 = Duration, 1 = Reason
-        +awayDefaultReason: 'no reason'
-        awayBroadcast: '§8{0,time,HH:mm:ss} {1}§8 is §3away§8 for §7{2}' # 1 = Player Display Name, 2 = Away Reason
-        backBroadcast: '§8{0,time,HH:mm:ss} {1}§8 is §6back§8 after §7{2}§8 for §7{3}' # 1 = Player Display Name, 2 = Away Reason, 3 = Away Duration
-        backNotAway: '-> You are §enot currently away'
 version: @VERSION@

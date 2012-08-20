@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.World.Environment;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -21,36 +22,29 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.event.world.WorldUnloadEvent;
-import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.plugin.Plugin;
 
 import edgruberman.bukkit.playeractivity.consumers.PlayerAway;
 import edgruberman.bukkit.playeractivity.consumers.PlayerBack;
 import edgruberman.bukkit.sleep.rewards.Reward;
 
-/**
- * Sleep state management
- */
+/** sleep state management */
 public final class Somnologist implements Listener {
 
-    private final JavaPlugin plugin;
+    private final Plugin plugin;
     private final List<String> excluded = new ArrayList<String>();
     private final Map<World, State> states = new HashMap<World, State>();
 
-    Somnologist(final JavaPlugin plugin, final List<String> excluded) {
+    Somnologist(final Plugin plugin, final List<String> excluded) {
         this.plugin = plugin;
         if (excluded != null) this.excluded.addAll(excluded);
         if (this.excluded.size() > 0 ) this.plugin.getLogger().config("Excluded Worlds: " + excluded);
 
         for (final World world : this.plugin.getServer().getWorlds()) this.loadState(world);
-        plugin.getServer().getPluginManager().registerEvents(this, plugin);
+        Bukkit.getPluginManager().registerEvents(this, plugin);
     }
 
-    /**
-     * Create state based on configuration
-     *
-     * @param world where sleep state applies to
-     * @return initial sleep state
-     */
+    /** create state based on configuration */
     State loadState(final World world) {
         if (world.getEnvironment() != Environment.NORMAL) {
             this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] will not be tracked because its environment is " + world.getEnvironment().toString());
@@ -67,13 +61,13 @@ public final class Somnologist implements Listener {
         config.options().copyDefaults(true);
 
         final State state = new State(this.plugin, world, config);
-        this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Sleep Enabled: " + state.isSleepEnabled);
+        this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Sleep Enabled: " + state.sleep);
         this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Forced Sleep Minimum Count: " + state.forceCount);
         this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Forced Sleep Minimum Percent: " + state.forcePercent);
-        this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Away Idle: " + (state.awayBack != null));
-        if (state.tracker != null) {
-            this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Idle Threshold (seconds): " + (state.tracker.getIdleThreshold() / 1000));
-            this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Monitored Activity: " + state.tracker.getInterpreters().size() + " events");
+        this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Away Sleep: " + state.away);
+        if (state.away) {
+            this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Idle Threshold (seconds): " + (state.idleMonitor.tracker.getIdleThreshold() / 1000));
+            this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Monitored Activity: " + state.idleMonitor.tracker.getInterpreters().size() + " events");
         }
         for (final Reward reward : state.rewards) this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Reward: " + reward.toString());
         if (state.temporaryBed != null) this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Temporary Beds Enabled");
@@ -86,9 +80,7 @@ public final class Somnologist implements Listener {
         return this.states.get(world);
     }
 
-    /**
-     * Disable sleep state tracking for all worlds
-     */
+    /** disable sleep state tracking for all worlds */
     void clear() {
         HandlerList.unregisterAll(this);
 
@@ -101,15 +93,13 @@ public final class Somnologist implements Listener {
         this.excluded.clear();
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
+    @EventHandler
     public void onWorldLoad(final WorldLoadEvent event) {
         this.loadState(event.getWorld());
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
+    @EventHandler(ignoreCancelled = true)
     public void onWorldUnload(final WorldUnloadEvent event) {
-        if (event.isCancelled()) return;
-
         final State state = this.states.get(event.getWorld());
         if (state == null) return;
 
@@ -117,7 +107,7 @@ public final class Somnologist implements Listener {
         this.states.remove(state);
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
+    @EventHandler
     public void onPlayerJoin(final PlayerJoinEvent event) {
         // Ignore for untracked world sleep states
         final State state = this.states.get(event.getPlayer().getWorld());
@@ -126,7 +116,7 @@ public final class Somnologist implements Listener {
         state.add(event.getPlayer());
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
+    @EventHandler
     public void onPlayerChangedWorld(final PlayerChangedWorldEvent event) {
         // Notify tracked sleep states of player moving between them
         final State from = this.states.get(event.getFrom());
@@ -136,7 +126,7 @@ public final class Somnologist implements Listener {
         if (to != null) to.add(event.getPlayer());
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
+    @EventHandler
     public void onPlayerQuit(final PlayerQuitEvent event) {
         // Ignore for untracked world sleep states
         final State state = this.states.get(event.getPlayer().getWorld());
@@ -145,33 +135,34 @@ public final class Somnologist implements Listener {
         state.remove(event.getPlayer());
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerBedEnter(final PlayerBedEnterEvent event) {
-        if (event.isCancelled()) return;
-
         // Ignore for untracked world sleep states
         final State state = this.states.get(event.getPlayer().getWorld());
         if (state == null) return;
 
-        state.bedEntered(event.getPlayer());
+        state.enter(event.getPlayer());
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
+    @EventHandler
     public void onPlayerBedLeave(final PlayerBedLeaveEvent event) {
         // Ignore for untracked world sleep states
         final State state = this.states.get(event.getPlayer().getWorld());
         if (state == null) return;
 
-        state.bedLeft(event.getPlayer(), event.getBed());
+        state.leave(event.getPlayer(), event.getBed());
     }
 
     @EventHandler
     public void onPlayerAway(final PlayerAway event) {
-        // Ignore for untracked world sleep states
+        // ignore for untracked world sleep states
         final State state = this.states.get(event.getPlayer().getWorld());
         if (state == null) return;
 
-        state.setAway(event.getPlayer());
+        // ignore for worlds that do not enable away sleep
+        if (!state.away) return;
+
+        state.ignore(event.getPlayer(), true, "away");
     }
 
     @EventHandler
@@ -180,7 +171,10 @@ public final class Somnologist implements Listener {
         final State state = this.states.get(event.getPlayer().getWorld());
         if (state == null) return;
 
-        state.setBack(event.getPlayer());
+        // ignore for worlds that do not enable away sleep
+        if (!state.away) return;
+
+        state.ignore(event.getPlayer(), false, "back");
     }
 
 }

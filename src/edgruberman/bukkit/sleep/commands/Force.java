@@ -37,13 +37,13 @@ public class Force implements CommandExecutor {
             return true;
         }
 
-        if (state.playersInBed.size() == 0) {
+        if (state.sleeping.size() == 0) {
             Main.courier.send(sender, "requireSleeper");
             return true;
         }
 
         Main.courier.send(sender, "forceSuccess", world.getName());
-        state.forceSleep(sender);
+        state.force(sender);
         return true;
     }
 

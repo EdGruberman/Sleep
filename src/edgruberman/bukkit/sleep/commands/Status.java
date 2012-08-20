@@ -45,33 +45,29 @@ public class Status implements CommandExecutor {
             return true;
         }
 
-        if (!state.isSleepEnabled) {
+        if (!state.sleep) {
             Main.courier.send(sender, "sleepDisabled", world.getName());
             return true;
         }
 
-        if (state.playersInBed.size() == 0) {
+        if (state.sleeping.size() == 0) {
             Main.courier.send(sender, "noneInBed");
 
         } else {
-            final List<Player> notSleeping = new ArrayList<Player>(state.players);
-            notSleeping.removeAll(state.playersInBed);
-            notSleeping.removeAll(state.playersIdle);
-            notSleeping.removeAll(state.playersAway);
-            notSleeping.removeAll(state.playersIgnored);
-            Collections.sort(notSleeping, new DisplayNameComparator());
+            final List<Player> preventing = state.preventing();
+            Collections.sort(preventing, new DisplayNameComparator());
 
             final List<String> names = new ArrayList<String>();
-            for (final Player player : notSleeping)
+            for (final Player player : preventing)
                 names.add(Main.courier.format("notSleeping.+player", player.getDisplayName()));
 
             Main.courier.send(sender, "notSleeping.format", names.size(), Status.join(names, Main.courier.format("notSleeping.+delimiter")));
         }
 
-        final int count = state.playersInBed.size();
-        final int possible = state.sleepersPossible().size();
-        final int percent = (int) Math.floor((double) count / (possible > 0 ? possible : 1) * 100);
-        Main.courier.send(sender, "status", percent, state.sleepersNeeded(), count, possible);
+        final int sleeping = state.sleeping.size();
+        final int possible = state.possible().size();
+        final int percent = (int) Math.floor((double) sleeping / (possible > 0 ? possible : 1) * 100);
+        Main.courier.send(sender, "status", percent, state.needed(), sleeping, possible);
         return true;
     }
 

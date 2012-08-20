@@ -1,4 +1,4 @@
-package edgruberman.bukkit.sleep;
+package edgruberman.bukkit.sleep.util;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -13,6 +13,7 @@ import java.net.URL;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.PluginClassLoader;
+
 
 public class DependencyManager {
 
@@ -58,6 +59,7 @@ public class DependencyManager {
 
     /**
      * Save a resource embedded in plugin's JAR file to the plugin's data folder
+     * TODO use Plugin.extractResource
      */
     private File extract(final String source) throws IOException {
         final URL src = this.plugin.getClass().getResource("/" + source);

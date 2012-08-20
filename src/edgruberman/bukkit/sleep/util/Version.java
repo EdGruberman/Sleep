@@ -1,4 +1,4 @@
-package edgruberman.bukkit.sleep;
+package edgruberman.bukkit.sleep.util;
 
 
 import java.util.ArrayList;

@@ -15,16 +15,6 @@ commands:
         description: Force sleep for one night
         permission: sleep.force
         usage: /<command>[ <World>]
-    'sleep:away':
-        aliases: [away, afk]
-        description: Configure your status as not active
-        permission: sleep.away
-        usage: /<command>[ <Reason>]
-    'sleep:back':
-        aliases: [back]
-        description: Configure your status as no longer away
-        permission: sleep.back
-        usage: /<command>
     'sleep:reload':
         description: Reload Sleep plugin
         permission: sleep.reload
@@ -42,25 +32,20 @@ permissions:
         default: true
         children:
             sleep.status: true
-            sleep.awayback: true
+            sleep.idle: true
+            sleep.away: true
     sleep.ignore:
         description: 'Will always be ignored for sleep'
+        default: false
+    sleep.idle:
+        description: 'Will be ignored for sleep while idle'
+        default: false
+    sleep.away:
+        description: 'Will be ignored for sleep while away'
         default: false
     sleep.enter.force:
         description: 'Will automatically force sleep when entering bed'
         default: false
-    sleep.away:
-        description: 'Can use sleep:away command'
-        default: false
-    sleep.back:
-        description: 'Can use sleep:back command'
-        default: false
-    sleep.awayback:
-        description: 'Can use sleep:away and sleep:back commands'
-        default: false
-        children:
-            sleep.away: true
-            sleep.back: true
     sleep.status:
         description: 'Can use sleep:status command'
         default: false
