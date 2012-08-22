@@ -1,5 +1,8 @@
 package edgruberman.bukkit.sleep.rewards;
 
+import java.text.MessageFormat;
+import java.util.logging.Level;
+
 import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.EntityType;
@@ -30,13 +33,14 @@ public class ExperienceOrb extends Reward {
             orb.setExperience(this.experience);
         }
 
-        Main.plugin.getLogger().finest("Rewarded " + player.getName() + " by creating " + result
-                + " experience orbs with " + this.experience + " experience each");
+        Main.plugin.getLogger().log(Level.FINEST, "Rewarded {0} by creating {1} experience orbs with {2} experience each"
+                , new Object[] { player.getName(), result, this.experience });
     }
 
     @Override
     public String toString() {
-        return "ExperienceOrb = name: \"" + this.name + "\", quantity: " + this.quantity + ", experience: " + this.experience + ", factor: " + Reward.DECIMAL_FORMAT.format(this.factor);
+        return MessageFormat.format("ExperienceOrb = name: \"{0}\", quantity: {1}, experience: {2}, factor: {3,number,#.##}"
+                , this.name, this.quantity, this.experience, this.factor);
     }
 
 }

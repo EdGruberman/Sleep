@@ -1,5 +1,8 @@
 package edgruberman.bukkit.sleep.rewards;
 
+import java.text.MessageFormat;
+import java.util.logging.Level;
+
 import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
@@ -29,13 +32,14 @@ public class PotionEffect extends Reward {
     public void apply(final Player player, final Block bed, final int participants) {
         final int result = this.factorFor(this.duration * PotionEffect.TICKS_PER_SECOND, participants);
         player.addPotionEffect(this.type.createEffect((int) (result * (1 / this.type.getDurationModifier())), this.amplifier));
-        Main.plugin.getLogger().finest("Rewarded " + player.getName() + " by adding " + this.type.getName()
-                + " potion effect for " + result + " ticks with an amplifier of " + this.amplifier);
+        Main.plugin.getLogger().log(Level.FINEST, "Rewarded {0} by adding {1} potion effect for {2} ticks with an amplifier of {3}"
+                , new Object[] { player.getName(), this.type.getName(), result, this.amplifier });
     }
 
     @Override
     public String toString() {
-        return "PotionEffect = name: \"" + this.name + "\", type: " + this.type.getName() + ", duration: " + this.duration + ", amplifier: " + this.amplifier + ", factor: " + Reward.DECIMAL_FORMAT.format(this.factor);
+        return MessageFormat.format("PotionEffect = name: \"{0}\", type: {1}, duration: {2}, amplifier: {3}, factor: {4,number,#.##}"
+                , this.name, this.type.getName(), this.duration, this.amplifier, this.factor);
     }
 
 }

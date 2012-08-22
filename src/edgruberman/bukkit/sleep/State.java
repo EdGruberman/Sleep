@@ -6,21 +6,20 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
-import org.bukkit.event.HandlerList;
-import org.bukkit.event.Listener;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.Plugin;
 
 import edgruberman.bukkit.sleep.rewards.Reward;
 
 /** sleep state for a specific world */
-public final class State implements Listener {
+public final class State {
 
     /** first world relative time (hours * 1000) associated with ability to enter bed (Derived empirically) */
     private static final long TIME_NIGHT_START = 12540;
@@ -41,6 +40,7 @@ public final class State implements Listener {
     public final boolean away;
     public final IdleMonitor idleMonitor;
 
+    // need to track players in/out of bed and in/out of world as processing will sometimes occur mid-event before player fully completes event
     public final List<Player> sleeping = new ArrayList<Player>();
     public final List<Player> players = new ArrayList<Player>();
 
@@ -61,16 +61,12 @@ public final class State implements Listener {
         this.temporaryBed = ( config.getBoolean("temporaryBed.enabled") ? new TemporaryBed(this, config.getLong("temporaryBed.duration") * State.TICKS_PER_SECOND) : null );
         this.idleMonitor = ( config.getBoolean("idle.enabled") ? new IdleMonitor(this, config.getConfigurationSection("idle")) : null );
 
-        for (final Player player : world.getPlayers()) {
-            this.lastBedEnterMessage.put(player, 0L);
-            this.lastBedLeaveMessage.put(player, 0L);
-            if (this.isAway(player)) this.ignore(player, true, "away");
-            if (player.hasPermission("sleep.ignore")) this.ignore(player, true, "ignore");
-        }
+        for (final Player existing : world.getPlayers()) this.add(existing);
     }
 
     void clear() {
-        HandlerList.unregisterAll(this);
+        for (final Player player : this.world.getPlayers()) this.remove(player);
+
         if (this.idleMonitor != null) this.idleMonitor.clear();
         if (this.temporaryBed != null) this.temporaryBed.clear();
 
@@ -97,7 +93,7 @@ public final class State implements Listener {
 
     /** player joined world */
     void add(final Player joiner) {
-        this.plugin.getLogger().finest("[" + this.world.getName() + "] add: " + joiner.getName());
+        this.plugin.getLogger().log(Level.FINEST, "[{0}] add: {1} (Ignored: {2})", new Object[] { this.world.getName(), joiner.getName(), joiner.isSleepingIgnored() });
         this.players.add(joiner);
 
         this.lastBedEnterMessage.put(joiner, 0L);
@@ -116,7 +112,7 @@ public final class State implements Listener {
 
     /** player entered bed */
     void enter(final Player enterer) {
-        this.plugin.getLogger().finest("[" + this.world.getName() + "] enter: " + enterer.getName());
+        this.plugin.getLogger().log(Level.FINEST, "[{0}] enter: {1} (Ignored: {2})", new Object[] { this.world.getName(), enterer.getName(), enterer.isSleepingIgnored() });
         this.sleeping.add(enterer);
 
         if (!this.sleep) {
@@ -134,18 +130,17 @@ public final class State implements Listener {
 
     /** player left bed */
     void leave(final Player leaver, final Block bed) {
-        this.plugin.getLogger().finest("[" + this.world.getName() + "] leave: " + leaver.getName());
+        this.plugin.getLogger().log(Level.FINEST, "[{0}] leave: {1} (Ignored: {2})", new Object[] { this.world.getName(), leaver.getName(), leaver.isSleepingIgnored() });
         this.sleeping.remove(leaver);
+
+        if (this.isIdle(leaver) || this.isAway(leaver)) leaver.setSleepingIgnored(true);
 
         if (this.isNight()) {
             // night time bed leaves only occur because of a manual action
             if (!leaver.isSleepingIgnored()) this.notify("leave", leaver);
-            if (this.isIdle(leaver) || this.isAway(leaver)) leaver.setSleepingIgnored(true);
             return;
         }
         // morning
-
-        if (this.isIdle(leaver) || this.isAway(leaver)) leaver.setSleepingIgnored(true);
 
         // apply reward
         if (this.participants == null) this.participants = this.sleeping.size() + 1;
@@ -162,16 +157,16 @@ public final class State implements Listener {
     }
 
     /** player left world */
-    void remove(final Player removed) {
-        this.plugin.getLogger().finest("[" + this.world.getName() + "] remove: " + removed.getName());
-        this.players.remove(removed);
-        final boolean wasAsleep = this.sleeping.remove(removed);
+    void remove(final Player remover) {
+        this.plugin.getLogger().log(Level.FINEST, "[{0}] remove: {1} (Ignored: {2})", new Object[] { this.world.getName(), remover.getName(), remover.isSleepingIgnored() });
+        this.players.remove(remover);
+        final boolean wasAsleep = this.sleeping.remove(remover);
 
-        this.lastBedEnterMessage.remove(removed);
-        this.lastBedLeaveMessage.remove(removed);
+        this.lastBedEnterMessage.remove(remover);
+        this.lastBedLeaveMessage.remove(remover);
 
-        if (!removed.isSleepingIgnored() && (wasAsleep || this.sleeping.size() >= 1)) this.notify("remove", removed);
-        removed.setSleepingIgnored(false);
+        if (!remover.isSleepingIgnored() && (wasAsleep || this.sleeping.size() >= 1)) this.notify("remove", remover);
+        remover.setSleepingIgnored(false);
     }
 
     /**
@@ -198,7 +193,7 @@ public final class State implements Listener {
         // don't stop ignoring if any override is still active (TODO consider raising cancellable event)
         if (!ignore) if (this.isIdle(player) || player.hasPermission("sleep.ignore") || this.isAway(player) || this.forcing) return;
 
-        this.plugin.getLogger().finest("[" + this.world.getName() + "] Setting " + player.getName() + " to" + (ignore ? "" : " not") + " ignore sleep (" + key + ")");
+        this.plugin.getLogger().log(Level.FINEST, "[{0}] Setting {1} (Ignored: {2}) to {3,choice,0#not |1#}ignore sleep ({4})", new Object[] { this.world.getName(), player.getName(), player.isSleepingIgnored(), ignore?1:0, key });
         player.setSleepingIgnored(ignore);
         if (this.sleeping.size() >= 1) this.notify(key, player);
     }
@@ -207,12 +202,18 @@ public final class State implements Listener {
         if (this.forcing) return;
 
         if (key.equals("enter")) {
-            if (System.currentTimeMillis() <= (this.lastBedEnterMessage.get(player) + (this.bedNoticeLimit * 1000))) return;
+            if (System.currentTimeMillis() <= (this.lastBedEnterMessage.get(player) + (this.bedNoticeLimit * 1000))) {
+                this.plugin.getLogger().log(Level.FINEST, "enter bedNoticeLimit of {0} seconds exceeded by {1}", new Object[] { this.bedNoticeLimit, player.getName() });
+                return;
+            }
             this.lastBedEnterMessage.put(player, System.currentTimeMillis());
         }
 
         if (key.equals("leave")) {
-            if (System.currentTimeMillis() <= (this.lastBedLeaveMessage.get(player) + (this.bedNoticeLimit * 1000))) return;
+            if (System.currentTimeMillis() <= (this.lastBedLeaveMessage.get(player) + (this.bedNoticeLimit * 1000))) {
+                this.plugin.getLogger().log(Level.FINEST, "leave bedNoticeLimit of {0} seconds exceeded by {1}", new Object[] { this.bedNoticeLimit, player.getName() });
+                return;
+            }
             this.lastBedLeaveMessage.put(player, System.currentTimeMillis());
         }
 
@@ -276,23 +277,23 @@ public final class State implements Listener {
         final int possible = this.possible().size();
         final int sleeping = this.sleeping.size();
 
-        // Need 100% of possible if percent not specified
+        // need 100% of possible if percent not specified
         final double forcePercent = (((this.forcePercent > 0) && (this.forcePercent < 100)) ? this.forcePercent : 100);
         final int needPercent = (int) Math.ceil(forcePercent / 100 * possible);
 
-        // Use all possible if count not specified
+        // use all possible if count not specified
         final int needCount = (this.forceCount > 0 ? this.forceCount : possible);
 
-        // Need lowest count to satisfy either count or percent
+        // need lowest count to satisfy either count or percent
         int need = Math.min(needCount, needPercent) - sleeping;
 
-        // Can't need less than no one
+        // can't need less than no one
         if (need < 0) need = 0;
 
-        // Can't need more than who is possible
+        // can't need more than who is possible
         if (need > possible) need = possible;
 
-        // Always need at least 1 person actually in bed
+        // always need at least 1 player actually in bed
         if (sleeping == 0 && need == 0) need = 1;
 
         return need;

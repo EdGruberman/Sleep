@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
+import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
@@ -53,7 +54,7 @@ public class IdleMonitor implements Observer, Listener {
             final PlayerIdle idle = (PlayerIdle) arg;
             if (!idle.player.getWorld().equals(this.state.world)) return;
 
-            this.state.plugin.getLogger().finest("[" + this.state.world.getName() + "] idle: " + idle.player.getName() + "; " + idle.duration);
+            this.state.plugin.getLogger().log(Level.FINEST, "[{0}] idle: {1} (Ignored: {2}); {3}", new Object[] { this.state.world.getName(), idle.player.getName(), idle.player.isSleepingIgnored(), idle.duration });
             this.idle.add(idle.player);
             this.state.ignore(idle.player, true, "idle");
             return;
@@ -64,7 +65,7 @@ public class IdleMonitor implements Observer, Listener {
 
         if (!this.idle.contains(active.player)) return;
 
-        this.state.plugin.getLogger().finest("[" + this.state.world.getName() + "] active: " + active.player.getName() + "; " + active.event.getSimpleName());
+        this.state.plugin.getLogger().log(Level.FINEST, "[{0}] active: {1} (Ignored: {2}); {3}", new Object[] { this.state.world.getName(), active.player.getName(), active.player.isSleepingIgnored(), active.event.getSimpleName() });
         this.idle.remove(active.player);
         this.state.ignore(active.player, false, "active");
     }

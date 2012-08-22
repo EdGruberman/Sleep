@@ -1,5 +1,7 @@
 package edgruberman.bukkit.sleep;
 
+import java.util.logging.Level;
+
 import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.entity.Player;
@@ -35,11 +37,11 @@ public class Insomnia implements Runnable, Listener {
     @Override
     public void run() {
         if (!this.player.isSleeping()) {
-            this.plugin.getLogger().fine("Cancelling insomnia for " + this.player.getName() + "; No longer in bed");
+            this.plugin.getLogger().log(Level.FINEST, "Insomnia cancelled for {0}; No longer in bed", this.player.getName());
             return;
         }
 
-        this.plugin.getLogger().fine(this.player.getName() + " has insomnia; Setting spawn point then removing player from bed...");
+        this.plugin.getLogger().log(Level.FINEST, "Insomnia sets in for {0}; Setting spawn point then ejecting from bed...", this.player.getName());
 
         // eject player from bed before sleep can complete, but set player's spawn point
         final CraftPlayer craftEnterer = (CraftPlayer) this.player;

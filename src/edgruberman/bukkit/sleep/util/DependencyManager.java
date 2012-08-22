@@ -53,7 +53,7 @@ public class DependencyManager {
             loader.addURL(jar.toURI().toURL());
 
         } catch (final MalformedURLException e) {
-            this.plugin.getLogger().severe("Error appending plugin class loader with \"" + jar + "; " + e.getClass().getName() + ": " + e.getMessage());
+            this.plugin.getLogger().severe("Error appending plugin class loader with \"" + jar + "; " + e);
         }
     }
 
@@ -74,7 +74,7 @@ public class DependencyManager {
             this.copy(src, destination);
 
         } catch (final IOException e) {
-            this.plugin.getLogger().severe("Error extracting \"" + src.getFile() + "\" to \"" + destination.getPath() + "\"; " + e.getClass().getName() + ": " + e.getMessage());
+            this.plugin.getLogger().severe("Error extracting \"" + src.getFile() + "\" to \"" + destination.getPath() + "\"; " + e);
             throw e;
         }
 

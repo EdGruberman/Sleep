@@ -1,14 +1,10 @@
 package edgruberman.bukkit.sleep.rewards;
 
-import java.text.DecimalFormat;
-
 import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
 public abstract class Reward {
-
-    public static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("#.##");
 
     public static Reward create(final ConfigurationSection definition) throws ClassNotFoundException, ClassCastException, InstantiationException, IllegalAccessException {
         Class<? extends Reward> subClass = null;

@@ -3,7 +3,6 @@ package edgruberman.bukkit.sleep;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -84,11 +83,8 @@ public final class Somnologist implements Listener {
     void clear() {
         HandlerList.unregisterAll(this);
 
-        final Iterator<State> it = this.states.values().iterator();
-        while (it.hasNext()) {
-            it.next().clear();
-            it.remove();
-        }
+        for (final State state : this.states.values()) state.clear();
+        this.states.clear();
 
         this.excluded.clear();
     }
