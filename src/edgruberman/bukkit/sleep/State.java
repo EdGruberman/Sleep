@@ -253,7 +253,7 @@ public final class State {
         final Iterator<Player> it = preventing.iterator();
         while (it.hasNext()) {
             final Player player = it.next();
-            if (player.isSleepingIgnored() || player.isSleeping())
+            if (player.isSleepingIgnored() || this.sleeping.contains(player))
                 it.remove();
         }
 
