@@ -158,7 +158,7 @@ public final class State {
 
     /** player left world */
     void remove(final Player remover) {
-        this.plugin.getLogger().log(Level.FINEST, "[{0}] remove: {1} (Ignored: {2})", new Object[] { this.world.getName(), remover.getName(), remover.isSleepingIgnored() });
+        this.plugin.getLogger().log(Level.FINEST, "[{0}] remove: {1} (Current: [{3}]; Ignored: {2})", new Object[] { this.world.getName(), remover.getName(), remover.isSleepingIgnored(), remover.getWorld().getName() });
         this.players.remove(remover);
         final boolean wasAsleep = this.sleeping.remove(remover);
 
