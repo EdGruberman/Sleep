@@ -1,7 +1,6 @@
 package edgruberman.bukkit.sleep.rewards;
 
 import java.text.MessageFormat;
-import java.util.logging.Level;
 
 import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
@@ -33,7 +32,7 @@ public class ExperienceOrb extends Reward {
             orb.setExperience(this.experience);
         }
 
-        Main.plugin.getLogger().log(Level.FINEST, "Rewarded {0} by creating {1} experience orbs with {2} experience each"
+        Main.plugin.getLogger().log(Reward.REWARD, "Rewarded {0} by creating {1} experience orbs with {2} experience each"
                 , new Object[] { player.getName(), result, this.experience });
     }
 

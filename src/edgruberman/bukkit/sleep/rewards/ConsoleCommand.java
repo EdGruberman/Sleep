@@ -1,7 +1,6 @@
 package edgruberman.bukkit.sleep.rewards;
 
 import java.text.MessageFormat;
-import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.block.Block;
@@ -28,7 +27,7 @@ public class ConsoleCommand extends Reward {
         final int result = this.factorFor(this.value, participants);
         final String command = String.format(this.format, player.getName(), result);
         Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), command);
-        Main.plugin.getLogger().log(Level.FINEST, "Rewarded {0} by dispatching console command \"{1}\"", new Object[] { player.getName(), command });
+        Main.plugin.getLogger().log(Reward.REWARD, "Rewarded {0} by dispatching console command \"{1}\"", new Object[] { player.getName(), command });
     }
 
     @Override

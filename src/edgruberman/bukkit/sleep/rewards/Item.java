@@ -1,7 +1,6 @@
 package edgruberman.bukkit.sleep.rewards;
 
 import java.text.MessageFormat;
-import java.util.logging.Level;
 
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -35,7 +34,7 @@ public class Item extends Reward {
         for (final ItemStack remaining : player.getInventory().addItem(new ItemStack(this.material, result, this.data)).values())
             player.getWorld().dropItemNaturally(player.getLocation(), remaining);
 
-        Main.plugin.getLogger().log(Level.FINEST, "Rewarded {0} by giving {1} {2} with data {3}"
+        Main.plugin.getLogger().log(Reward.REWARD, "Rewarded {0} by giving {1} {2} with data {3}"
                 , new Object[] { player.getName(), result, this.material.name(), this.data } );
     }
 
