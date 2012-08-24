@@ -54,7 +54,7 @@ public class IdleMonitor implements Observer, Listener {
             final PlayerIdle idle = (PlayerIdle) arg;
             if (!idle.player.getWorld().equals(this.state.world)) return;
 
-            this.state.plugin.getLogger().log(Level.FINEST, "[{0}] idle: {1} (Ignored: {2}); {3}", new Object[] { this.state.world.getName(), idle.player.getName(), idle.player.isSleepingIgnored(), idle.duration });
+            this.state.plugin.getLogger().log(Level.FINEST, "[{0}] idle: {1} (Ignored: {2}); {3}ms", new Object[] { this.state.world.getName(), idle.player.getName(), idle.player.isSleepingIgnored(), idle.duration });
             this.idle.add(idle.player);
             this.state.ignore(idle.player, true, "idle");
             return;
