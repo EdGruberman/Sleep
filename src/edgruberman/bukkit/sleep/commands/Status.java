@@ -73,8 +73,15 @@ public class Status implements CommandExecutor {
 
     static World parseWorld(final CommandSender sender, final String[] args) {
         if (args.length >= 1) {
-            final World world = Bukkit.getWorld(args[0]);
-            if (world != null) return world;
+            final World exact = Bukkit.getWorld(args[0]);
+            if (exact != null) return exact;
+
+            final String lower = args[0].toLowerCase();
+            for (final World insensitive : Bukkit.getWorlds())
+                if (insensitive.getName().toLowerCase().equals(lower))
+                    return insensitive;
+
+            return null;
         }
 
         if (sender instanceof Player)
