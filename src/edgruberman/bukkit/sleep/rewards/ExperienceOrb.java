@@ -8,6 +8,7 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 
 import edgruberman.bukkit.sleep.Main;
+import edgruberman.bukkit.sleep.util.CustomLevel;
 
 public class ExperienceOrb extends Reward {
 
@@ -32,7 +33,7 @@ public class ExperienceOrb extends Reward {
             orb.setExperience(this.experience);
         }
 
-        Main.plugin.getLogger().log(Reward.REWARD, "Rewarded {0} by creating {1} experience orbs with {2} experience each"
+        Main.plugin.getLogger().log(CustomLevel.DEBUG, "Rewarded {0} by creating {1} experience orbs with {2} experience each"
                 , new Object[] { player.getName(), result, this.experience });
     }
 

@@ -7,6 +7,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
 import edgruberman.bukkit.sleep.Main;
+import edgruberman.bukkit.sleep.util.CustomLevel;
 
 public class Health extends Reward {
 
@@ -26,13 +27,13 @@ public class Health extends Reward {
         if (this.health != 0) {
             final int result = this.factorFor(this.health, participants);
             player.setHealth(Math.max(0, Math.min(20, player.getHealth() + result)));
-            Main.plugin.getLogger().log(Reward.REWARD, "Rewarded {0} by adding {1} to health which set it to {2}", new Object[] { player.getName(), result, player.getHealth() });
+            Main.plugin.getLogger().log(CustomLevel.DEBUG, "Rewarded {0} by adding {1} to health which set it to {2}", new Object[] { player.getName(), result, player.getHealth() });
         }
 
         if (this.exhaustion != 0) {
             final float result = this.factorFor(this.exhaustion, participants);
             player.setExhaustion(Math.max(0, player.getExhaustion() + result));
-            Main.plugin.getLogger().log(Reward.REWARD, "Rewarded {0} by adding {1,number,#.##} to exhaustion which set it to {2,number,#.##}"
+            Main.plugin.getLogger().log(CustomLevel.DEBUG, "Rewarded {0} by adding {1,number,#.##} to exhaustion which set it to {2,number,#.##}"
                     , new Object[] { player.getName(), result, player.getExhaustion() });
 
         }

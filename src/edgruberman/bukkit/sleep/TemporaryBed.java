@@ -18,6 +18,8 @@ import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerBedLeaveEvent;
 import org.bukkit.material.Bed;
 
+import edgruberman.bukkit.sleep.util.CustomLevel;
+
 public class TemporaryBed implements Listener {
 
     /** Ticks in bed when Minecraft reassigns bed spawn */
@@ -120,7 +122,7 @@ public class TemporaryBed implements Listener {
         broken.getPlayer().setBedSpawnLocation(previous);
         this.previous.remove(broken.getPlayer().getName());
 
-        this.state.plugin.getLogger().log(Level.FINEST, "Temporary bed reverted by {0} to {1}; Temporary: {2}", new Object[]{broken.getPlayer().getName(), previous, head});
+        this.state.plugin.getLogger().log(CustomLevel.TRACE, "Temporary bed reverted by {0} to {1}; Temporary: {2}", new Object[]{broken.getPlayer().getName(), previous, head});
         Main.courier.send(broken.getPlayer(), "temporaryBedReverted"
                 , previous.getWorld().getName(), previous.getBlockX(), previous.getBlockY(), previous.getBlockZ()
                 , head.getWorld().getName(), head.getX(), head.getY(), head.getZ());

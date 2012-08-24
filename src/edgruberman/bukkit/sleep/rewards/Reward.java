@@ -1,14 +1,10 @@
 package edgruberman.bukkit.sleep.rewards;
 
-import java.util.logging.Level;
-
 import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
 public abstract class Reward {
-
-    protected static final Level REWARD = new RewardLevel();
 
     public static Reward create(final ConfigurationSection definition) throws ClassNotFoundException, ClassCastException, InstantiationException, IllegalAccessException {
         Class<? extends Reward> subClass = null;
@@ -55,12 +51,5 @@ public abstract class Reward {
 
     @Override
     public abstract String toString();
-
-
-
-    protected static class RewardLevel extends Level {
-        private static final long serialVersionUID = 1L;
-        RewardLevel() { super("REWARD", 200); }
-    }
 
 }

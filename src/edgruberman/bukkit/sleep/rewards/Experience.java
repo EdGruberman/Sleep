@@ -7,6 +7,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
 import edgruberman.bukkit.sleep.Main;
+import edgruberman.bukkit.sleep.util.CustomLevel;
 
 public class Experience extends Reward {
 
@@ -26,14 +27,14 @@ public class Experience extends Reward {
         if (this.total != 0) {
             final int result = this.factorFor(this.total, participants);
             player.setTotalExperience(Math.max(0, player.getTotalExperience() + result));
-            Main.plugin.getLogger().log(Reward.REWARD, "Rewarded {0} by adding {1} to total experience which set it to {2}"
+            Main.plugin.getLogger().log(CustomLevel.DEBUG, "Rewarded {0} by adding {1} to total experience which set it to {2}"
                     , new Object[] { player.getName(), result, player.getTotalExperience() });
         }
 
         if (this.level != 0) {
             final int result = this.factorFor(this.level, participants);
             player.setLevel(Math.max(0, player.getLevel() + result));
-            Main.plugin.getLogger().log(Reward.REWARD, "Rewarded {0} by adding {1} to experience level which set it to {2}"
+            Main.plugin.getLogger().log(CustomLevel.DEBUG, "Rewarded {0} by adding {1} to experience level which set it to {2}"
                     , new Object[] { player.getName(), result, player.getLevel() });
         }
     }
