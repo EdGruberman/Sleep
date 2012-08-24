@@ -1,8 +1,6 @@
 package edgruberman.bukkit.sleep;
 
 import org.bukkit.Bukkit;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.Plugin;
 
@@ -58,12 +56,6 @@ public final class Main extends CustomPlugin {
         this.somnologist.clear();
         Main.courier = null;
         Main.plugin = null;
-    }
-
-    @Override
-    public boolean onCommand(final CommandSender sender, final Command command, final String label, final String[] args) {
-        Main.courier.send(sender, "commandDisabled", command.getName(), label);
-        return true;
     }
 
 }

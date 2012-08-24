@@ -70,7 +70,6 @@ messages:
         +player: '{0}§r' # 0 = Player Display Name
         +delimiter: ', '
     status: '-> {1,choice,0#Sleep §dneeds {2} more§r in bed: |100#}{3} in bed / {4} possible = {1}%' # 1 = Percent In Bed, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
-    commandDisabled: '-> {2} command is currently §cdisabled' # 1 = Command, 2 = Label
     requiresArgument: '-> Required §cargument missing§r: {1}' # 1 = Argument
     reload: '-> {1} plugin §2reloaded' # 1 = Plugin Name
 version: @VERSION@
