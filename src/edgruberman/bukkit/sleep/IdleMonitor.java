@@ -16,7 +16,6 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import edgruberman.bukkit.playeractivity.PlayerActive;
 import edgruberman.bukkit.playeractivity.PlayerIdle;
 import edgruberman.bukkit.playeractivity.StatusTracker;
-import edgruberman.bukkit.playeractivity.interpreters.Interpreter;
 
 public class IdleMonitor implements Observer, Listener {
 
@@ -27,16 +26,15 @@ public class IdleMonitor implements Observer, Listener {
 
     IdleMonitor(final State state, final ConfigurationSection config) {
         this.state = state;
-        this.tracker = new StatusTracker(state.plugin);
+        this.tracker = new StatusTracker(state.plugin, config.getLong("duration") * 1000);
         for (final String className : config.getStringList("activity"))
             try {
-                this.tracker.addInterpreter(Interpreter.create(className));
+                this.tracker.addInterpreter(className);
             } catch (final Exception e) {
                 state.plugin.getLogger().warning("Unsupported activity for " + state.world.getName() + ": " + className + "; " + e);
             }
 
         this.tracker.register(this, PlayerActive.class);
-        this.tracker.setIdleThreshold(config.getLong("duration") * 1000);
         this.tracker.register(this, PlayerIdle.class);
 
         Bukkit.getPluginManager().registerEvents(this, state.plugin);
