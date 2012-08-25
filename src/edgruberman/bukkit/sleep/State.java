@@ -234,7 +234,7 @@ public final class State {
     private boolean isIdle(final Player player) {
         if (this.idleMonitor == null) return false;
 
-        return this.idleMonitor.tracker.getIdle().contains(player);
+        return this.idleMonitor.idle.contains(player);
     }
 
     /** @return true if time allows bed usage; otherwise false */

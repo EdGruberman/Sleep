@@ -21,8 +21,7 @@ public class IdleMonitor implements Observer, Listener {
 
     public final State state;
     public final StatusTracker tracker;
-
-    private final Set<Player> idle = new HashSet<Player>();
+    public final Set<Player> idle = new HashSet<Player>();
 
     IdleMonitor(final State state, final ConfigurationSection config) {
         this.state = state;
