@@ -104,10 +104,7 @@ public final class State {
         if (this.isAway(joiner)) this.ignore(joiner, true, "away");
         if (this.forcing) this.ignore(joiner, true, "force");
 
-        if (!joiner.isSleepingIgnored() && this.sleeping.size() >= 1) {
-            this.notify("add", joiner);
-            Main.courier.send(joiner, "add", joiner.getDisplayName(), this.needed(), this.sleeping.size(), this.possible().size());
-        }
+        if (!joiner.isSleepingIgnored() && this.sleeping.size() >= 1) this.notify("add", joiner);
     }
 
     /** player entered bed */

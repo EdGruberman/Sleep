@@ -110,6 +110,10 @@ public final class Somnologist implements Listener {
         if (state == null) return;
 
         state.add(event.getPlayer());
+
+        // player is not considered in the world yet, so won't get world notification
+        if (!event.getPlayer().isSleepingIgnored() && state.sleeping.size() >= 1)
+            Main.courier.send(event.getPlayer(), "add", event.getPlayer().getDisplayName(), state.needed(), state.sleeping.size(), state.possible().size());
     }
 
     @EventHandler

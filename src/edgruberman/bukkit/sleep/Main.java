@@ -31,7 +31,7 @@ public final class Main extends CustomPlugin {
             dm.installUtility("PlayerActivity.jar");
         }
 
-        this.putConfigMinimum("config.yml", "6.0.0b94");
+        this.putConfigMinimum("config.yml", "6.0.0b107");
     }
 
     @Override
