@@ -1,6 +1,10 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
-<project default="Test (Build and Copy)" basedir="..">
-    
+<project default="Build" basedir="..">
+
+    <tstamp>
+        <format property="start" pattern="yyyy-MM-dd HH:mm:ss z" timezone="UTC" />
+    </tstamp>
+
     <property name="src" location="src" />
     <property name="resources" location="resources" />
     <property name="stage" location="stage" />
@@ -16,16 +20,12 @@
         <fileset dir="${bukkit.shared}" includes="**" />
     </path>
 
-    <target name="Test (Build and Copy)" description="Build existing version and copy JAR to test server">
-        <antcall target="Build" />
-        <copy file="${dist}/${project.name}.jar" todir="${bukkit.test}" />
-    </target>
-
     <target name="Build" description="Build existing version" depends="-Existing Version">
         <propertyfile file="${version.properties}">
             <entry key="build" operation="+" value="1" type="int" />
         </propertyfile>
-        <antcall target="JAR Export" />
+        <antcall target="-JAR Export" />
+        <antcall target="-Update Test Server" />
     </target>
 
     <target name="Revision Alpha (#.#.+1a1)" description="Build first alpha of revision update" depends="-Existing Version">
@@ -79,10 +79,11 @@
             <entry key="type" value="" />
             <entry key="build" value="" />
         </propertyfile>
-        <antcall target="JAR Export" />
+        <antcall target="-JAR Export" />
+        <antcall target="-Update Test Server" />
     </target>
 
-    <target name="JAR Export" description="Create standard plugin file" depends="-Get Version">
+    <target name="-JAR Export" description="Create standard plugin file" depends="-Get Version">
         <echo message="Exporting JAR for version ${version}" />
 
         <delete dir="${stage}" />
@@ -95,10 +96,9 @@
                 <filter token="VERSION" value="${version}" />
                 <filter token="VERSION.TARGET" value="${version.target}" />
                 <filter token="AUTHOR" value="${bukkit.author}" />
-                <filter token="MAIN" value="${plugin.main}" />
             </filterset>
         </copy>
-        
+
         <copy todir="${stage}/jar" preservelastmodified="true">
             <fileset dir="${resources}" excludes="**/*.yml"/>
         </copy>
@@ -111,10 +111,12 @@
             <section name="${plugin.implementation-name}">
                 <attribute name="Specification-Title" value="${project.name}" />
                 <attribute name="Specification-Version" value="${version.major}.${version.minor}" />
-                <attribute name="Specification-Vendor" value="${bukkit.author}" />
+                <attribute name="Specification-Vendor" value="${plugin.vendor}" />
                 <attribute name="Implementation-Title" value="${plugin.implementation-title}" />
                 <attribute name="Implementation-Version" value="${version.revision}${version.type}${version.build}" />
-                <attribute name="Implementation-Vendor" value="${bukkit.author}" />
+                <attribute name="Implementation-Vendor" value="${plugin.vendor}" />
+                <attribute name="Implementation-Url" value="${plugin.implementation-url}" />
+                <attribute name="Built-Date" value="${start}"/>
             </section>
         </manifest>
 
@@ -138,6 +140,10 @@
         <property file="${version.properties}" prefix="existing" />
         <property name="existing" value="${existing.major}.${existing.minor}.${existing.revision}${existing.type}${existing.build}" />
         <echo message="Existing version ${existing}" />
+    </target>
+    
+    <target name="-Update Test Server" description="Copy to test server">
+        <copy file="${dist}/${project.name}.jar" todir="${bukkit.test}" />
     </target>
 
 </project>

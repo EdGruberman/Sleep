@@ -1,9 +1,9 @@
 name: @NAME@
+version: @VERSION@
 description: Manages sleep criteria and notifications
 softdepend: [PlayerActivity]
-version: @VERSION@
-author: @AUTHOR@
-main: @MAIN@
+author: EdGruberman (ed@rjump.com)
+main: edgruberman.bukkit.sleep.Main
 commands:
     'sleep:status':
         aliases: [sleep, sleep.status]

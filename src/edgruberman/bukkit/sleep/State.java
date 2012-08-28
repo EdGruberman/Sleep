@@ -21,12 +21,6 @@ import edgruberman.bukkit.sleep.rewards.Reward;
 /** sleep state for a specific world */
 public final class State {
 
-    /** first world relative time (hours * 1000) associated with ability to enter bed (Derived empirically) */
-    private static final long TIME_NIGHT_START = 12540;
-
-    /** first world relative time (hours * 1000) associated with inability to enter bed (Derived empirically) */
-    private static final long TIME_NIGHT_END = 23455;
-
     private static final long TICKS_PER_SECOND = 20;
 
     public final Plugin plugin;
@@ -132,8 +126,8 @@ public final class State {
 
         if (this.isIdle(leaver) || this.isAway(leaver)) leaver.setSleepingIgnored(true);
 
-        if (this.isNight()) {
-            // night time bed leaves only occur because of a manual action
+        if (this.world.getTime() != 0) {
+            // morning awakenings only occur at relative time 0, all other times are manual
             if (!leaver.isSleepingIgnored()) this.notify("leave", leaver);
             return;
         }
@@ -232,15 +226,6 @@ public final class State {
         if (this.idleMonitor == null) return false;
 
         return this.idleMonitor.idle.contains(player);
-    }
-
-    /** @return true if time allows bed usage; otherwise false */
-    public boolean isNight() {
-        final long now = this.world.getTime();
-
-        if ((State.TIME_NIGHT_START <= now) && (now < State.TIME_NIGHT_END)) return true;
-
-        return false;
     }
 
     /** players not ignored and not in bed */
