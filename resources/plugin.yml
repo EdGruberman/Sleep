@@ -1,4 +1,4 @@
-name: @NAME@
+name: Sleep
 version: @VERSION@
 description: Manages sleep criteria and notifications
 softdepend: [PlayerActivity]
