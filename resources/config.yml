@@ -47,30 +47,31 @@ reward:
         factor: 0.5
 away: false # requires PlayerActivity plugin
 sleep: true
-bedNoticeLimit: 3 # Seconds (enter and leave only)
+bedNoticeLimit: 5 # Seconds (enter and leave only)
 messages:
-    enter: '§8{0,time,HH:mm:ss} {1} entered bed ({2,choice,0#§5no more needed to sleep§8|1#§dneed +{2} to sleep§8})' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
-    leave: '§8{0,time,HH:mm:ss} {1} left bed ({3,choice,0#§5no one in bed§8|1#§dneed +{2} to sleep§8})' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
-    add: '§8{0,time,HH:mm:ss} {1} joined the world (§dneed +{2} to sleep§8)' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
-    remove: '§8{0,time,HH:mm:ss} {1} left the world ({2,choice,0#§5no more needed to sleep§8|1#§dneed +{2} to sleep§8})' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
-    idle: '§8{0,time,HH:mm:ss} {1} is now idle ({2,choice,0#§5no more needed to sleep§8|1#§dneed +{2} to sleep§8})' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
-    active: '§8{0,time,HH:mm:ss} {1} is no longer idle (§dneed +{2} to sleep§8)' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
-    away: '§8{0,time,HH:mm:ss} {1} is now away ({2,choice,0#§5no more needed to sleep§8|1#§dneed +{2} to sleep§8})' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
-    back: '§8{0,time,HH:mm:ss} {1} is no longer away (§dneed +{2} to sleep§8)' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
+    enter: '§8{0,time,HH:mm:ss} {1}§8 entered bed ({2,choice,0#§5no more needed§8|1#§dneed +{2} to sleep§8})' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
+    leave: '§8{0,time,HH:mm:ss} {1}§8 left bed ({3,choice,0#§5no one in bed§8|1#§dneed +{2} to sleep§8})' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
+    add: '§8{0,time,HH:mm:ss} {1}§8 joined the world (§dneed +{2} to sleep§8)' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
+    remove: '§8{0,time,HH:mm:ss} {1}§8 left the world ({2,choice,0#§5no more needed§8|1#§dneed +{2} to sleep§8})' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
+    idle: '§8{0,time,HH:mm:ss} {1}§8 is now idle ({2,choice,0#§5no more needed§8|1#§dneed +{2} to sleep§8})' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
+    active: '§8{0,time,HH:mm:ss} {1}§8 is no longer idle (§dneed +{2} to sleep§8)' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
+    away: '§8{0,time,HH:mm:ss} {1}§8 is now away ({2,choice,0#§5no more needed§8|1#§dneed +{2} to sleep§8})' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
+    back: '§8{0,time,HH:mm:ss} {1}§8 is no longer away (§dneed +{2} to sleep§8)' # 1 = Player Display Name, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
     force: '§8{0,time,HH:mm:ss} {1}§8 is §5forcing§8 the sun to rise' # 1 = Player Display Name / Plugin Name
     temporaryBedInstruction: '-> §8To §5revert§8 to previous spawn, §5destroy§8 this bed soon' # 1 = Duration Until Commit
     temporaryBedReverted: '-> §2Reverted§8 spawn to previous bed'
-    worldNotFound: '-> World §enot found: {1}' # 1 = World
-    sleepNotManaged: '-> Sleep state is §enot managed§r for {1}' # 1 = World
-    sleepDisabled: '-> Sleep is §edisabled§r for {1}' # 1 = World
-    requireSleeper: '-> §eNeed at least one§r player in bed to force sleep'
-    forceSuccess: '-> §aForcing§r sleep in {1}...' # 1 = World
+    worldNotFound: '-> §7World §enot found: {1}' # 1 = World
+    sleepNotManaged: '-> §7Sleep state is §enot managed§7 for {1}' # 1 = World
+    sleepDisabled: '-> §7Sleep is §edisabled§7 for {1}' # 1 = World
+    requireSleeper: '-> §eNeed at least one§7 player in bed to force sleep'
+    forceSuccess: '-> §aForcing§7 sleep in {1}...' # 1 = World
     noneInBed: '-> No one is currently in bed'
     notSleeping:
-        format: '-> {1,choice,0#Everyone is asleep|1#§d{1} players§r not in bed: {2}}' # 1 = Player Count Not Sleeping, 2 = Player Display Names Not In Bed
-        +player: '{0}§r' # 0 = Player Display Name
-        +delimiter: ', '
-    status: '-> {1,choice,0#Sleep §dneeds {2} more§r in bed: |100#}{3} in bed / {4} possible = {1}%' # 1 = Percent In Bed, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
-    requiresArgument: '-> Required §cargument missing§r: {1}' # 1 = Argument
-    reload: '-> {1} plugin §2reloaded' # 1 = Plugin Name
+        format: '-> §7{1,choice,0#Everyone is asleep|1#§d{1} players§7 not in bed: {2}}' # 1 = Player Count Not Sleeping, 2 = Player Display Names Not In Bed
+        +player: '{0}§7' # 0 = Player Display Name
+        +delimiter: '§8, '
+    status: '-> §7{1,choice,0#Sleep §dneeds {2} more§7 in bed: |100#}{3} in bed / {4} possible = {1}%' # 1 = Percent In Bed, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
+    commandDisabled: '-> §7{2} command is currently §cdisabled' # 1 = Command, 2 = Label
+    requiresArgument: '-> §7Required §cargument missing§7: §o{1}' # 1 = Argument
+    reload: '-> §7{1} plugin §2reloaded' # 1 = Plugin Name
 version: @VERSION@

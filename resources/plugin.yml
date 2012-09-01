@@ -3,6 +3,7 @@ version: @VERSION@
 description: Manages sleep criteria and notifications
 softdepend: [PlayerActivity]
 author: EdGruberman (ed@rjump.com)
+website: http://dev.bukkit.org/server-mods/sleep/
 main: edgruberman.bukkit.sleep.Main
 commands:
     'sleep:status':
