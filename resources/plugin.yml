@@ -22,37 +22,37 @@ commands:
         usage: /<command>
 permissions:
     sleep.admin:
-        description: 'Can use administrative features of Sleep plugin'    
+        description: Can use administrative features of Sleep plugin    
         default: op
         children:
             sleep.user: true
             sleep.force: true
             sleep.reload: true
     sleep.user:
-        description: 'Can use basic features of Sleep plugin'
+        description: Can use basic features of Sleep plugin
         default: true
         children:
             sleep.status: true
             sleep.idle: true
             sleep.away: true
     sleep.ignore:
-        description: 'Will always be ignored for sleep'
+        description: Will always be ignored for sleep
         default: false
     sleep.idle:
-        description: 'Will be ignored for sleep while idle'
+        description: Will be ignored for sleep while idle
         default: false
     sleep.away:
-        description: 'Will be ignored for sleep while away'
+        description: Will be ignored for sleep while away
         default: false
     sleep.enter.force:
-        description: 'Will automatically force sleep when entering bed'
+        description: Will automatically force sleep when entering bed
         default: false
     sleep.status:
-        description: 'Can use sleep:status command'
+        description: Can use sleep:status command
         default: false
     sleep.force:
-        description: 'Can use sleep:force command'
+        description: Can use sleep:force command
         default: false
     sleep.reload:
-        description: 'Can use sleep:reload command'
+        description: Can use sleep:reload command
         default: false
