@@ -38,11 +38,11 @@ public class Force implements CommandExecutor {
         }
 
         if (state.sleeping.size() == 0) {
-            Main.courier.send(sender, "requireSleeper");
+            state.courier.send(sender, "requireSleeper");
             return true;
         }
 
-        Main.courier.send(sender, "forceSuccess", world.getName());
+        state.courier.send(sender, "forceSuccess", world.getName());
         state.force(sender);
         return true;
     }

@@ -22,7 +22,7 @@ public final class Main extends CustomPlugin {
 
     @Override
     public void onLoad() {
-        this.putConfigMinimum("config.yml", "6.0.0rc0");
+        this.putConfigMinimum("config.yml", "6.0.0rc1");
 
         if (this.isValidPlugin("PlayerActivity", "edgruberman.bukkit.playeractivity", "3.0.0rc0")) return;
 
@@ -36,7 +36,7 @@ public final class Main extends CustomPlugin {
     @Override
     public void onEnable() {
         this.reloadConfig();
-        Main.courier = ConfigurationCourier.Factory.create(this).setBase("messages").build();
+        Main.courier = ConfigurationCourier.Factory.create(this).setPath("common").build();
 
         if (Bukkit.getPluginManager().getPlugin("PlayerActivity") == null) PlayerMoveBlockEvent.MovementTracker.initialize(this);
 

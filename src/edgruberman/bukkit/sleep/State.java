@@ -16,6 +16,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.Plugin;
 
+import edgruberman.bukkit.sleep.messaging.ConfigurationCourier;
+import edgruberman.bukkit.sleep.messaging.Courier;
 import edgruberman.bukkit.sleep.rewards.Reward;
 
 /** sleep state for a specific world */
@@ -25,12 +27,13 @@ public final class State {
 
     public final Plugin plugin;
     public final World world;
+    public final Courier courier;
     public final boolean sleep;
     public final int forceCount;
     public final int forcePercent;
-    public final int bedNoticeLimit;
+    public final int messageLimit;
     public final Collection<Reward> rewards = new ArrayList<Reward>();
-    public final TemporaryBed temporaryBed;
+    public final Cot cot;
     public final boolean away;
     public final IdleMonitor idleMonitor;
 
@@ -46,13 +49,14 @@ public final class State {
     State(final Plugin plugin, final World world, final ConfigurationSection config) {
         this.plugin = plugin;
         this.world = world;
+        this.courier = ConfigurationCourier.Factory.create(plugin).setBase(config).setPath("messages").build();
         this.sleep = config.getBoolean("sleep");
-        this.bedNoticeLimit = config.getInt("bedNoticeLimit");
+        this.messageLimit = config.getInt("messageLimit");
         this.away = config.getBoolean("away");
         this.forceCount = ( config.getBoolean("force.enabled") ? config.getInt("force.count") : -1 );
         this.forcePercent = ( config.getBoolean("force.enabled") ? config.getInt("force.percent") : -1 );
         this.loadReward(config.getConfigurationSection("reward"));
-        this.temporaryBed = ( config.getBoolean("temporaryBed.enabled") ? new TemporaryBed(this, config.getLong("temporaryBed.duration") * State.TICKS_PER_SECOND) : null );
+        this.cot = ( config.getBoolean("cot.enabled") ? new Cot(this, config.getLong("cot.duration") * State.TICKS_PER_SECOND) : null );
         this.idleMonitor = ( config.getBoolean("idle.enabled") ? new IdleMonitor(this, config.getConfigurationSection("idle")) : null );
 
         for (final Player existing : world.getPlayers()) this.add(existing);
@@ -62,7 +66,7 @@ public final class State {
         for (final Player player : this.world.getPlayers()) this.remove(player);
 
         if (this.idleMonitor != null) this.idleMonitor.clear();
-        if (this.temporaryBed != null) this.temporaryBed.clear();
+        if (this.cot != null) this.cot.clear();
 
         this.lastBedEnterMessage.clear();
         this.lastBedLeaveMessage.clear();
@@ -173,7 +177,7 @@ public final class State {
             this.ignore(player, true, "force");
 
         final String name = ( forcer != null ? ( forcer instanceof Player ? ((Player) forcer).getDisplayName() : forcer.getName() ) : this.plugin.getName() );
-        Main.courier.world(this.world, "force", name);
+        this.courier.world(this.world, "force", name);
     }
 
     /** set whether or not a player ignores sleep status checks */
@@ -193,23 +197,23 @@ public final class State {
         if (this.forcing) return;
 
         if (key.equals("enter")) {
-            if (System.currentTimeMillis() <= (this.lastBedEnterMessage.get(player) + (this.bedNoticeLimit * 1000))) {
-                this.plugin.getLogger().log(Level.FINEST, "enter bedNoticeLimit of {0} seconds exceeded by {1}", new Object[] { this.bedNoticeLimit, player.getName() });
+            if (System.currentTimeMillis() <= (this.lastBedEnterMessage.get(player) + (this.messageLimit * 1000))) {
+                this.plugin.getLogger().log(Level.FINEST, "enter message limit of {0} seconds exceeded by {1}", new Object[] { this.messageLimit, player.getName() });
                 return;
             }
             this.lastBedEnterMessage.put(player, System.currentTimeMillis());
         }
 
         if (key.equals("leave")) {
-            if (System.currentTimeMillis() <= (this.lastBedLeaveMessage.get(player) + (this.bedNoticeLimit * 1000))) {
-                this.plugin.getLogger().log(Level.FINEST, "leave bedNoticeLimit of {0} seconds exceeded by {1}", new Object[] { this.bedNoticeLimit, player.getName() });
+            if (System.currentTimeMillis() <= (this.lastBedLeaveMessage.get(player) + (this.messageLimit * 1000))) {
+                this.plugin.getLogger().log(Level.FINEST, "leave message limit of {0} seconds exceeded by {1}", new Object[] { this.messageLimit, player.getName() });
                 return;
             }
             this.lastBedLeaveMessage.put(player, System.currentTimeMillis());
         }
 
         final int needed = this.needed();
-        Main.courier.world(this.world, key, player.getDisplayName(), needed, this.sleeping.size(), this.possible().size());
+        this.courier.world(this.world, key, player.getDisplayName(), needed, this.sleeping.size(), this.possible().size());
         if (needed == 0 && (this.forceCount != -1 || this.forcePercent != -1) && this.preventing().size() >= 1 ) this.force(null);
     }
 

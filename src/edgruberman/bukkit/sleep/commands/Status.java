@@ -46,12 +46,12 @@ public class Status implements CommandExecutor {
         }
 
         if (!state.sleep) {
-            Main.courier.send(sender, "sleepDisabled", world.getName());
+            state.courier.send(sender, "sleepDisabled", world.getName());
             return true;
         }
 
         if (state.sleeping.size() == 0) {
-            Main.courier.send(sender, "noneInBed");
+            state.courier.send(sender, "noneInBed");
 
         } else {
             final List<Player> preventing = state.preventing();
@@ -59,15 +59,15 @@ public class Status implements CommandExecutor {
 
             final List<String> names = new ArrayList<String>();
             for (final Player player : preventing)
-                names.add(Main.courier.format("notSleeping.+player", player.getDisplayName()));
+                names.add(state.courier.format("notSleeping.+player", player.getDisplayName()));
 
-            Main.courier.send(sender, "notSleeping.format", names.size(), Status.join(names, Main.courier.format("notSleeping.+delimiter")));
+            state.courier.send(sender, "notSleeping.format", names.size(), Status.join(names, state.courier.format("notSleeping.+delimiter")));
         }
 
         final int sleeping = state.sleeping.size();
         final int possible = state.possible().size();
         final int percent = (int) Math.floor((double) sleeping / (possible > 0 ? possible : 1) * 100);
-        Main.courier.send(sender, "status", percent, state.needed(), sleeping, possible);
+        state.courier.send(sender, "summary", percent, state.needed(), sleeping, possible);
         return true;
     }
 

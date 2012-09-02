@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -46,30 +47,30 @@ public final class Somnologist implements Listener {
     /** create state based on configuration */
     State loadState(final World world) {
         if (world.getEnvironment() != Environment.NORMAL) {
-            this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] will not be tracked because its environment is " + world.getEnvironment().toString());
+            this.plugin.getLogger().log(Level.CONFIG, "Sleep state for [{0}] will not be tracked because its environment is {1}", new Object[] { world.getName(), world.getEnvironment() });
             return null;
         }
 
         if (this.excluded.contains(world.getName())) {
-            this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] will not be tracked because it is explicitly excluded");
+            this.plugin.getLogger().log(Level.CONFIG, "Sleep state for [{0}] will not be tracked because it is explicitly excluded", world.getName());
             return null;
         }
 
         final YamlConfiguration config = YamlConfiguration.loadConfiguration(new File(this.plugin.getDataFolder(), "Worlds/" + world.getName() + "/config.yml"));
-        config.addDefaults(this.plugin.getConfig());
+        config.setDefaults(this.plugin.getConfig());
         config.options().copyDefaults(true);
 
         final State state = new State(this.plugin, world, config);
-        this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Sleep Enabled: " + state.sleep);
-        this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Forced Sleep Minimum Count: " + state.forceCount);
-        this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Forced Sleep Minimum Percent: " + state.forcePercent);
-        this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Away Sleep: " + state.away);
+        this.plugin.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] Sleep Enabled: " + state.sleep);
+        this.plugin.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] Forced Sleep Minimum Count: " + state.forceCount);
+        this.plugin.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] Forced Sleep Minimum Percent: " + state.forcePercent);
+        this.plugin.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] Away Sleep: " + state.away);
         if (state.away) {
-            this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Idle Threshold (seconds): " + (state.idleMonitor.tracker.getIdleThreshold() / 1000));
-            this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Monitored Activity: " + state.idleMonitor.tracker.getInterpreters().size() + " events");
+            this.plugin.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] Idle Threshold (seconds): " + (state.idleMonitor.tracker.getIdleThreshold() / 1000));
+            this.plugin.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] Monitored Activity: " + state.idleMonitor.tracker.getInterpreters().size() + " events");
         }
-        for (final Reward reward : state.rewards) this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Reward: " + reward.toString());
-        if (state.temporaryBed != null) this.plugin.getLogger().config("Sleep state for [" + world.getName() + "] Temporary Beds Enabled");
+        for (final Reward reward : state.rewards) this.plugin.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] Reward: " + reward.toString());
+        if (state.cot != null) this.plugin.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] Cots Enabled");
 
         this.states.put(world, state);
         return state;
@@ -113,7 +114,7 @@ public final class Somnologist implements Listener {
 
         // player is not considered in the world yet, so won't get world notification
         if (!event.getPlayer().isSleepingIgnored() && state.sleeping.size() >= 1)
-            Main.courier.send(event.getPlayer(), "add", event.getPlayer().getDisplayName(), state.needed(), state.sleeping.size(), state.possible().size());
+            state.courier.send(event.getPlayer(), "add", event.getPlayer().getDisplayName(), state.needed(), state.sleeping.size(), state.possible().size());
     }
 
     @EventHandler

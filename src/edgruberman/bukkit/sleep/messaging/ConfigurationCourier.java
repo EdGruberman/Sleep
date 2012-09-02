@@ -12,7 +12,7 @@ import org.bukkit.plugin.Plugin;
  * uses message patterns stored in a {@link org.bukkit.configuration.ConfigurationSection ConfigurationSection}
  *
  * @author EdGruberman (ed@rjump.com)
- * @version 2.0.0
+ * @version 3.0.0
  */
 public class ConfigurationCourier extends Courier {
 
@@ -79,15 +79,15 @@ public class ConfigurationCourier extends Courier {
             this.setBase(plugin.getConfig());
         }
 
-        /** @param path path to section in plugin configuration containing message patterns */
-        public Factory setBase(final String path) {
-            this.base = this.plugin.getConfig().getConfigurationSection(path);
-            return this;
-        }
-
         /** @param section base section containing message patterns */
         public Factory setBase(final ConfigurationSection section) {
             this.base = section;
+            return this;
+        }
+
+        /** @param path path to section relative to current base section containing message patterns */
+        public Factory setPath(final String path) {
+            this.base = this.base.getConfigurationSection(path);
             return this;
         }
 

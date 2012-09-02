@@ -19,7 +19,8 @@ import org.bukkit.material.Bed;
 
 import edgruberman.bukkit.sleep.util.CustomLevel;
 
-public class TemporaryBed implements Listener {
+/** temporary bed */
+public class Cot implements Listener {
 
     /** Ticks in bed when Minecraft reassigns bed spawn */
     private static final int BED_CHANGE_TICKS = 100;
@@ -29,7 +30,7 @@ public class TemporaryBed implements Listener {
     private final Map<String, Location> previous = new HashMap<String, Location>();
     private final Map<String, Integer> committers = new HashMap<String, Integer>();
 
-    TemporaryBed(final State state, final long duration) {
+    Cot(final State state, final long duration) {
         this.state = state;
         this.duration = duration;
         state.plugin.getServer().getPluginManager().registerEvents(this, state.plugin);
@@ -61,7 +62,7 @@ public class TemporaryBed implements Listener {
         if (!event.getPlayer().getWorld().equals(this.state.world)) return;
 
         // Ignore if bed spawn did not change
-        if (event.getPlayer().getSleepTicks() < TemporaryBed.BED_CHANGE_TICKS) return;
+        if (event.getPlayer().getSleepTicks() < Cot.BED_CHANGE_TICKS) return;
 
         final Location previous = this.previous.get(event.getPlayer().getName());
         if (previous == null) return;
@@ -74,7 +75,7 @@ public class TemporaryBed implements Listener {
         }
 
         this.state.plugin.getLogger().log(CustomLevel.TRACE, "Temporary bed used by {0} at {2}; Previous: {1}", new Object[]{event.getPlayer().getName(), previous, event.getBed()});
-        Main.courier.send(event.getPlayer(), "temporaryBedInstruction", TemporaryBed.readableDuration(this.duration / 20 * 1000)
+        this.state.courier.send(event.getPlayer(), "cot.instruction", Cot.readableDuration(this.duration / 20 * 1000)
                 , previous.getWorld().getName(), previous.getBlockX(), previous.getBlockY(), previous.getBlockZ()
                 , event.getBed().getWorld().getName(), event.getBed().getX(), event.getBed().getY(), event.getBed().getZ());
 
@@ -85,10 +86,10 @@ public class TemporaryBed implements Listener {
 
     private class BedChangeCommitter implements Runnable {
 
-        private final TemporaryBed temporary;
+        private final Cot temporary;
         private final Player player;
 
-        private BedChangeCommitter(final TemporaryBed temporary, final Player player) {
+        private BedChangeCommitter(final Cot temporary, final Player player) {
             this.temporary = temporary;
             this.player = player;
         }
@@ -122,7 +123,7 @@ public class TemporaryBed implements Listener {
         this.previous.remove(broken.getPlayer().getName());
 
         this.state.plugin.getLogger().log(CustomLevel.TRACE, "Temporary bed reverted by {0} to {1}; Temporary: {2}", new Object[]{broken.getPlayer().getName(), previous, head});
-        Main.courier.send(broken.getPlayer(), "temporaryBedReverted"
+        this.state.courier.send(broken.getPlayer(), "cot.reverted"
                 , previous.getWorld().getName(), previous.getBlockX(), previous.getBlockY(), previous.getBlockZ()
                 , head.getWorld().getName(), head.getX(), head.getY(), head.getZ());
     }
