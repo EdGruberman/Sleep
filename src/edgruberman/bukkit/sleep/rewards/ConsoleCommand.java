@@ -27,7 +27,7 @@ public class ConsoleCommand extends Reward {
     public void apply(final Player player, final Block bed, final int participants) {
         final int result = this.factorFor(this.value, participants);
         final String command = String.format(this.format, player.getName(), result);
-        Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), command);
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
         Main.plugin.getLogger().log(CustomLevel.DEBUG, "Rewarded {0} by dispatching console command \"{1}\"", new Object[] { player.getName(), command });
     }
 

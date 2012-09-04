@@ -25,7 +25,7 @@ public class Insomnia implements Runnable, Listener {
         this.plugin = plugin;
 
         // TODO research if -10 is unnecessary to compensate for any background processing before task starts counting
-        this.taskId = Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(this.plugin, this, Insomnia.DEEP_SLEEP_TICKS - 10);
+        this.taskId = Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin, this, Insomnia.DEEP_SLEEP_TICKS - 10);
         if (this.taskId == -1) {
             plugin.getLogger().warning("Failed to schedule Insomnia task");
             return;

@@ -33,7 +33,7 @@ public class Cot implements Listener {
     Cot(final State state, final long duration) {
         this.state = state;
         this.duration = duration;
-        state.plugin.getServer().getPluginManager().registerEvents(this, state.plugin);
+        Bukkit.getPluginManager().registerEvents(this, state.plugin);
     }
 
     void clear() {
@@ -80,7 +80,7 @@ public class Cot implements Listener {
                 , event.getBed().getWorld().getName(), event.getBed().getX(), event.getBed().getY(), event.getBed().getZ());
 
         // Bed spawn changed, commit change after specified duration has elapsed
-        final int taskId = this.state.plugin.getServer().getScheduler().scheduleSyncDelayedTask(this.state.plugin, new BedChangeCommitter(this, event.getPlayer()), this.duration);
+        final int taskId = Bukkit.getScheduler().scheduleSyncDelayedTask(this.state.plugin, new BedChangeCommitter(this, event.getPlayer()), this.duration);
         this.committers.put(event.getPlayer().getName(), taskId);
     }
 

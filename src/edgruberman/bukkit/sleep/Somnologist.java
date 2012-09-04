@@ -40,7 +40,7 @@ public final class Somnologist implements Listener {
         if (excluded != null) this.excluded.addAll(excluded);
         if (this.excluded.size() > 0 ) this.plugin.getLogger().config("Excluded Worlds: " + excluded);
 
-        for (final World world : this.plugin.getServer().getWorlds()) this.loadState(world);
+        for (final World world : Bukkit.getWorlds()) this.loadState(world);
         Bukkit.getPluginManager().registerEvents(this, plugin);
     }
 
