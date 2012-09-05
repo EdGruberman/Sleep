@@ -130,6 +130,9 @@ public final class State {
 
         if (this.isIdle(leaver) || this.isAway(leaver)) leaver.setSleepingIgnored(true);
 
+        // player could leave bed after disconnect while in bed and reconnect in day time
+        if (!this.players.contains(leaver)) return;
+
         if (this.world.getTime() != 0) {
             // morning awakenings only occur at relative time 0, all other times are manual
             if (!leaver.isSleepingIgnored()) this.notify("leave", leaver);
