@@ -1,12 +1,6 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
-<project name="Bukkit Plugin" default="default">
-    <description>Bukkit Plugin Standard Build Management v3.0.0</description>
-
-    <target name="default" description="Increment build, export distributable, and install locally">
-        <antcall target="version-build" />
-        <antcall target="dist" />
-        <antcall target="install" />
-    </target>
+<project name="Bukkit Plugin" default="version-build">
+    <description>Bukkit Plugin Standard Build Management v3.1.0</description>
 
     <target name="debug">
         <echoproperties />
@@ -41,6 +35,8 @@
         <propertyfile file="${version.properties}">
             <entry key="build" operation="+" value="1" type="int" />
         </propertyfile>
+        <antcall target="dist" />
+        <antcall target="install" />
     </target>
 
     <target name="version-revision" description="#.#.+1a0  |  Increment next revision version and reset life cycle to alpha (bug fixes that do not change functionality)" depends="-version-previous">
@@ -49,6 +45,8 @@
             <entry key="type" value="a" />
             <entry key="build" value="0" type="int" />
         </propertyfile>
+        <antcall target="dist" />
+        <antcall target="install" />
     </target>
 
     <target name="version-minor" description="#.+1.0a0  |  Increment next minor version and reset life cycle to alpha (new functionality added)" depends="-version-previous">
@@ -58,6 +56,8 @@
             <entry key="type" value="a" />
             <entry key="build" value="0" type="int" />
         </propertyfile>
+        <antcall target="dist" />
+        <antcall target="install" />
     </target>
 
     <target name="version-major" description="+1.0.0a0  |  Increment next major version and reset life cycle to alpha (existing functionality changed/significant redesign)" depends="-version-previous">
@@ -68,6 +68,8 @@
             <entry key="type" value="a" />
             <entry key="build" value="0" type="int" />
         </propertyfile>
+        <antcall target="dist" />
+        <antcall target="install" />
     </target>
 
     <target name="version-beta" description="#.#.#b0  |  Move life cycle to beta (public testing encouraged without any guarantee)" depends="-version-previous">
@@ -75,6 +77,8 @@
             <entry key="type" value="b" />
             <entry key="build" value="0" type="int" />
         </propertyfile>
+        <antcall target="dist" />
+        <antcall target="install" />
     </target>
 
     <target name="version-candidate" description="#.#.#rc0  |  Move life cycle to release candidate (functionality no longer intended to change, production release imminent)" depends="-version-previous">
@@ -82,6 +86,8 @@
             <entry key="type" value="rc" />
             <entry key="build" value="0" type="int" />
         </propertyfile>
+        <antcall target="dist" />
+        <antcall target="install" />
     </target>
 
     <target name="version-release" description="#.#.#  |  Remove life cycle indicator for full production release" depends="-version-previous">
@@ -89,12 +95,16 @@
             <entry key="type" value="" />
             <entry key="build" value="" />
         </propertyfile>
+        <antcall target="dist" />
+        <antcall target="install" />
     </target>
 
     <target name="-version-previous" description="Generate console output to show previous version">
         <property prefix="previous" file="${version.properties}" />
         <property name="previous" value="${previous.major}.${previous.minor}.${previous.revision}${previous.type}${previous.build}" />
         <echo message="Previous version was ${previous}" />
+        <antcall target="dist" />
+        <antcall target="install" />
     </target>
 
 

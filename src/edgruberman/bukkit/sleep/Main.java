@@ -22,9 +22,9 @@ public final class Main extends CustomPlugin {
 
     @Override
     public void onLoad() {
-        this.putConfigMinimum("config.yml", "6.0.0rc1");
+        this.putConfigMinimum("config.yml", "6.0.0");
 
-        if (this.isValidPlugin("PlayerActivity", "edgruberman.bukkit.playeractivity", "3.0.0rc0")) return;
+        if (this.isValidPlugin("PlayerActivity", "edgruberman.bukkit.playeractivity", "3.0.0")) return;
 
         // manual intervention required if plugin installed
         if (Bukkit.getPluginManager().getPlugin("PlayerActivity") != null)
