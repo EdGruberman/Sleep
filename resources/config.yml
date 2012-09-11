@@ -66,8 +66,8 @@ messages:
     noneInBed: '-> §7No one is currently in bed'
     notSleeping:
         format: '-> §7{1,choice,0#Everyone is asleep|1#§d{1} players§7 not in bed: {2}}' # 1 = Player Count Not Sleeping, 2 = Player Display Names Not In Bed
-        +player: '{0}§7' # 0 = Player Display Name
-        +delimiter: '§8, '
+        +player: '{0}' # 0 = Player Display Name
+        +delimiter: '§8, §7'
     summary: '-> §7{1,choice,0#Sleep §dneeds {2} more§7 in bed: |100#}{3} in bed / {4} possible = {1}%' # 1 = Percent In Bed, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
     commandDisabled: '-> §7{2} command is currently §cdisabled' # 1 = Command, 2 = Label
 common:
