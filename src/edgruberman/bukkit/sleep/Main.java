@@ -22,7 +22,7 @@ public final class Main extends CustomPlugin {
 
     @Override
     public void onLoad() {
-        this.putConfigMinimum("config.yml", "6.0.0");
+        this.putConfigMinimum("config.yml", "6.0.1a0");
 
         if (this.isValidPlugin("PlayerActivity", "edgruberman.bukkit.playeractivity", "3.0.0")) return;
 

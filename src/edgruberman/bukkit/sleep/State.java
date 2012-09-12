@@ -24,6 +24,8 @@ import edgruberman.bukkit.sleep.rewards.Reward;
 public final class State {
 
     private static final long TICKS_PER_SECOND = 20;
+    private static final long SLEEP_FAILED_TICKS = 23460; //  bed leave in morning after failed sleep
+    private static final long SLEEP_SUCCESS_TICKS = 0; // bed leave in morning after sleep completes
 
     public final Plugin plugin;
     public final World world;
@@ -37,7 +39,7 @@ public final class State {
     public final boolean away;
     public final IdleMonitor idleMonitor;
 
-    // need to track players in/out of bed and in/out of world as processing will sometimes occur mid-event before player fully completes event
+    // need to track players manually as processing will sometimes occur mid-event before player is adjusted
     public final List<Player> sleeping = new ArrayList<Player>();
     public final List<Player> players = new ArrayList<Player>();
 
@@ -62,19 +64,6 @@ public final class State {
         for (final Player existing : world.getPlayers()) this.add(existing);
     }
 
-    void clear() {
-        for (final Player player : this.world.getPlayers()) this.remove(player);
-
-        if (this.idleMonitor != null) this.idleMonitor.clear();
-        if (this.cot != null) this.cot.clear();
-
-        this.lastBedEnterMessage.clear();
-        this.lastBedLeaveMessage.clear();
-        this.rewards.clear();
-        this.sleeping.clear();
-        this.players.clear();
-    }
-
     private void loadReward(final ConfigurationSection reward) {
         if (reward == null || !reward.getBoolean("enabled")) return;
 
@@ -87,6 +76,19 @@ public final class State {
                 this.plugin.getLogger().warning("Unable to create reward for [" + this.world.getName() + "]: " + name + "; " + e);
             }
         }
+    }
+
+    void clear() {
+        for (final Player player : this.world.getPlayers()) this.remove(player);
+
+        if (this.idleMonitor != null) this.idleMonitor.clear();
+        if (this.cot != null) this.cot.clear();
+
+        this.lastBedEnterMessage.clear();
+        this.lastBedLeaveMessage.clear();
+        this.rewards.clear();
+        this.sleeping.clear();
+        this.players.clear();
     }
 
     /** player joined world */
@@ -133,23 +135,27 @@ public final class State {
         // player could leave bed after disconnect while in bed and reconnect in day time
         if (!this.players.contains(leaver)) return;
 
-        if (this.world.getTime() != 0) {
-            // morning awakenings only occur at relative time 0, all other times are manual
+        // skip notify and skip reward when morning occurs and sleep did not complete
+        if (this.world.getTime() == State.SLEEP_FAILED_TICKS) return;
+
+        // notify for manual bed leave at night
+        if (this.world.getTime() != State.SLEEP_SUCCESS_TICKS) {
             if (!leaver.isSleepingIgnored()) this.notify("leave", leaver);
             return;
         }
+
         // morning
 
         // apply reward
         if (this.participants == null) this.participants = this.sleeping.size() + 1;
         for (final Reward reward : this.rewards) reward.apply(leaver, bed, this.participants);
-        if (this.sleeping.size() != 0) return;
 
-        // last player to leave bed in morning
+        // clean-up if last player to leave bed
+        if (this.sleeping.size() != 0) return;
         this.participants = null;
-        if (!this.forcing) return;
 
         // reset forced sleep
+        if (!this.forcing) return;
         this.forcing = false;
         for (final Player player : this.world.getPlayers()) this.ignore(player, false, "reset");
     }
