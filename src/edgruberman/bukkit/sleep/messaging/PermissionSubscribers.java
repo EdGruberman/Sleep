@@ -7,10 +7,10 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.permissions.Permissible;
 
 /**
- * {@link org.bukkit.permissions.Permissible}s that have the specified permission at message delivery time
+ * {@link org.bukkit.command.CommandSender CommandSender}s that have the specified permission at message delivery time
  *
  * @author EdGruberman (ed@rjump.com)
- * @version 2.0.0
+ * @version 2.0.1
  */
 public class PermissionSubscribers extends Recipients {
 

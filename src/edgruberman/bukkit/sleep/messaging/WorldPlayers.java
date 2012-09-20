@@ -20,6 +20,10 @@ public class WorldPlayers extends Recipients {
         this.world = world;
     }
 
+    public World getWorld() {
+        return this.world;
+    }
+
     @Override
     public Confirmation deliver(final Message message) {
         final List<Player> players = this.world.getPlayers();
