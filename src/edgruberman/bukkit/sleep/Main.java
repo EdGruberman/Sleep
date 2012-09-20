@@ -1,8 +1,15 @@
 package edgruberman.bukkit.sleep;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.jar.JarInputStream;
+
 import org.bukkit.Bukkit;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.java.PluginClassLoader;
 
 import edgruberman.bukkit.playeractivity.PlayerMoveBlockEvent;
 import edgruberman.bukkit.sleep.commands.Force;
@@ -22,15 +29,35 @@ public final class Main extends CustomPlugin {
 
     @Override
     public void onLoad() {
-        this.putConfigMinimum("config.yml", "6.0.1a0");
+        this.putConfigMinimum(CustomPlugin.CONFIGURATION_FILE, "6.0.0");
 
-        if (this.isValidPlugin("PlayerActivity", "edgruberman.bukkit.playeractivity", "3.0.0")) return;
+        final String versionPlayerActivity = "3.0.0";
+        if (this.isValidPlugin("PlayerActivity", "edgruberman.bukkit.playeractivity", versionPlayerActivity)) return;
 
-        // manual intervention required if plugin installed
+        // manual intervention required if dependency previously installed and out of date
         if (Bukkit.getPluginManager().getPlugin("PlayerActivity") != null)
             throw new IllegalStateException("PlayerActivity plugin out of date;  Stop server, delete \"plugins/PlayerActivity.jar\", and then restart server");
 
-        this.saveResource("PlayerActivity.jar", true);
+        final File utilityFile = new File(this.getDataFolder(), "PlayerActivity.jar");
+        URL utilityURL = null;
+        try { utilityURL = utilityFile.toURI().toURL(); } catch (final MalformedURLException e) { throw new RuntimeException(e); }
+
+        // skip extraction if existing utility and version minimum met
+        Version existing = null;
+        if (utilityFile.exists()) {
+            try {
+                final JarInputStream utilityJar = new JarInputStream(utilityURL.openStream());
+                existing = new Version(utilityJar.getManifest().getMainAttributes().getValue("Specification-Version") + "." + utilityJar.getManifest().getMainAttributes().getValue("Implementation-Version"));
+                utilityJar.close();
+                } catch (final IOException e) { throw new RuntimeException(e); }
+            if (existing.compareTo(new Version(versionPlayerActivity)) >= 0) return;
+        }
+
+        // extract utility dependency
+        this.saveResource(utilityFile.getName(), true);
+
+        // first time extraction requires late class path addition
+        ((PluginClassLoader) this.getClassLoader()).addURL(utilityURL);
     }
 
     @Override
