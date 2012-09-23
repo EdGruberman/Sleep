@@ -29,7 +29,7 @@ public final class Main extends CustomPlugin {
 
     @Override
     public void onLoad() {
-        this.putConfigMinimum(CustomPlugin.CONFIGURATION_FILE, "6.0.0");
+        this.putConfigMinimum(CustomPlugin.CONFIGURATION_FILE, "6.1.0b0");
 
         final String versionPlayerActivity = "3.0.0";
         if (this.isValidPlugin("PlayerActivity", "edgruberman.bukkit.playeractivity", versionPlayerActivity)) return;

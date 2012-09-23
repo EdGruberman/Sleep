@@ -59,7 +59,7 @@ public class Status implements CommandExecutor {
 
             final List<String> names = new ArrayList<String>();
             for (final Player player : preventing)
-                names.add(state.courier.format("notSleeping.+player", player.getDisplayName()));
+                names.add(state.courier.format("+player", player.getName(), player.getDisplayName()));
 
             state.courier.send(sender, "notSleeping.format", names.size(), Status.join(names, state.courier.format("notSleeping.+delimiter")));
         }

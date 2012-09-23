@@ -185,7 +185,15 @@ public final class State {
         for (final Player player : this.world.getPlayers())
             this.ignore(player, true, "force");
 
-        final String name = ( forcer != null ? ( forcer instanceof Player ? ((Player) forcer).getDisplayName() : forcer.getName() ) : this.plugin.getName() );
+        String name = this.plugin.getName();
+        if (forcer != null) {
+            if (forcer instanceof Player) {
+                final Player player = (Player) forcer;
+                this.courier.format("+player", player.getName(), player.getDisplayName());
+            } else {
+                name = forcer.getName();
+            }
+        }
         this.courier.world(this.world, "force", name);
     }
 
@@ -222,7 +230,8 @@ public final class State {
         }
 
         final int needed = this.needed();
-        this.courier.world(this.world, key, player.getDisplayName(), needed, this.sleeping.size(), this.possible().size());
+        final String name = this.courier.format("+player", player.getName(), player.getDisplayName());
+        this.courier.world(this.world, key, name, needed, this.sleeping.size(), this.possible().size());
         if (needed == 0 && (this.forceCount != -1 || this.forcePercent != -1) && this.preventing().size() >= 1 ) this.force(null);
     }
 
