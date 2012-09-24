@@ -91,15 +91,10 @@ public class CustomPlugin extends JavaPlugin {
 
     public void extractConfig(final String resource, final boolean replace) {
         final Charset target = Charset.defaultCharset();
-        this.getLogger().log(Level.FINE, "Extracting configuration file {1} {0} as {2}", new Object[] { resource, CustomPlugin.CONFIGURATION_SOURCE.name(), target.name() });
-        if (target.equals(CustomPlugin.CONFIGURATION_SOURCE)) {
-            super.saveResource(resource, replace);
-            return;
-        }
-
         final File config = new File(this.getDataFolder(), resource);
-        if (config.exists()) return;
+        if (config.exists() && !replace) return;
 
+        this.getLogger().log(Level.FINE, "Extracting configuration file {1} {0} as {2}", new Object[] { resource, CustomPlugin.CONFIGURATION_SOURCE.name(), target.name() });
         config.getParentFile().mkdirs();
 
         final char[] cbuf = new char[1024]; int read;
