@@ -12,7 +12,7 @@ import org.bukkit.plugin.Plugin;
  * handles message delivery and logging
  *
  * @author EdGruberman (ed@rjump.com)
- * @version 3.0.0
+ * @version 3.0.1
  */
 public class Courier {
 
@@ -65,7 +65,7 @@ public class Courier {
 
     /** deliver message to individual player */
     public void send(final CommandSender sender, final String pattern, final Object... arguments) {
-        final Recipients recipients = new Sender(sender);
+        final Recipients recipients = new Individual(sender);
         final Message message = this.draft(pattern, arguments);
         this.submit(recipients, message);
     }
@@ -122,7 +122,7 @@ public class Courier {
             return this;
         }
 
-        /** @param key path to color code character value in plugin configuration */
+        /** @param key path to color code prefix character in plugin configuration */
         public Factory setColorCode(final String key) {
             this.setColorCode(this.plugin.getConfig().getString("colorCode").charAt(0));
             return this;

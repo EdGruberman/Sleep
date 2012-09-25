@@ -10,7 +10,7 @@ import org.bukkit.permissions.Permissible;
  * {@link org.bukkit.command.CommandSender CommandSender}s that have the specified permission at message delivery time
  *
  * @author EdGruberman (ed@rjump.com)
- * @version 2.0.1
+ * @version 2.0.2
  */
 public class PermissionSubscribers extends Recipients {
 
@@ -30,7 +30,7 @@ public class PermissionSubscribers extends Recipients {
                 count++;
             }
 
-        return new Confirmation(Level.FINER, count, "[PUBLISH@{1}({2})] {0}", message, PermissionSubscribers.this.permission, count);
+        return new Confirmation(Level.FINER, count, "[PUBLISH-{1}({2})] {0}", message, PermissionSubscribers.this.permission, count);
     }
 
 }
