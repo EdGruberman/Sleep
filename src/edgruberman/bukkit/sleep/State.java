@@ -51,7 +51,7 @@ public final class State {
     State(final Plugin plugin, final World world, final ConfigurationSection config) {
         this.plugin = plugin;
         this.world = world;
-        this.courier = ConfigurationCourier.Factory.create(plugin).setBase(config).setPath("messages").build();
+        this.courier = ConfigurationCourier.Factory.create(plugin).setColorCode("colorCode").setBase(config).setPath("messages").build();
         this.sleep = config.getBoolean("sleep");
         this.messageLimit = config.getInt("messageLimit");
         this.away = config.getBoolean("away");

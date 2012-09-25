@@ -16,20 +16,19 @@ import edgruberman.bukkit.sleep.commands.Force;
 import edgruberman.bukkit.sleep.commands.Reload;
 import edgruberman.bukkit.sleep.commands.Status;
 import edgruberman.bukkit.sleep.messaging.ConfigurationCourier;
-import edgruberman.bukkit.sleep.messaging.Courier;
 import edgruberman.bukkit.sleep.util.CustomPlugin;
 import edgruberman.bukkit.sleep.util.Version;
 
 public final class Main extends CustomPlugin {
 
-    public static Courier courier;
+    public static ConfigurationCourier courier;
     public static Plugin plugin;
 
     private Somnologist somnologist = null;
 
     @Override
     public void onLoad() {
-        this.putConfigMinimum(CustomPlugin.CONFIGURATION_FILE, "6.1.0b0");
+        this.putConfigMinimum(CustomPlugin.CONFIGURATION_FILE, "6.1.0b2");
 
         final String versionPlayerActivity = "3.0.0";
         if (this.isValidPlugin("PlayerActivity", "edgruberman.bukkit.playeractivity", versionPlayerActivity)) return;
@@ -63,7 +62,7 @@ public final class Main extends CustomPlugin {
     @Override
     public void onEnable() {
         this.reloadConfig();
-        Main.courier = ConfigurationCourier.Factory.create(this).setPath("common").build();
+        Main.courier = ConfigurationCourier.Factory.create(this).setColorCode("colorCode").setPath("common").build();
 
         if (Bukkit.getPluginManager().getPlugin("PlayerActivity") == null) PlayerMoveBlockEvent.MovementTracker.initialize(this);
 
