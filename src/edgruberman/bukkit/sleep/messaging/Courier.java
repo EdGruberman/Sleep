@@ -12,7 +12,7 @@ import org.bukkit.plugin.Plugin;
  * handles message delivery and logging
  *
  * @author EdGruberman (ed@rjump.com)
- * @version 3.0.1
+ * @version 4.0.0
  */
 public class Courier {
 
@@ -119,12 +119,6 @@ public class Courier {
         /** @param colorCode prefix that designates a color code in message patterns (default is {@value org.bukkit.ChatColor#COLOR_CHAR}, common alternate is &) */
         public Factory setColorCode(final char colorCode) {
             this.colorCode = colorCode;
-            return this;
-        }
-
-        /** @param key path to color code prefix character in plugin configuration */
-        public Factory setColorCode(final String key) {
-            this.setColorCode(this.plugin.getConfig().getString("colorCode").charAt(0));
             return this;
         }
 

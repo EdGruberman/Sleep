@@ -15,7 +15,7 @@ import org.bukkit.plugin.Plugin;
  * uses message patterns stored in a {@link org.bukkit.configuration.ConfigurationSection ConfigurationSection}
  *
  * @author EdGruberman (ed@rjump.com)
- * @version 4.0.1
+ * @version 4.1.0
  */
 public class ConfigurationCourier extends Courier {
 
@@ -121,6 +121,12 @@ public class ConfigurationCourier extends Courier {
             return this;
         }
 
+        /** @param key path to color code prefix character in base configuration */
+        public Factory setColorCode(final String key) {
+            this.setColorCode(this.base.getString(key).charAt(0));
+            return this;
+        }
+
         @Override
         public Factory setTimestamp(final boolean timestamp) {
             super.setTimestamp(timestamp);
@@ -130,12 +136,6 @@ public class ConfigurationCourier extends Courier {
         @Override
         public Factory setColorCode(final char colorCode) {
             super.setColorCode(colorCode);
-            return this;
-        }
-
-        @Override
-        public Factory setColorCode(final String key) {
-            super.setColorCode(key);
             return this;
         }
 
