@@ -17,7 +17,6 @@ import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.Plugin;
 
 import edgruberman.bukkit.sleep.messaging.ConfigurationCourier;
-import edgruberman.bukkit.sleep.messaging.Courier;
 import edgruberman.bukkit.sleep.rewards.Reward;
 
 /** sleep state for a specific world */
@@ -29,7 +28,7 @@ public final class State {
 
     public final Plugin plugin;
     public final World world;
-    public final Courier courier;
+    public final ConfigurationCourier courier;
     public final boolean sleep;
     public final int forceCount;
     public final int forcePercent;
@@ -48,10 +47,10 @@ public final class State {
     private final Map<Player, Long> lastBedEnterMessage = new HashMap<Player, Long>();
     private final Map<Player, Long> lastBedLeaveMessage = new HashMap<Player, Long>();
 
-    State(final Plugin plugin, final World world, final ConfigurationSection config) {
+    State(final Plugin plugin, final World world, final ConfigurationSection config, final ConfigurationSection messages) {
         this.plugin = plugin;
         this.world = world;
-        this.courier = ConfigurationCourier.Factory.create(plugin).setColorCode("colorCode").setBase(config).setPath("messages").build();
+        this.courier = ConfigurationCourier.Factory.create(plugin).setBase(messages).setColorCode("colorCode").build();
         this.sleep = config.getBoolean("sleep");
         this.messageLimit = config.getInt("messageLimit");
         this.away = config.getBoolean("away");
@@ -140,7 +139,7 @@ public final class State {
 
         // notify for manual bed leave at night
         if (this.world.getTime() != State.SLEEP_SUCCESS_TICKS) {
-            if (!leaver.isSleepingIgnored()) this.notify("leave", leaver);
+            if (this.sleep && !leaver.isSleepingIgnored()) this.notify("leave", leaver);
             return;
         }
 

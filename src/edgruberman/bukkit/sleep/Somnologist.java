@@ -27,6 +27,7 @@ import org.bukkit.plugin.Plugin;
 import edgruberman.bukkit.playeractivity.consumers.PlayerAway;
 import edgruberman.bukkit.playeractivity.consumers.PlayerBack;
 import edgruberman.bukkit.sleep.rewards.Reward;
+import edgruberman.bukkit.sleep.util.CustomPlugin;
 
 /** sleep state management */
 public final class Somnologist implements Listener {
@@ -56,11 +57,15 @@ public final class Somnologist implements Listener {
             return null;
         }
 
-        final YamlConfiguration config = YamlConfiguration.loadConfiguration(new File(this.plugin.getDataFolder(), "Worlds/" + world.getName() + "/config.yml"));
+        final YamlConfiguration config = YamlConfiguration.loadConfiguration(new File(this.plugin.getDataFolder(), "Worlds/" + world.getName() + "/" + CustomPlugin.CONFIGURATION_FILE));
         config.setDefaults(this.plugin.getConfig());
         config.options().copyDefaults(true);
 
-        final State state = new State(this.plugin, world, config);
+        final YamlConfiguration messages = YamlConfiguration.loadConfiguration(new File(this.plugin.getDataFolder(), "Worlds/" + world.getName() + "/" + Main.MESSAGES_FILE));
+        messages.setDefaults(Main.courier.getBase().getRoot());
+        messages.options().copyDefaults(true);
+
+        final State state = new State(this.plugin, world, config, messages);
         this.plugin.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] Sleep Enabled: " + state.sleep);
         this.plugin.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] Forced Sleep Minimum Count: " + state.forceCount);
         this.plugin.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] Forced Sleep Minimum Percent: " + state.forcePercent);

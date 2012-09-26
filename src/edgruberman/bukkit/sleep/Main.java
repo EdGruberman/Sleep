@@ -14,6 +14,8 @@ import edgruberman.bukkit.sleep.util.PluginDependency;
 
 public final class Main extends CustomPlugin {
 
+    public static final String MESSAGES_FILE = "messages.yml";
+
     public static ConfigurationCourier courier;
     public static Plugin plugin;
 
@@ -21,7 +23,8 @@ public final class Main extends CustomPlugin {
 
     @Override
     public void onLoad() {
-        this.putConfigMinimum(CustomPlugin.CONFIGURATION_FILE, "6.1.0b2");
+        this.putConfigMinimum(CustomPlugin.CONFIGURATION_FILE, "6.1.0b5");
+        this.putConfigMinimum(Main.MESSAGES_FILE, "6.1.0b5");
 
         final PluginDependency dependency = new PluginDependency(this, "PlayerActivity", "edgruberman.bukkit.playeractivity", "3.0.0");
         if (dependency.isValid()) return;
@@ -36,7 +39,7 @@ public final class Main extends CustomPlugin {
     @Override
     public void onEnable() {
         this.reloadConfig();
-        Main.courier = ConfigurationCourier.Factory.create(this).setColorCode("colorCode").setPath("common").build();
+        Main.courier = ConfigurationCourier.Factory.create(this).setBase(this.loadConfig(Main.MESSAGES_FILE)).setColorCode("colorCode").setPath("common").build();
 
         if (Bukkit.getPluginManager().getPlugin("PlayerActivity") == null) PlayerMoveBlockEvent.MovementTracker.initialize(this);
 
