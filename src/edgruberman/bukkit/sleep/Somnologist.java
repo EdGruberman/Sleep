@@ -57,25 +57,31 @@ public final class Somnologist implements Listener {
             return null;
         }
 
-        final YamlConfiguration config = YamlConfiguration.loadConfiguration(new File(this.plugin.getDataFolder(), "Worlds/" + world.getName() + "/" + CustomPlugin.CONFIGURATION_FILE));
+        final File configWorld = new File(this.plugin.getDataFolder(), "Worlds/" + world.getName() + "/" + CustomPlugin.CONFIGURATION_FILE);
+        final YamlConfiguration config = YamlConfiguration.loadConfiguration(configWorld);
         config.setDefaults(this.plugin.getConfig());
         config.options().copyDefaults(true);
+        if (configWorld.exists()) this.plugin.getLogger().log(Level.CONFIG, "[{0}] World specific override file found for configuration: {1}", new Object[] { world.getName(), configWorld });
 
-        final YamlConfiguration messages = YamlConfiguration.loadConfiguration(new File(this.plugin.getDataFolder(), "Worlds/" + world.getName() + "/" + Main.MESSAGES_FILE));
+        final File messagesWorld = new File(this.plugin.getDataFolder(), "Worlds/" + world.getName() + "/" + Main.MESSAGES_FILE);
+        final YamlConfiguration messages = YamlConfiguration.loadConfiguration(messagesWorld);
         messages.setDefaults(Main.courier.getBase().getRoot());
         messages.options().copyDefaults(true);
+        if (messagesWorld.exists()) this.plugin.getLogger().log(Level.CONFIG, "[{0}] World specific override file found for messages: {1}", new Object[] { world.getName(), messagesWorld });
 
         final State state = new State(this.plugin, world, config, messages);
-        this.plugin.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] Sleep Enabled: " + state.sleep);
-        this.plugin.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] Forced Sleep Minimum Count: " + state.forceCount);
-        this.plugin.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] Forced Sleep Minimum Percent: " + state.forcePercent);
-        this.plugin.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] Away Sleep: " + state.away);
-        if (state.away) {
-            this.plugin.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] Idle Threshold (seconds): " + (state.idleMonitor.tracker.getIdleThreshold() / 1000));
-            this.plugin.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] Monitored Activity: " + state.idleMonitor.tracker.getInterpreters().size() + " events");
+        if (state.idleMonitor != null) {
+            this.plugin.getLogger().log(Level.CONFIG, "[{0}] Idle Threshold (seconds): {1}", new Object[] { world.getName(), state.idleMonitor.tracker.getIdleThreshold() / 1000 });
+            this.plugin.getLogger().log(Level.CONFIG, "[{0}] Monitored Activity: {1} events", new Object[] { world.getName(), state.idleMonitor.tracker.getInterpreters().size() });
         }
-        for (final Reward reward : state.rewards) this.plugin.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] Reward: " + reward.toString());
-        if (state.cot != null) this.plugin.getLogger().log(Level.CONFIG, "Sleep state for [" + world.getName() + "] Cots Enabled");
+        if (state.forceCount != -1 || state.forcePercent != -1) {
+            this.plugin.getLogger().log(Level.CONFIG, "[{0}] Forced Sleep Minimum Count: {1}", new Object[] { world.getName(),  state.forceCount });
+            this.plugin.getLogger().log(Level.CONFIG, "[{0}] Forced Sleep Minimum Percent: {1}", new Object[] { world.getName(), state.forcePercent });
+        }
+        for (final Reward reward : state.rewards) this.plugin.getLogger().log(Level.CONFIG, "[{0}] Reward: {1}", new Object[] { world.getName(), reward.toString() });
+        if (state.cot != null) this.plugin.getLogger().log(Level.CONFIG, "[{0}] Cots Enabled", world.getName());
+        if (!state.sleep) this.plugin.getLogger().log(Level.CONFIG, "[{0}] Sleep Disabled", world.getName());
+        if (!state.away) this.plugin.getLogger().log(Level.CONFIG, "[{0}] Manual Away Enabled", world.getName());
 
         this.states.put(world, state);
         return state;
