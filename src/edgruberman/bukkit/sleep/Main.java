@@ -23,10 +23,10 @@ public final class Main extends CustomPlugin {
 
     @Override
     public void onLoad() {
-        this.putConfigMinimum(CustomPlugin.CONFIGURATION_FILE, "6.1.0b5");
-        this.putConfigMinimum(Main.MESSAGES_FILE, "6.1.0b5");
+        this.putConfigMinimum(CustomPlugin.CONFIGURATION_FILE, "6.1.0b7");
+        this.putConfigMinimum(Main.MESSAGES_FILE, "6.1.0b7");
 
-        final PluginDependency dependency = new PluginDependency(this, "PlayerActivity", "edgruberman.bukkit.playeractivity", "3.0.0");
+        final PluginDependency dependency = new PluginDependency(this, "PlayerActivity", "edgruberman.bukkit.playeractivity", "3.1.0");
         if (dependency.isValid()) return;
 
         // manual intervention required if dependency previously installed and out of date

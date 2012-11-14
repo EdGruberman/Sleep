@@ -1,3 +1,4 @@
+# For detailed information refer to http://dev.bukkit.org/server-mods/sleep/pages/configuration/
 logLevel: INFO
 force:
     enabled: false

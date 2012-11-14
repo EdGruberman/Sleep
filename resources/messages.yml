@@ -1,3 +1,4 @@
+# For detailed information refer to http://dev.bukkit.org/server-mods/sleep/pages/configuration/
 colorCode: '§'
 enter: '§8{0,time,HH:mm:ss} {1}§8 entered bed ({2,choice,0#§5no more needed§8|1#§dneed +{2} to sleep§8})' # 1 = Player, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
 leave: '§8{0,time,HH:mm:ss} {1}§8 left bed ({3,choice,0#§5no one in bed§8|1#§dneed +{2} to sleep§8})' # 1 = Player, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
