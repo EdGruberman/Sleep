@@ -22,7 +22,7 @@ commands:
         usage: /<command>
 permissions:
     sleep.admin:
-        description: Can use administrative features of Sleep plugin    
+        description: Can use all features of Sleep plugin    
         default: op
         children:
             sleep.user: true
