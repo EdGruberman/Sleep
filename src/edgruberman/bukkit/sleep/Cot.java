@@ -22,9 +22,6 @@ import edgruberman.bukkit.sleep.util.CustomLevel;
 /** temporary bed */
 public class Cot implements Listener {
 
-    /** Ticks in bed when Minecraft reassigns bed spawn */
-    private static final int BED_CHANGE_TICKS = 100;
-
     private final State state;
     private final long duration;
     private final Map<String, Location> previous = new HashMap<String, Location>();
@@ -61,8 +58,7 @@ public class Cot implements Listener {
     public void onPlayerBedLeave(final PlayerBedLeaveEvent event) {
         if (!event.getPlayer().getWorld().equals(this.state.world)) return;
 
-        // Ignore if bed spawn did not change
-        if (event.getPlayer().getSleepTicks() < Cot.BED_CHANGE_TICKS) return;
+        // TODO ignore if bed spawn will not change https://bukkit.atlassian.net/browse/BUKKIT-1917
 
         final Location previous = this.previous.get(event.getPlayer().getName());
         if (previous == null) return;
