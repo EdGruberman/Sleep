@@ -24,8 +24,8 @@ import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.event.world.WorldUnloadEvent;
 import org.bukkit.plugin.Plugin;
 
-import edgruberman.bukkit.playeractivity.consumers.PlayerAway;
-import edgruberman.bukkit.playeractivity.consumers.PlayerBack;
+import edgruberman.bukkit.playeractivity.consumers.away.PlayerAway;
+import edgruberman.bukkit.playeractivity.consumers.away.PlayerBack;
 import edgruberman.bukkit.sleep.rewards.Reward;
 import edgruberman.bukkit.sleep.util.CustomPlugin;
 

@@ -26,7 +26,7 @@ public final class Main extends CustomPlugin {
         this.putConfigMinimum(CustomPlugin.CONFIGURATION_FILE, "6.1.0b7");
         this.putConfigMinimum(Main.MESSAGES_FILE, "6.1.0b7");
 
-        final PluginDependency dependency = new PluginDependency(this, "PlayerActivity", "edgruberman.bukkit.playeractivity", "3.2.0");
+        final PluginDependency dependency = new PluginDependency(this, "PlayerActivity", "edgruberman.bukkit.playeractivity", "4.0.0b0");
         if (dependency.isValid()) return;
 
         // manual intervention required if dependency previously installed and out of date
