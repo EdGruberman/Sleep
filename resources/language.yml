@@ -9,19 +9,19 @@ active: '§8{0,time,HH:mm:ss} {1}§8 is no longer idle (§dneed +{2} to sleep§8
 away: '§8{0,time,HH:mm:ss} {1}§8 is now away ({2,choice,0#§5no more needed§8|1#§dneed +{2} to sleep§8})' # 1 = Player, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
 back: '§8{0,time,HH:mm:ss} {1}§8 is no longer away (§dneed +{2} to sleep§8)' # 1 = Player, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
 force: '§8{0,time,HH:mm:ss} {1}§8 is §5forcing§8 the sun to rise' # 1 = Player / Plugin Name
-cot-instruction: '-> §8To §5revert§8 to previous spawn, §5destroy§8 this bed soon' # 1 = Duration
-cot-reverted: '-> §2Reverted§8 spawn to previous bed'
-sleep-disabled: '-> §7Sleep is §edisabled§7 for {1}' # 1 = World
-require-sleeper: '-> §eNeed at least one§7 player in bed to force sleep'
-force-success: '-> §aForcing§7 sleep in {1}...' # 1 = World
-none-in-bed: '-> §7No one is currently in bed'
+cot-instruction: '§f-> §8To §5revert§8 to previous spawn, §5destroy§8 this bed soon' # 1 = Duration
+cot-reverted: '§f-> §2Reverted§8 spawn to previous bed'
+sleep-disabled: '§f-> §7Sleep is §edisabled§7 for {1}' # 1 = World
+require-sleeper: '§f-> §eNeed at least one§7 player in bed to force sleep'
+force-success: '§f-> §aForcing§7 sleep in {1}...' # 1 = World
+none-in-bed: '§f-> §7No one is currently in bed'
 not-sleeping:
-  format: '-> §7{1,choice,0#Everyone is asleep|1#§d{1} players§7 not in bed: {2}}' # 1 = Player Count Not Sleeping, 2 = Players Not In Bed
+  format: '§f-> §7{1,choice,0#Everyone is asleep|1#§d{1} players§7 not in bed: {2}}' # 1 = Player Count Not Sleeping, 2 = Players Not In Bed
   +delimiter: '§8, §7'
-summary: '-> §7{1,choice,0#Sleep §dneeds {2} more§7 in bed: |100#}{3} in bed / {4} possible = {1}%' # 1 = Percent In Bed, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
+summary: '§f-> §7{1,choice,0#Sleep §dneeds {2} more§7 in bed: |100#}{3} in bed / {4} possible = {1}%' # 1 = Percent In Bed, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
 +player: '{1}' # 0 = Name, 1 = Display Name
 common:
-  sleep-not-managed: '-> §7Sleep state is §enot managed§7 for §b§o{1}' # 1 = World
+  sleep-not-managed: '§f-> §7Sleep state is §enot managed§7 for §b§o{1}' # 1 = World
   unknown-argument: '§f-> §eUnknown§f value for §b§o{1}§7: §f{2}' # 1 = Argument Name, 2 = Argument Value
   requires-argument: '§f-> §cMissing §7required argument: §b§o{1}' # 1 = Argument Name
   reload: '§f-> §2Reloaded §7{1} plugin' # 1 = Plugin Name
