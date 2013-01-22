@@ -52,8 +52,8 @@ public final class State {
     State(final Plugin plugin, final World world, final ConfigurationSection config, final ConfigurationSection messages) {
         this.plugin = plugin;
         this.world = world;
-        this.courier = ConfigurationCourier.Factory.create(plugin).setBase(messages).setColorCode("colorCode").build();
-        this.messageLimit = config.getInt("messageLimit");
+        this.courier = ConfigurationCourier.Factory.create(plugin).setBase(messages).setFormatCode("format-code").build();
+        this.messageLimit = config.getInt("message-limit");
         this.away = config.getBoolean("away");
         this.forceCount = ( config.getBoolean("force.enabled") ? config.getInt("force.count") : -1 );
         this.forcePercent = ( config.getBoolean("force.enabled") ? config.getInt("force.percent") : -1 );

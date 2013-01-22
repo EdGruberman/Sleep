@@ -14,7 +14,7 @@ import edgruberman.bukkit.sleep.util.PluginDependency;
 
 public final class Main extends CustomPlugin {
 
-    public static final String MESSAGES_FILE = "messages.yml";
+    public static final String LANGUAGE_FILE = "language.yml";
 
     public static ConfigurationCourier courier;
     public static Plugin plugin;
@@ -24,8 +24,8 @@ public final class Main extends CustomPlugin {
 
     @Override
     public void onLoad() {
-        this.putConfigMinimum(CustomPlugin.CONFIGURATION_FILE, "6.1.0b7");
-        this.putConfigMinimum(Main.MESSAGES_FILE, "6.1.0b7");
+        this.putConfigMinimum("6.1.0b15");
+        this.putConfigMinimum(Main.LANGUAGE_FILE, "6.1.0b15");
 
         final PluginDependency dependency = new PluginDependency(this, "PlayerActivity", "edgruberman.bukkit.playeractivity", "4.0.0b0");
         if (dependency.isValid()) return;
@@ -49,7 +49,7 @@ public final class Main extends CustomPlugin {
         }
 
         this.reloadConfig();
-        Main.courier = ConfigurationCourier.Factory.create(this).setBase(this.loadConfig(Main.MESSAGES_FILE)).setColorCode("colorCode").setPath("common").build();
+        Main.courier = ConfigurationCourier.Factory.create(this).setBase(this.loadConfig(Main.LANGUAGE_FILE)).setFormatCode("format-code").setPath("common").build();
 
         if (Bukkit.getPluginManager().getPlugin("PlayerActivity") == null) PlayerMoveBlockEvent.MovementTracker.initialize(this);
 

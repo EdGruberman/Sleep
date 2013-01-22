@@ -71,7 +71,7 @@ public class Cot implements Listener {
         }
 
         this.state.plugin.getLogger().log(CustomLevel.TRACE, "Temporary bed used by {0} at {2}; Previous: {1}", new Object[]{event.getPlayer().getName(), previous, event.getBed()});
-        this.state.courier.send(event.getPlayer(), "cotInstruction", Cot.readableDuration(this.duration / 20 * 1000)
+        this.state.courier.send(event.getPlayer(), "cot-instruction", Cot.readableDuration(this.duration / 20 * 1000)
                 , previous.getWorld().getName(), previous.getBlockX(), previous.getBlockY(), previous.getBlockZ()
                 , event.getBed().getWorld().getName(), event.getBed().getX(), event.getBed().getY(), event.getBed().getZ());
 
@@ -119,7 +119,7 @@ public class Cot implements Listener {
         this.previous.remove(broken.getPlayer().getName());
 
         this.state.plugin.getLogger().log(CustomLevel.TRACE, "Temporary bed reverted by {0} to {1}; Temporary: {2}", new Object[]{broken.getPlayer().getName(), previous, head});
-        this.state.courier.send(broken.getPlayer(), "cotReverted"
+        this.state.courier.send(broken.getPlayer(), "cot-reverted"
                 , previous.getWorld().getName(), previous.getBlockX(), previous.getBlockY(), previous.getBlockZ()
                 , head.getWorld().getName(), head.getX(), head.getY(), head.getZ());
     }

@@ -29,29 +29,29 @@ public class Status implements CommandExecutor {
     @Override
     public boolean onCommand(final CommandSender sender, final Command command, final String label, final String[] args) {
         if (!(sender instanceof Player) && args.length == 0) {
-            Main.courier.send(sender, "requiresArgument", "<World>");
+            Main.courier.send(sender, "requires-argument", "<World>");
             return false;
         }
 
         final World world = Status.parseWorld(sender, args);
         if (world == null) {
-            Main.courier.send(sender, "worldNotFound", args[0]);
+            Main.courier.send(sender, "unknown-argument", "<World>", args[0]);
             return false;
         }
 
         final State state = this.somnologist.getState(world);
         if (state == null) {
-            Main.courier.send(sender, "sleepNotManaged", world.getName());
+            Main.courier.send(sender, "sleep-not-managed", world.getName());
             return true;
         }
 
         if (!state.sleep) {
-            state.courier.send(sender, "sleepDisabled", world.getName());
+            state.courier.send(sender, "sleep-disabled", world.getName());
             return true;
         }
 
         if (state.sleeping.size() == 0) {
-            state.courier.send(sender, "noneInBed");
+            state.courier.send(sender, "none-in-bed");
 
         } else {
             final List<Player> preventing = state.preventing();
@@ -61,7 +61,7 @@ public class Status implements CommandExecutor {
             for (final Player player : preventing)
                 names.add(state.courier.format("+player", player.getName(), player.getDisplayName()));
 
-            state.courier.send(sender, "notSleeping.format", names.size(), Status.join(names, state.courier.format("notSleeping.+delimiter")));
+            state.courier.send(sender, "not-sleeping.format", names.size(), Status.join(names, state.courier.format("not-sleeping.+delimiter")));
         }
 
         final int sleeping = state.sleeping.size();

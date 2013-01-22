@@ -1,52 +1,52 @@
 # For detailed information refer to http://dev.bukkit.org/server-mods/sleep/pages/configuration/
-logLevel: INFO
+log-level: INFO
 force:
-    enabled: false
-    count: -1
-    percent: -1
+  enabled: false
+  count: -1
+  percent: -1
 idle:
-    enabled: true
-    duration: 60 # seconds
-    activity:
-        - PlayerMoveBlockEvent
-        - AsyncPlayerChatEvent
-        - PlayerBedLeaveEvent
-        - PlayerInteractEvent
-        - PlayerDropItemEvent
-        - PlayerToggleSneakEvent
-        - PlayerItemHeldEvent
-        - PlayerJoinEvent
-        - PlayerChangedWorldEvent
-        - EnchantItemEvent
-        - PrepareItemEnchantEvent
-        - InventoryClickEvent
+  enabled: true
+  duration: 60 # seconds
+  activity:
+    - PlayerMoveBlockEvent
+    - AsyncPlayerChatEvent
+    - PlayerBedLeaveEvent
+    - PlayerInteractEvent
+    - PlayerDropItemEvent
+    - PlayerToggleSneakEvent
+    - PlayerItemHeldEvent
+    - PlayerJoinEvent
+    - PlayerChangedWorldEvent
+    - EnchantItemEvent
+    - PrepareItemEnchantEvent
+    - InventoryClickEvent
 cot:
-    enabled: false
-    duration: 500 # seconds (<1 day cycle)
+  enabled: false
+  duration: 500 # seconds (<1 day cycle)
 reward:
-    enabled: false
-    Golden Apple Satiation:
-        class: Food
-        saturation: 9.6
-        level: 0
-        factor: 0.0
-    Golden Apple Regeneration:
-        class: PotionEffect
-        type: REGENERATION
-        duration: 4
-        amplifier: 1
-        factor: 0.0
-    Exhaustion Reset:
-        class: Health
-        health: 0
-        exhaustion: -100.0
-        factor: 0.0
-    Experience Orbs:
-        class: ExperienceOrb
-        quantity: 3
-        experience: 5
-        factor: 0.5
+  enabled: false
+  Golden Apple Satiation:
+    class: Food
+    saturation: 9.6
+    level: 0
+    factor: 0.0
+  Golden Apple Regeneration:
+    class: PotionEffect
+    type: REGENERATION
+    duration: 4
+    amplifier: 1
+    factor: 0.0
+  Exhaustion Reset:
+    class: Health
+    health: 0
+    exhaustion: -100.0
+    factor: 0.0
+  Experience Orbs:
+    class: ExperienceOrb
+    quantity: 3
+    experience: 5
+    factor: 0.5
 away: false # requires PlayerActivity plugin
 sleep: true
-messageLimit: 5 # Seconds (enter and leave only)
+message-limit: 5 # Seconds (enter and leave only)
 version: @VERSION@

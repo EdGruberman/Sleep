@@ -25,7 +25,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 /**
  * @author EdGruberman (ed@rjump.com)
- * @version 1.2.0
+ * @version 1.3.4
  */
 public class CustomPlugin extends JavaPlugin {
 
@@ -40,6 +40,10 @@ public class CustomPlugin extends JavaPlugin {
     private final Map<String, Version> configurationMinimums = new HashMap<String, Version>();
     private FileConfiguration config = null;
     private char pathSeparator = '.';
+
+    public void putConfigMinimum(final String version) {
+        this.putConfigMinimum(CustomPlugin.CONFIGURATION_FILE, version);
+    }
 
     public void putConfigMinimum(final String resource, final String version) {
         this.configurationMinimums.put(resource, new Version(version));
@@ -58,8 +62,8 @@ public class CustomPlugin extends JavaPlugin {
 
     @Override
     public void reloadConfig() {
-        this.config = this.loadConfig(CustomPlugin.CONFIGURATION_FILE, this.pathSeparator, this.configurationMinimums.get(CustomPlugin.CONFIGURATION_FILE));
-        this.setLogLevel(this.getConfig().getString("logLevel"));
+        this.config = this.loadConfig(CustomPlugin.CONFIGURATION_FILE);
+        this.setLogLevel(this.getConfig().getString("log-level"));
         this.getLogger().log(Level.FINEST, "YAML configuration file encoding: {0}", CustomPlugin.CONFIGURATION_TARGET);
     }
 
@@ -68,7 +72,7 @@ public class CustomPlugin extends JavaPlugin {
         this.extractConfig(CustomPlugin.CONFIGURATION_FILE, false);
     }
 
-    /** @param resource same as in {@link #loadConfig(String, char, Version)} */
+    /** @param resource file name relative to plugin data folder and base of jar (embedded file extracted to file system if does not exist) */
     public FileConfiguration loadConfig(final String resource) {
         return this.loadConfig(resource, this.pathSeparator, this.configurationMinimums.get(resource));
     }
@@ -88,11 +92,11 @@ public class CustomPlugin extends JavaPlugin {
         } catch (final Exception e) {
             throw new RuntimeException("Unable to load configuration file: " + existing.getPath(), e);
         }
-        yaml.setDefaults(this.loadEmbeddedConfig(CustomPlugin.CONFIGURATION_FILE));
+        yaml.setDefaults(this.loadEmbeddedConfig(resource));
         if (required == null) return yaml;
 
         // verify required or later version
-        final Version version = new Version(yaml.getString("version"));
+        final Version version = new Version(yaml.getString("version", null));
         if (version.compareTo(required) >= 0) return yaml;
 
         this.archiveConfig(resource, version);

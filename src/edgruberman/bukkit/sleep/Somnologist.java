@@ -63,7 +63,7 @@ public final class Somnologist implements Listener {
         config.options().copyDefaults(true);
         if (configWorld.exists()) this.plugin.getLogger().log(Level.CONFIG, "[{0}] World specific override file found for configuration: {1}", new Object[] { world.getName(), configWorld });
 
-        final File messagesWorld = new File(this.plugin.getDataFolder(), "Worlds/" + world.getName() + "/" + Main.MESSAGES_FILE);
+        final File messagesWorld = new File(this.plugin.getDataFolder(), "Worlds/" + world.getName() + "/" + Main.LANGUAGE_FILE);
         final YamlConfiguration messages = YamlConfiguration.loadConfiguration(messagesWorld);
         messages.setDefaults(Main.courier.getBase().getRoot());
         messages.options().copyDefaults(true);

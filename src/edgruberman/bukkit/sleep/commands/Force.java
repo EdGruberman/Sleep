@@ -21,28 +21,28 @@ public class Force implements CommandExecutor {
     @Override
     public boolean onCommand(final CommandSender sender, final Command command, final String label, final String[] args) {
         if (!(sender instanceof Player) && args.length == 0) {
-            Main.courier.send(sender, "requiresArgument", "<World>");
+            Main.courier.send(sender, "requires-argument", "<World>");
             return false;
         }
 
         final World world = Status.parseWorld(sender, args);
         if (world == null) {
-            Main.courier.send(sender, "worldNotFound", args[0]);
+            Main.courier.send(sender, "unknown-argument", "<World>", args[0]);
             return false;
         }
 
         final State state = this.somnologist.getState(world);
         if (state == null) {
-            Main.courier.send(sender, "sleepNotManaged", world.getName());
+            Main.courier.send(sender, "sleep-not-managed", world.getName());
             return true;
         }
 
         if (state.sleeping.size() == 0) {
-            state.courier.send(sender, "requireSleeper");
+            state.courier.send(sender, "require-sleeper");
             return true;
         }
 
-        state.courier.send(sender, "forceSuccess", world.getName());
+        state.courier.send(sender, "force-success", world.getName());
         state.force(sender);
         return true;
     }
