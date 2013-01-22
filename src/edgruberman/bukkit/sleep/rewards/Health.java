@@ -7,31 +7,30 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
 import edgruberman.bukkit.sleep.Main;
+import edgruberman.bukkit.sleep.Reward;
 import edgruberman.bukkit.sleep.util.CustomLevel;
 
 public class Health extends Reward {
 
-    public int health;
-    public float exhaustion;
+    public final int health;
+    public final float exhaustion;
 
-    @Override
-    public Reward load(final ConfigurationSection definition) {
-        super.load(definition);
+    public Health(final ConfigurationSection definition) {
+        super(definition);
         this.health = definition.getInt("health");
         this.exhaustion = (float) definition.getDouble("exhaustion");
-        return this;
     }
 
     @Override
     public void apply(final Player player, final Block bed, final int participants) {
         if (this.health != 0) {
-            final int result = this.factorFor(this.health, participants);
+            final int result = this.factor(this.health, participants);
             player.setHealth(Math.max(0, Math.min(20, player.getHealth() + result)));
             Main.plugin.getLogger().log(CustomLevel.DEBUG, "Rewarded {0} by adding {1} to health which set it to {2}", new Object[] { player.getName(), result, player.getHealth() });
         }
 
         if (this.exhaustion != 0) {
-            final float result = this.factorFor(this.exhaustion, participants);
+            final float result = this.factor(this.exhaustion, participants);
             player.setExhaustion(Math.max(0, player.getExhaustion() + result));
             Main.plugin.getLogger().log(CustomLevel.DEBUG, "Rewarded {0} by adding {1,number,#.##} to exhaustion which set it to {2,number,#.##}"
                     , new Object[] { player.getName(), result, player.getExhaustion() });

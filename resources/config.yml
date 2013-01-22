@@ -23,7 +23,7 @@ idle:
 cot:
   enabled: false
   duration: 500 # seconds (<1 day cycle)
-reward:
+rewards:
   enabled: false
   Golden Apple Satiation:
     class: Food

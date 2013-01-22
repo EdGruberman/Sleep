@@ -8,29 +8,28 @@ import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffectType;
 
 import edgruberman.bukkit.sleep.Main;
+import edgruberman.bukkit.sleep.Reward;
 import edgruberman.bukkit.sleep.util.CustomLevel;
 
 public class PotionEffect extends Reward {
 
     private static final int TICKS_PER_SECOND = 20;
 
-    public PotionEffectType type;
-    public int duration;
-    public int amplifier;
+    public final PotionEffectType type;
+    public final int duration;
+    public final int amplifier;
 
-    @Override
-    public Reward load(final ConfigurationSection definition) {
-        super.load(definition);
+    public PotionEffect(final ConfigurationSection definition) {
+        super(definition);
         this.type = PotionEffectType.getByName(definition.getString("type"));
         if (this.type == null) throw new IllegalArgumentException("Unrecognized PotionEffectType: " + definition.getString("type"));
         this.duration = definition.getInt("duration");
         this.amplifier = definition.getInt("amplifier");
-        return this;
     }
 
     @Override
     public void apply(final Player player, final Block bed, final int participants) {
-        final int result = this.factorFor(this.duration * PotionEffect.TICKS_PER_SECOND, participants);
+        final int result = this.factor(this.duration * PotionEffect.TICKS_PER_SECOND, participants);
         player.addPotionEffect(this.type.createEffect((int) (result * (1 / this.type.getDurationModifier())), this.amplifier));
         Main.plugin.getLogger().log(CustomLevel.DEBUG, "Rewarded {0} by adding {1} potion effect for {2} ticks with an amplifier of {3}"
                 , new Object[] { player.getName(), this.type.getName(), result, this.amplifier });

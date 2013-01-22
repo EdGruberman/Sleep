@@ -8,24 +8,23 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
 import edgruberman.bukkit.sleep.Main;
+import edgruberman.bukkit.sleep.Reward;
 import edgruberman.bukkit.sleep.util.CustomLevel;
 
 public class ConsoleCommand extends Reward {
 
-    public String format;
-    public int value;
+    public final String format;
+    public final int value;
 
-    @Override
-    public Reward load(final ConfigurationSection definition) {
-        super.load(definition);
+    public ConsoleCommand(final ConfigurationSection definition) {
+        super(definition);
         this.format = definition.getString("format");
         this.value = definition.getInt("value");
-        return this;
     }
 
     @Override
     public void apply(final Player player, final Block bed, final int participants) {
-        final int result = this.factorFor(this.value, participants);
+        final int result = this.factor(this.value, participants);
         final String command = String.format(this.format, player.getName(), result);
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
         Main.plugin.getLogger().log(CustomLevel.DEBUG, "Rewarded {0} by dispatching console command \"{1}\"", new Object[] { player.getName(), command });

@@ -9,28 +9,27 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 import edgruberman.bukkit.sleep.Main;
+import edgruberman.bukkit.sleep.Reward;
 import edgruberman.bukkit.sleep.util.CustomLevel;
 
 public class Item extends Reward {
 
-    public int quantity;
-    public Material material;
-    public short data;
+    public final int quantity;
+    public final Material material;
+    public final short data;
 
-    @Override
-    public Reward load(final ConfigurationSection definition) {
-        super.load(definition);
+    public Item(final ConfigurationSection definition) {
+        super(definition);
         this.quantity = definition.getInt("quantity");
         if (this.quantity <= 0) throw new IllegalArgumentException("Quantity must be greater than 0");
         this.material = Material.matchMaterial(definition.getString("material"));
         if (this.material == null) throw new IllegalArgumentException("Unrecognized Material: " + definition.getString("material"));
         this.data = (short) definition.getInt("data");
-        return this;
     }
 
     @Override
     public void apply(final Player player, final Block bed, final int participants) {
-        final int result = this.factorFor(this.quantity, participants);
+        final int result = this.factor(this.quantity, participants);
 
         for (final ItemStack remaining : player.getInventory().addItem(new ItemStack(this.material, result, this.data)).values())
             player.getWorld().dropItemNaturally(player.getLocation(), remaining);

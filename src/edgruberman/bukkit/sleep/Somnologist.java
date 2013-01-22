@@ -26,7 +26,6 @@ import org.bukkit.plugin.Plugin;
 
 import edgruberman.bukkit.playeractivity.consumers.away.PlayerAway;
 import edgruberman.bukkit.playeractivity.consumers.away.PlayerBack;
-import edgruberman.bukkit.sleep.rewards.Reward;
 import edgruberman.bukkit.sleep.util.CustomPlugin;
 
 /** sleep state management */

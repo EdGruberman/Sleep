@@ -19,7 +19,6 @@ import org.bukkit.plugin.Plugin;
 
 import edgruberman.bukkit.sleep.craftbukkit.CraftBukkit;
 import edgruberman.bukkit.sleep.messaging.ConfigurationCourier;
-import edgruberman.bukkit.sleep.rewards.Reward;
 
 /** sleep state for a specific world */
 public final class State {
@@ -57,7 +56,7 @@ public final class State {
         this.away = config.getBoolean("away");
         this.forceCount = ( config.getBoolean("force.enabled") ? config.getInt("force.count") : -1 );
         this.forcePercent = ( config.getBoolean("force.enabled") ? config.getInt("force.percent") : -1 );
-        this.loadReward(config.getConfigurationSection("reward"));
+        this.loadRewards(config.getConfigurationSection("rewards"));
         this.cot = ( config.getBoolean("cot.enabled") ? new Cot(this, config.getLong("cot.duration") * State.TICKS_PER_SECOND) : null );
         this.idleMonitor = ( config.getBoolean("idle.enabled") ? new IdleMonitor(this, config.getConfigurationSection("idle")) : null );
 
@@ -77,14 +76,15 @@ public final class State {
         for (final Player existing : world.getPlayers()) this.add(existing);
     }
 
-    private void loadReward(final ConfigurationSection reward) {
-        if (reward == null || !reward.getBoolean("enabled")) return;
+    private void loadRewards(final ConfigurationSection rewards) {
+        if (rewards == null || !rewards.getBoolean("enabled")) return;
 
-        for (final String name : reward.getKeys(false)) {
+        for (final String name : rewards.getKeys(false)) {
             if (name.equals("enabled")) continue;
 
+            final ConfigurationSection reward = rewards.getConfigurationSection(name);
             try {
-                this.rewards.add(Reward.create(reward.getConfigurationSection(name)));
+                this.rewards.add(Reward.create(reward.getString("class"), reward));
             } catch (final Exception e) {
                 this.plugin.getLogger().warning("Unable to create reward for [" + this.world.getName() + "]: " + name + "; " + e);
             }
