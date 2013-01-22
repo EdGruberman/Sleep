@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 
+import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.command.CommandSender;
@@ -16,6 +17,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.Plugin;
 
+import edgruberman.bukkit.sleep.craftbukkit.CraftBukkit;
 import edgruberman.bukkit.sleep.messaging.ConfigurationCourier;
 import edgruberman.bukkit.sleep.rewards.Reward;
 
@@ -51,7 +53,6 @@ public final class State {
         this.plugin = plugin;
         this.world = world;
         this.courier = ConfigurationCourier.Factory.create(plugin).setBase(messages).setColorCode("colorCode").build();
-        this.sleep = config.getBoolean("sleep");
         this.messageLimit = config.getInt("messageLimit");
         this.away = config.getBoolean("away");
         this.forceCount = ( config.getBoolean("force.enabled") ? config.getInt("force.count") : -1 );
@@ -59,6 +60,19 @@ public final class State {
         this.loadReward(config.getConfigurationSection("reward"));
         this.cot = ( config.getBoolean("cot.enabled") ? new Cot(this, config.getLong("cot.duration") * State.TICKS_PER_SECOND) : null );
         this.idleMonitor = ( config.getBoolean("idle.enabled") ? new IdleMonitor(this, config.getConfigurationSection("idle")) : null );
+
+        if (config.getBoolean("sleep")) {
+            CraftBukkit cb = null;
+            try {
+                cb = CraftBukkit.create();
+            } catch (final Exception e) {
+                plugin.getLogger().severe("Unsupported CraftBukkit version " + Bukkit.getVersion() + "; " + e);
+                plugin.getLogger().severe("Sleep will not be disabled; Check " + plugin.getDescription().getWebsite() + " for updates");
+            }
+            this.sleep = ( cb != null ? true : false);
+        } else {
+            this.sleep = false;
+        }
 
         for (final Player existing : world.getPlayers()) this.add(existing);
     }
