@@ -19,6 +19,7 @@ public final class Main extends CustomPlugin {
     public static ConfigurationCourier courier;
     public static Plugin plugin;
 
+    private boolean prepared = true;
     private Somnologist somnologist = null;
 
     @Override
@@ -29,15 +30,24 @@ public final class Main extends CustomPlugin {
         final PluginDependency dependency = new PluginDependency(this, "PlayerActivity", "edgruberman.bukkit.playeractivity", "4.0.0b0");
         if (dependency.isValid()) return;
 
-        // manual intervention required if dependency previously installed and out of date
-        if (dependency.isInstalled())
-            throw new IllegalStateException("PlayerActivity plugin out of date;  Stop server, delete \"plugins/PlayerActivity.jar\", and then restart server");
+        if (!dependency.isInstalled()) {
+            dependency.extract();
+            return;
+        }
 
-        dependency.extract();
+        // manual intervention required if dependency previously installed and out of date
+        this.prepared = false;
+        this.getLogger().severe("PlayerActivity plugin out of date;  Stop server, delete \"plugins/PlayerActivity.jar\", and then restart server");
     }
 
     @Override
     public void onEnable() {
+        if (!this.prepared) {
+            this.getLogger().severe("Disabling plugin; Dependencies not met");
+            this.setEnabled(false);
+            return;
+        }
+
         this.reloadConfig();
         Main.courier = ConfigurationCourier.Factory.create(this).setBase(this.loadConfig(Main.MESSAGES_FILE)).setColorCode("colorCode").setPath("common").build();
 
@@ -55,7 +65,7 @@ public final class Main extends CustomPlugin {
     public void onDisable() {
         HandlerList.unregisterAll(this);
         Bukkit.getScheduler().cancelTasks(this);
-        this.somnologist.clear();
+        if (this.somnologist != null) this.somnologist.clear();
         Main.courier = null;
         Main.plugin = null;
     }
