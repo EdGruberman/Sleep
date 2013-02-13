@@ -278,8 +278,7 @@ public final class State {
 
     private boolean isIdle(final Player player) {
         if (this.idleMonitor == null) return false;
-
-        return this.idleMonitor.idle.contains(player);
+        return this.idleMonitor.isIdle(player);
     }
 
     /** players not ignored and not in bed */

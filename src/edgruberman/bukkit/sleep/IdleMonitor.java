@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
+import java.util.UUID;
 import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
@@ -21,7 +22,7 @@ public class IdleMonitor implements Observer, Listener {
 
     public final State state;
     public final StatusTracker tracker;
-    public final Set<Player> idle = new HashSet<Player>();
+    public final Set<UUID> idle = new HashSet<UUID>();
 
     IdleMonitor(final State state, final ConfigurationSection config) {
         this.state = state;
@@ -52,7 +53,7 @@ public class IdleMonitor implements Observer, Listener {
             if (!idle.player.getWorld().equals(this.state.world)) return;
 
             this.state.plugin.getLogger().log(Level.FINEST, "[{0}] idle: {1} (Ignored: {2}); {3}ms", new Object[] { this.state.world.getName(), idle.player.getName(), idle.player.isSleepingIgnored(), idle.duration });
-            this.idle.add(idle.player);
+            this.idle.add(idle.player.getUniqueId());
             this.state.ignore(idle.player, true, "idle");
             return;
         }
@@ -60,16 +61,20 @@ public class IdleMonitor implements Observer, Listener {
         final PlayerActive active = (PlayerActive) arg;
         if (!active.player.getWorld().equals(this.state.world)) return;
 
-        if (!this.idle.contains(active.player)) return;
+        if (!this.isIdle(active.player)) return;
 
         this.state.plugin.getLogger().log(Level.FINEST, "[{0}] active: {1} (Ignored: {2}); {3}", new Object[] { this.state.world.getName(), active.player.getName(), active.player.isSleepingIgnored(), active.event.getSimpleName() });
-        this.idle.remove(active.player);
+        this.idle.remove(active.player.getUniqueId());
         this.state.ignore(active.player, false, "active");
     }
 
     @EventHandler
     public void onPlayerQuit(final PlayerQuitEvent quit) {
-        this.idle.remove(quit.getPlayer());
+        this.idle.remove(quit.getPlayer().getUniqueId());
+    }
+
+    public boolean isIdle(final Player player) {
+        return this.idle.contains(player.getUniqueId());
     }
 
 }
