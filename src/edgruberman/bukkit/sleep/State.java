@@ -47,8 +47,8 @@ public final class State {
 
     private boolean forcing = false;
     private Integer participants = null;
-    private final Map<Player, Long> lastBedEnterMessage = new HashMap<Player, Long>();
-    private final Map<Player, Long> lastBedLeaveMessage = new HashMap<Player, Long>();
+    private final Map<UUID, Long> lastBedEnterMessage = new HashMap<UUID, Long>();
+    private final Map<UUID, Long> lastBedLeaveMessage = new HashMap<UUID, Long>();
 
     State(final Plugin plugin, final World world, final ConfigurationSection config, final ConfigurationSection messages) {
         this.plugin = plugin;
@@ -129,8 +129,8 @@ public final class State {
         this.plugin.getLogger().log(Level.FINEST, "[{0}] add: {1} (Ignored: {2})", new Object[] { this.world.getName(), joiner.getName(), joiner.isSleepingIgnored() });
         this.players.add(joiner);
 
-        this.lastBedEnterMessage.put(joiner, 0L);
-        this.lastBedLeaveMessage.put(joiner, 0L);
+        this.lastBedEnterMessage.put(joiner.getUniqueId(), 0L);
+        this.lastBedLeaveMessage.put(joiner.getUniqueId(), 0L);
 
         if (joiner.hasPermission("sleep.ignore")) this.ignore(joiner, true, "permission");
         if (this.isIdle(joiner)) this.ignore(joiner, true, "idle");
@@ -199,8 +199,8 @@ public final class State {
         this.players.remove(remover);
         final boolean wasAsleep = this.sleeping.remove(remover.getUniqueId());
 
-        this.lastBedEnterMessage.remove(remover);
-        this.lastBedLeaveMessage.remove(remover);
+        this.lastBedEnterMessage.remove(remover.getUniqueId());
+        this.lastBedLeaveMessage.remove(remover.getUniqueId());
 
         if (!remover.isSleepingIgnored() && (wasAsleep || this.sleeping.size() >= 1)) this.notify("remove", remover);
         remover.setSleepingIgnored(false);
@@ -247,19 +247,19 @@ public final class State {
         if (this.forcing) return;
 
         if (key.equals("enter")) {
-            if (System.currentTimeMillis() <= (this.lastBedEnterMessage.get(player) + (this.messageLimit * 1000))) {
+            if (System.currentTimeMillis() <= (this.lastBedEnterMessage.get(player.getUniqueId()) + (this.messageLimit * 1000))) {
                 this.plugin.getLogger().log(Level.FINEST, "enter message limit of {0} seconds exceeded by {1}", new Object[] { this.messageLimit, player.getName() });
                 return;
             }
-            this.lastBedEnterMessage.put(player, System.currentTimeMillis());
+            this.lastBedEnterMessage.put(player.getUniqueId(), System.currentTimeMillis());
         }
 
         if (key.equals("leave")) {
-            if (System.currentTimeMillis() <= (this.lastBedLeaveMessage.get(player) + (this.messageLimit * 1000))) {
+            if (System.currentTimeMillis() <= (this.lastBedLeaveMessage.get(player.getUniqueId()) + (this.messageLimit * 1000))) {
                 this.plugin.getLogger().log(Level.FINEST, "leave message limit of {0} seconds exceeded by {1}", new Object[] { this.messageLimit, player.getName() });
                 return;
             }
-            this.lastBedLeaveMessage.put(player, System.currentTimeMillis());
+            this.lastBedLeaveMessage.put(player.getUniqueId(), System.currentTimeMillis());
         }
 
         final int needed = this.needed();
