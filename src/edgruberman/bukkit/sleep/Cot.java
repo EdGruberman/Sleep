@@ -19,7 +19,7 @@ import org.bukkit.material.Bed;
 
 import edgruberman.bukkit.sleep.util.CustomLevel;
 
-/** temporary bed */
+/** temporary bed manager */
 public class Cot implements Listener {
 
     private final State state;
@@ -44,14 +44,15 @@ public class Cot implements Listener {
     public void onPlayerBedEnter(final PlayerBedEnterEvent event) {
         if (!event.getPlayer().getWorld().equals(this.state.world)) return;
 
-        // Ignore if no previous bed spawn exists
-        if (event.getPlayer().getBedSpawnLocation() == null) return;
+        // ignore if no previous bed spawn exists
+        final Location previous = this.state.craftBukkit.getBed(event.getPlayer());
+        if (previous == null) return;
 
-        // Ignore when bed is same as current spawn
-        if (event.getPlayer().getBedSpawnLocation().equals(event.getBed().getLocation())) return;
+        // ignore when bed is same as current spawn
+        if (previous.equals(event.getBed().getLocation())) return;
 
-        // Record previous bed spawn location
-        this.previous.put(event.getPlayer().getName(), event.getPlayer().getBedSpawnLocation());
+        // record previous bed spawn location
+        this.previous.put(event.getPlayer().getName(), previous);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -63,9 +64,9 @@ public class Cot implements Listener {
         final Location previous = this.previous.get(event.getPlayer().getName());
         if (previous == null) return;
 
-        // NB: Bed spawn for player will not be updated until event finishes processing
+        // NB: bed spawn for player will not be updated until event finishes processing
         if (event.getBed().getLocation().equals(previous)) {
-            // Since bed spawn did not change, remove tracking of bed spawn
+            // since bed spawn did not change, remove tracking of bed spawn
             this.previous.remove(event.getPlayer().getName());
             return;
         }
@@ -75,7 +76,7 @@ public class Cot implements Listener {
                 , previous.getWorld().getName(), previous.getBlockX(), previous.getBlockY(), previous.getBlockZ()
                 , event.getBed().getWorld().getName(), event.getBed().getX(), event.getBed().getY(), event.getBed().getZ());
 
-        // Bed spawn changed, commit change after specified duration has elapsed
+        // bed spawn changed, commit change after specified duration has elapsed
         final int taskId = Bukkit.getScheduler().scheduleSyncDelayedTask(this.state.plugin, new BedChangeCommitter(this, event.getPlayer()), this.duration);
         this.committers.put(event.getPlayer().getName(), taskId);
     }
@@ -104,17 +105,17 @@ public class Cot implements Listener {
 
         if (broken.getBlock().getTypeId() != Material.BED_BLOCK.getId()) return;
 
-        // Ignore if bed spawn change has been committed
+        // ignore if bed spawn change has been committed
         final Location previous = this.previous.get(broken.getPlayer().getName());
         if (previous == null) return;
 
-        // Ignore if broken bed is not current spawn
+        // ignore if broken bed is not current spawn
         Block head = broken.getBlock();
         final Bed bed = new Bed(broken.getBlock().getTypeId(), broken.getBlock().getData());
         if (!bed.isHeadOfBed()) head = head.getRelative(bed.getFacing());
-        if (!head.getLocation().equals(broken.getPlayer().getBedSpawnLocation())) return;
+        if (!head.getLocation().equals(this.state.craftBukkit.getBed(broken.getPlayer()))) return;
 
-        // Revert to previous bed spawn
+        // revert to previous bed spawn
         broken.getPlayer().setBedSpawnLocation(previous);
         this.previous.remove(broken.getPlayer().getName());
 

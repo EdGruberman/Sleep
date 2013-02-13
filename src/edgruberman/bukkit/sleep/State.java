@@ -38,6 +38,7 @@ public final class State {
     public final Cot cot;
     public final boolean away;
     public final IdleMonitor idleMonitor;
+    public final CraftBukkit craftBukkit;
 
     // need to track players manually as processing will sometimes occur mid-event before player is adjusted
     public final List<Player> sleeping = new ArrayList<Player>();
@@ -57,20 +58,38 @@ public final class State {
         this.forceCount = ( config.getBoolean("force.enabled") ? config.getInt("force.count") : -1 );
         this.forcePercent = ( config.getBoolean("force.enabled") ? config.getInt("force.percent") : -1 );
         this.loadRewards(config.getConfigurationSection("rewards"));
-        this.cot = ( config.getBoolean("cot.enabled") ? new Cot(this, config.getLong("cot.duration") * State.TICKS_PER_SECOND) : null );
         this.idleMonitor = ( config.getBoolean("idle.enabled") ? new IdleMonitor(this, config.getConfigurationSection("idle")) : null );
 
-        if (config.getBoolean("sleep")) {
-            CraftBukkit cb = null;
+        CraftBukkit cb = null;
+        if (config.getBoolean("cot.enabled") || !config.getBoolean("sleep")) {
             try {
                 cb = CraftBukkit.create();
             } catch (final Exception e) {
                 plugin.getLogger().severe("Unsupported CraftBukkit version " + Bukkit.getVersion() + "; " + e);
-                plugin.getLogger().severe("Sleep will not be disabled; Check " + plugin.getDescription().getWebsite() + " for updates");
             }
-            this.sleep = ( cb != null ? true : false);
+        }
+        this.craftBukkit = cb;
+
+        if (!config.getBoolean("cot.enabled")) {
+            this.cot = null;
         } else {
-            this.sleep = false;
+            if (cb == null) {
+                plugin.getLogger().severe("Temporary Cots can not be enabled; Check " + plugin.getDescription().getWebsite() + " for updates");
+                this.cot = null;
+            } else {
+                this.cot = new Cot(this, config.getLong("cot.duration") * State.TICKS_PER_SECOND);
+            }
+        }
+
+        if (config.getBoolean("sleep")) {
+            this.sleep = true;
+        } else {
+            if (cb == null) {
+                plugin.getLogger().severe("Sleep can not be disabled; Check " + plugin.getDescription().getWebsite() + " for updates");
+                this.sleep = true;
+            } else {
+                this.sleep = false;
+            }
         }
 
         for (final Player existing : world.getPlayers()) this.add(existing);
@@ -126,7 +145,7 @@ public final class State {
         this.sleeping.add(enterer);
 
         if (!this.sleep) {
-            new Insomnia(this.plugin, enterer);
+            new Insomnia(this.plugin, this.craftBukkit, enterer);
             return;
         }
 

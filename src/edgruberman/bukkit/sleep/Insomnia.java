@@ -3,12 +3,13 @@ package edgruberman.bukkit.sleep;
 import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
-import org.bukkit.craftbukkit.v1_4_6.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerBedLeaveEvent;
 import org.bukkit.plugin.Plugin;
+
+import edgruberman.bukkit.sleep.craftbukkit.CraftBukkit;
 
 /** prevents deep sleep from occurring which would cause Minecraft to change the time to morning */
 public class Insomnia implements Runnable, Listener {
@@ -17,12 +18,14 @@ public class Insomnia implements Runnable, Listener {
     private static final long DEEP_SLEEP_TICKS = 100;
 
     private final Plugin plugin;
+    private final CraftBukkit craftBukkit;
     private final Player player;
     private final int taskId;
 
-    Insomnia(final Plugin plugin, final Player player) {
-        this.player = player;
+    Insomnia(final Plugin plugin, final CraftBukkit craftBukkit, final Player player) {
         this.plugin = plugin;
+        this.craftBukkit = craftBukkit;
+        this.player = player;
 
         // TODO research if -10 is unnecessary to compensate for any background processing before task starts counting
         this.taskId = Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin, this, Insomnia.DEEP_SLEEP_TICKS - 10);
@@ -44,8 +47,7 @@ public class Insomnia implements Runnable, Listener {
         this.plugin.getLogger().log(Level.FINEST, "Insomnia sets in for {0}; Setting spawn point then ejecting from bed...", this.player.getName());
 
         // eject player from bed before sleep can complete, but set player's spawn point
-        final CraftPlayer craftEnterer = (CraftPlayer) this.player;
-        craftEnterer.getHandle().a(true, true, true); // bed eject: reset sleep ticks, update sleeper status for world, set as current bed spawn
+        this.craftBukkit.bedEject(this.player);
     }
 
     @EventHandler
