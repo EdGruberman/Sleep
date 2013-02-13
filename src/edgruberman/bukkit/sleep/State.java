@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
@@ -41,7 +42,7 @@ public final class State {
     public final CraftBukkit craftBukkit;
 
     // need to track players manually as processing will sometimes occur mid-event before player is adjusted
-    public final List<Player> sleeping = new ArrayList<Player>();
+    public final List<UUID> sleeping = new ArrayList<UUID>();
     public final List<Player> players = new ArrayList<Player>();
 
     private boolean forcing = false;
@@ -142,7 +143,7 @@ public final class State {
     /** player entered bed */
     void enter(final Player enterer) {
         this.plugin.getLogger().log(Level.FINEST, "[{0}] enter: {1} (Ignored: {2})", new Object[] { this.world.getName(), enterer.getName(), enterer.isSleepingIgnored() });
-        this.sleeping.add(enterer);
+        this.sleeping.add(enterer.getUniqueId());
 
         if (!this.sleep) {
             new Insomnia(this.plugin, this.craftBukkit, enterer);
@@ -160,7 +161,7 @@ public final class State {
     /** player left bed */
     void leave(final Player leaver, final Block bed) {
         this.plugin.getLogger().log(Level.FINEST, "[{0}] leave: {1} (Ignored: {2})", new Object[] { this.world.getName(), leaver.getName(), leaver.isSleepingIgnored() });
-        this.sleeping.remove(leaver);
+        this.sleeping.remove(leaver.getUniqueId());
 
         if (this.isIdle(leaver) || this.isAway(leaver)) leaver.setSleepingIgnored(true);
 
@@ -196,7 +197,7 @@ public final class State {
     void remove(final Player remover) {
         this.plugin.getLogger().log(Level.FINEST, "[{0}] remove: {1} (Current: [{3}]; Ignored: {2})", new Object[] { this.world.getName(), remover.getName(), remover.isSleepingIgnored(), remover.getWorld().getName() });
         this.players.remove(remover);
-        final boolean wasAsleep = this.sleeping.remove(remover);
+        final boolean wasAsleep = this.sleeping.remove(remover.getUniqueId());
 
         this.lastBedEnterMessage.remove(remover);
         this.lastBedLeaveMessage.remove(remover);
@@ -232,7 +233,7 @@ public final class State {
     /** set whether or not a player ignores sleep status checks */
     public void ignore(final Player player, final boolean ignore, final String key) {
         // don't modify if already set as expected, or already actively engaged in sleep
-        if (player.isSleepingIgnored() == ignore || this.sleeping.contains(player)) return;
+        if (player.isSleepingIgnored() == ignore || this.sleeping.contains(player.getUniqueId())) return;
 
         // don't stop ignoring if any override is still active (TODO consider raising cancellable event)
         if (!ignore) if (this.isIdle(player) || player.hasPermission("sleep.ignore") || this.isAway(player) || this.forcing) return;
@@ -288,7 +289,7 @@ public final class State {
         final Iterator<Player> it = preventing.iterator();
         while (it.hasNext()) {
             final Player player = it.next();
-            if (player.isSleepingIgnored() || this.sleeping.contains(player))
+            if (player.isSleepingIgnored() || this.sleeping.contains(player.getUniqueId()))
                 it.remove();
         }
 
