@@ -3,6 +3,7 @@ package edgruberman.bukkit.sleep.craftbukkit;
 import java.lang.reflect.InvocationTargetException;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 public abstract class CraftBukkit {
@@ -20,5 +21,7 @@ public abstract class CraftBukkit {
     }
 
     public abstract void bedEject(Player player);
+
+    public abstract Location getBed(Player player);
 
 }
