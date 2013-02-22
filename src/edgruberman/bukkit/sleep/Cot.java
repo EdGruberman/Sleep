@@ -44,12 +44,9 @@ public class Cot implements Listener {
     public void onPlayerBedEnter(final PlayerBedEnterEvent event) {
         if (!event.getPlayer().getWorld().equals(this.state.world)) return;
 
-        // ignore if no previous bed spawn exists
         final Location previous = this.state.craftBukkit.getBed(event.getPlayer());
-        if (previous == null) return;
-
-        // ignore when bed is same as current spawn
-        if (previous.equals(event.getBed().getLocation())) return;
+        if (previous == null) return; // ignore if no previous bed spawn exists
+        if (previous.equals(event.getBed().getLocation())) return; // ignore when bed is same as current spawn
 
         // record previous bed spawn location
         this.previous.put(event.getPlayer().getName(), previous);
@@ -59,12 +56,10 @@ public class Cot implements Listener {
     public void onPlayerBedLeave(final PlayerBedLeaveEvent event) {
         if (!event.getPlayer().getWorld().equals(this.state.world)) return;
 
-        // TODO ignore if bed spawn will not change https://bukkit.atlassian.net/browse/BUKKIT-1917
-
         final Location previous = this.previous.get(event.getPlayer().getName());
         if (previous == null) return;
 
-        // NB: bed spawn for player will not be updated until event finishes processing
+        // bed spawn for player will not be updated until event finishes processing
         if (event.getBed().getLocation().equals(previous)) {
             // since bed spawn did not change, remove tracking of bed spawn
             this.previous.remove(event.getPlayer().getName());
@@ -77,26 +72,8 @@ public class Cot implements Listener {
                 , event.getBed().getWorld().getName(), event.getBed().getX(), event.getBed().getY(), event.getBed().getZ());
 
         // bed spawn changed, commit change after specified duration has elapsed
-        final int taskId = Bukkit.getScheduler().scheduleSyncDelayedTask(this.state.plugin, new BedChangeCommitter(this, event.getPlayer()), this.duration);
+        final int taskId = Bukkit.getScheduler().scheduleSyncDelayedTask(this.state.plugin, new BedChangeCommitter(event.getPlayer()), this.duration);
         this.committers.put(event.getPlayer().getName(), taskId);
-    }
-
-    private class BedChangeCommitter implements Runnable {
-
-        private final Cot temporary;
-        private final Player player;
-
-        private BedChangeCommitter(final Cot temporary, final Player player) {
-            this.temporary = temporary;
-            this.player = player;
-        }
-
-        @Override
-        public void run() {
-            this.temporary.previous.remove(this.player.getName());
-            this.temporary.committers.remove(this.player.getName());
-        }
-
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -124,6 +101,26 @@ public class Cot implements Listener {
                 , previous.getWorld().getName(), previous.getBlockX(), previous.getBlockY(), previous.getBlockZ()
                 , head.getWorld().getName(), head.getX(), head.getY(), head.getZ());
     }
+
+
+
+    private class BedChangeCommitter implements Runnable {
+
+        private final Player player;
+
+        private BedChangeCommitter(final Player player) {
+            this.player = player;
+        }
+
+        @Override
+        public void run() {
+            Cot.this.previous.remove(this.player.getName());
+            Cot.this.committers.remove(this.player.getName());
+        }
+
+    }
+
+
 
     private static String readableDuration(final long total) {
         final long totalSeconds = total / 1000;
