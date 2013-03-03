@@ -15,6 +15,7 @@ import org.bukkit.block.Block;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Cancellable;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.Plugin;
 
@@ -235,8 +236,11 @@ public final class State {
         // don't modify if already set as expected, or already actively engaged in sleep
         if (player.isSleepingIgnored() == ignore || this.sleeping.contains(player.getUniqueId())) return;
 
-        // don't stop ignoring if any override is still active (TODO consider raising cancellable event)
-        if (!ignore) if (this.isIdle(player) || player.hasPermission("sleep.ignore") || this.isAway(player) || this.forcing) return;
+        // don't stop ignoring if any override is still active
+        if (!ignore && (this.isIdle(player) || player.hasPermission("sleep.ignore") || this.isAway(player) || this.forcing)) return;
+
+        final Cancellable event = ( ignore ? new SleepIgnore(player) : new SleepAcknowledge(player) );
+        if (event.isCancelled()) return;
 
         this.plugin.getLogger().log(Level.FINEST, "[{0}] Setting {1} (Ignored: {2}) to {3,choice,0#not |1#}ignore sleep ({4})", new Object[] { this.world.getName(), player.getName(), player.isSleepingIgnored(), ignore?1:0, key });
         player.setSleepingIgnored(ignore);
