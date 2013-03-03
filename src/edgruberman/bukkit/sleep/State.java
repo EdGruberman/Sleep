@@ -25,7 +25,6 @@ import edgruberman.bukkit.sleep.messaging.ConfigurationCourier;
 /** sleep state for a specific world */
 public final class State {
 
-    private static final long TICKS_PER_SECOND = 20;
     private static final long SLEEP_FAILED_TICKS = 23460; //  bed leave in morning after failed sleep
     private static final long SLEEP_SUCCESS_TICKS = 0; // bed leave in morning after sleep completes
 
@@ -79,7 +78,7 @@ public final class State {
                 plugin.getLogger().severe("Temporary Cots can not be enabled; Check " + plugin.getDescription().getWebsite() + " for updates");
                 this.cot = null;
             } else {
-                this.cot = new Cot(this, config.getLong("cot.duration") * State.TICKS_PER_SECOND);
+                this.cot = new Cot(this, config.getLong("cot.duration") * Main.TICKS_PER_SECOND);
             }
         }
 

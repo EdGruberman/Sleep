@@ -14,6 +14,7 @@ import edgruberman.bukkit.sleep.util.PluginDependency;
 
 public final class Main extends CustomPlugin {
 
+    public static final long TICKS_PER_SECOND = 20;
     public static final String LANGUAGE_FILE = "language.yml";
 
     public static ConfigurationCourier courier;
