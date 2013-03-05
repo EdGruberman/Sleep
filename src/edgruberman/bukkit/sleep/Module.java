@@ -32,7 +32,7 @@ public class Module implements Listener {
 
             Module module;
             try {
-                module = registration.clazz.getConstructor(Plugin.class, State.class, ConfigurationSection.class).newInstance(registration.implementor, state, config);
+                module = registration.clazz.getConstructor(Plugin.class, State.class, ConfigurationSection.class).newInstance(registration.implementor, state, moduleSection);
             } catch (final Exception e) {
                 registration.implementor.getLogger().log(Level.WARNING, "[{0}] Unable to load {1} module (section: {3}, class: {2}); {4}", new Object[] { state.world.getName(), registration.clazz.getSimpleName(), registration.clazz.getName(), registration.section, e });
                 continue;
