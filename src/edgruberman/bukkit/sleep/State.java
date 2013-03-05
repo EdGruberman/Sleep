@@ -36,8 +36,6 @@ public final class State {
     public final int forcePercent;
     public final int messageLimit;
     public final Collection<Reward> rewards = new ArrayList<Reward>();
-    public final CotModule cot;
-    public final CraftBukkit craftBukkit;
 
     // need to track players manually as processing will sometimes occur mid-event before player is adjusted
     public final List<UUID> sleeping = new ArrayList<UUID>();
@@ -56,27 +54,6 @@ public final class State {
         this.forceCount = ( config.getBoolean("force.enabled") ? config.getInt("force.count") : -1 );
         this.forcePercent = ( config.getBoolean("force.enabled") ? config.getInt("force.percent") : -1 );
         this.loadRewards(config.getConfigurationSection("rewards"));
-
-        CraftBukkit cb = null;
-        if (config.getBoolean("cot.enabled") || !config.getBoolean("sleep")) {
-            try {
-                cb = CraftBukkit.create();
-            } catch (final Exception e) {
-                plugin.getLogger().severe("Unsupported CraftBukkit version " + Bukkit.getVersion() + "; " + e);
-            }
-        }
-        this.craftBukkit = cb;
-
-        if (!config.getBoolean("cot.enabled")) {
-            this.cot = null;
-        } else {
-            if (cb == null) {
-                plugin.getLogger().severe("Temporary Cots can not be enabled; Check " + plugin.getDescription().getWebsite() + " for updates");
-                this.cot = null;
-            } else {
-                this.cot = new CotModule(this, config.getLong("cot.duration") * Main.TICKS_PER_SECOND);
-            }
-        }
 
         if (config.getBoolean("sleep")) {
             this.sleep = true;
@@ -109,9 +86,6 @@ public final class State {
 
     void clear() {
         for (final Player player : this.world.getPlayers()) this.remove(player);
-
-        if (this.cot != null) this.cot.clear();
-
         this.lastBedEnterMessage.clear();
         this.lastBedLeaveMessage.clear();
         this.rewards.clear();

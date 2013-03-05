@@ -2,10 +2,12 @@ package edgruberman.bukkit.sleep;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -15,25 +17,49 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerBedLeaveEvent;
+import org.bukkit.event.server.PluginDisableEvent;
+import org.bukkit.event.world.WorldUnloadEvent;
 import org.bukkit.material.Bed;
+import org.bukkit.plugin.Plugin;
 
+import edgruberman.bukkit.sleep.craftbukkit.CraftBukkit;
 import edgruberman.bukkit.sleep.util.CustomLevel;
 
 /** temporary bed manager */
-public class CotModule implements Listener {
+class TemporaryBedModule implements Listener {
 
-    private final State state;
+    private final Plugin plugin;
+    private final World world;
     private final long duration;
+    private final Logger logger;
+    private final CraftBukkit cb;
     private final Map<String, Location> previous = new HashMap<String, Location>();
     private final Map<String, Integer> committers = new HashMap<String, Integer>();
 
-    CotModule(final State state, final long duration) {
-        this.state = state;
+    TemporaryBedModule(final Plugin plugin, final World world, final long duration, final CraftBukkit cb) {
+        this.plugin = plugin;
+        this.world = world;
         this.duration = duration;
-        Bukkit.getPluginManager().registerEvents(this, state.plugin);
+        this.logger = plugin.getLogger();
+        this.cb = cb;
+
+
+        Bukkit.getPluginManager().registerEvents(this, this.plugin);
     }
 
-    void clear() {
+    @EventHandler(ignoreCancelled = true)
+    private void onWorldUnload(final WorldUnloadEvent unload) {
+        if (!unload.getWorld().equals(this.world)) return;
+        this.disable();
+    }
+
+    @EventHandler
+    private void onPluginDisable(final PluginDisableEvent unload) {
+        if (!unload.getPlugin().equals(this.plugin)) return;
+        this.disable();
+    }
+
+    void disable() {
         HandlerList.unregisterAll(this);
         for (final int taskId : this.committers.values()) Bukkit.getScheduler().cancelTask(taskId);
         this.previous.clear();
@@ -42,9 +68,9 @@ public class CotModule implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerBedEnter(final PlayerBedEnterEvent event) {
-        if (!event.getPlayer().getWorld().equals(this.state.world)) return;
+        if (!event.getPlayer().getWorld().equals(this.world)) return;
 
-        final Location previous = this.state.craftBukkit.getBed(event.getPlayer());
+        final Location previous = this.cb.getBed(event.getPlayer());
         if (previous == null) return; // ignore if no previous bed spawn exists
         if (previous.equals(event.getBed().getLocation())) return; // ignore when bed is same as current spawn
 
@@ -54,7 +80,7 @@ public class CotModule implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerBedLeave(final PlayerBedLeaveEvent event) {
-        if (!event.getPlayer().getWorld().equals(this.state.world)) return;
+        if (!event.getPlayer().getWorld().equals(this.world)) return;
 
         final Location previous = this.previous.get(event.getPlayer().getName());
         if (previous == null) return;
@@ -66,19 +92,19 @@ public class CotModule implements Listener {
             return;
         }
 
-        this.state.plugin.getLogger().log(CustomLevel.TRACE, "Temporary bed used by {0} at {2}; Previous: {1}", new Object[]{event.getPlayer().getName(), previous, event.getBed()});
-        this.state.courier.send(event.getPlayer(), "cot-instruction", CotModule.readableDuration(this.duration / 20 * 1000)
+        this.logger.log(CustomLevel.TRACE, "Temporary bed used by {0} at {2}; Previous: {1}", new Object[]{event.getPlayer().getName(), previous, event.getBed()});
+        Main.courier.send(event.getPlayer(), "temporary-bed", TemporaryBedModule.readableDuration(this.duration / 20 * 1000)
                 , previous.getWorld().getName(), previous.getBlockX(), previous.getBlockY(), previous.getBlockZ()
                 , event.getBed().getWorld().getName(), event.getBed().getX(), event.getBed().getY(), event.getBed().getZ());
 
         // bed spawn changed, commit change after specified duration has elapsed
-        final int taskId = Bukkit.getScheduler().scheduleSyncDelayedTask(this.state.plugin, new BedChangeCommitter(event.getPlayer()), this.duration);
+        final int taskId = Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin, new BedChangeCommitter(event.getPlayer()), this.duration);
         this.committers.put(event.getPlayer().getName(), taskId);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onBlockBreak(final BlockBreakEvent broken) {
-        if (!broken.getBlock().getWorld().equals(this.state.world)) return;
+        if (!broken.getBlock().getWorld().equals(this.world)) return;
 
         if (broken.getBlock().getTypeId() != Material.BED_BLOCK.getId()) return;
 
@@ -90,14 +116,14 @@ public class CotModule implements Listener {
         Block head = broken.getBlock();
         final Bed bed = new Bed(broken.getBlock().getTypeId(), broken.getBlock().getData());
         if (!bed.isHeadOfBed()) head = head.getRelative(bed.getFacing());
-        if (!head.getLocation().equals(this.state.craftBukkit.getBed(broken.getPlayer()))) return;
+        if (!head.getLocation().equals(this.cb.getBed(broken.getPlayer()))) return;
 
         // revert to previous bed spawn
         broken.getPlayer().setBedSpawnLocation(previous);
         this.previous.remove(broken.getPlayer().getName());
 
-        this.state.plugin.getLogger().log(CustomLevel.TRACE, "Temporary bed reverted by {0} to {1}; Temporary: {2}", new Object[]{broken.getPlayer().getName(), previous, head});
-        this.state.courier.send(broken.getPlayer(), "cot-reverted"
+        this.logger.log(CustomLevel.TRACE, "Temporary bed reverted by {0} to {1}; Temporary: {2}", new Object[]{broken.getPlayer().getName(), previous, head});
+        Main.courier.send(broken.getPlayer(), "temporary-bed-reverted"
                 , previous.getWorld().getName(), previous.getBlockX(), previous.getBlockY(), previous.getBlockZ()
                 , head.getWorld().getName(), head.getX(), head.getY(), head.getZ());
     }
@@ -114,8 +140,8 @@ public class CotModule implements Listener {
 
         @Override
         public void run() {
-            CotModule.this.previous.remove(this.player.getName());
-            CotModule.this.committers.remove(this.player.getName());
+            TemporaryBedModule.this.previous.remove(this.player.getName());
+            TemporaryBedModule.this.committers.remove(this.player.getName());
         }
 
     }

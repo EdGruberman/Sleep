@@ -24,6 +24,7 @@ import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.event.world.WorldUnloadEvent;
 import org.bukkit.plugin.Plugin;
 
+import edgruberman.bukkit.sleep.craftbukkit.CraftBukkit;
 import edgruberman.bukkit.sleep.util.CustomPlugin;
 
 /** sleep state management */
@@ -77,9 +78,34 @@ public final class Somnologist implements Listener {
             this.plugin.getLogger().log(Level.CONFIG, "[{0}] Forced Sleep Minimum Percent: {1}", new Object[] { world.getName(), state.forcePercent });
         }
         for (final Reward reward : state.rewards) this.plugin.getLogger().log(Level.CONFIG, "[{0}] Reward: {1}", new Object[] { world.getName(), reward.toString() });
-        if (state.cot != null) this.plugin.getLogger().log(Level.CONFIG, "[{0}] Cots Enabled", world.getName());
-        if (!state.sleep) this.plugin.getLogger().log(Level.CONFIG, "[{0}] Sleep Disabled", world.getName());
-        if (config.getBoolean("away")) {
+
+        CraftBukkit cb = null;
+        if (config.getBoolean("cot.enabled") || !config.getBoolean("insomnia.enabled")) {
+            try {
+                cb = CraftBukkit.create();
+            } catch (final Exception e) {
+                this.plugin.getLogger().severe("Unsupported CraftBukkit version " + Bukkit.getVersion() + "; " + e);
+            }
+        }
+
+        if (config.getBoolean("cot.enabled")) {
+            if (cb != null) {
+                new TemporaryBedModule(state.plugin, state.world, config.getLong("cot.duration") * Main.TICKS_PER_SECOND, cb);
+                this.plugin.getLogger().log(Level.CONFIG, "[{0}] Cots Enabled", world.getName());
+            } else {
+                this.plugin.getLogger().severe("Temporary Cots can not be enabled; Check " + this.plugin.getDescription().getWebsite() + " for updates");
+            }
+        }
+
+        if (!state.sleep) {
+            if (cb != null) {
+                this.plugin.getLogger().log(Level.CONFIG, "[{0}] Sleep Disabled", world.getName());
+            } else {
+                this.plugin.getLogger().severe("Insomnia can not be enabled; Check " + this.plugin.getDescription().getWebsite() + " for updates");
+            }
+        }
+
+        if (config.getBoolean("away.enabled")) {
             new AwayModule(state);
             this.plugin.getLogger().log(Level.CONFIG, "[{0}] Manual Away Enabled", world.getName());
         }

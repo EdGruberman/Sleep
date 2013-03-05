@@ -20,7 +20,7 @@ idle:
     - EnchantItemEvent
     - PrepareItemEnchantEvent
     - InventoryClickEvent
-cot:
+temporary-bed:
   enabled: false
   duration: 500 # seconds (<1 day cycle)
 rewards:
@@ -46,7 +46,8 @@ rewards:
     quantity: 3
     experience: 5
     factor: 0.5
-away: false # requires PlayerActivity plugin
+away:
+  enabled: false # requires PlayerActivity plugin
 sleep: true
 message-limit: 5 # Seconds (enter and leave only)
 version: @VERSION@
