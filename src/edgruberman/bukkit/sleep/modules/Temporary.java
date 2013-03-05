@@ -42,7 +42,7 @@ public class Temporary extends Module {
             throw new IllegalStateException("Unsupported CraftBukkit version " + Bukkit.getVersion() + "; Check for updates at " + this.implementor.getDescription().getWebsite(), e);
         }
 
-        this.implementor.getLogger().log(Level.CONFIG, "[{0}] Temporary bed duration: {1} seconds)", new Object[] { this.state.world.getName(), this.duration / Main.TICKS_PER_SECOND });
+        this.implementor.getLogger().log(Level.CONFIG, "[{0}] Temporary bed duration: {1} seconds", new Object[] { this.state.world.getName(), this.duration / Main.TICKS_PER_SECOND });
     }
 
     @Override
