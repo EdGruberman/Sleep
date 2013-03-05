@@ -24,8 +24,6 @@ import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.event.world.WorldUnloadEvent;
 import org.bukkit.plugin.Plugin;
 
-import edgruberman.bukkit.playeractivity.consumers.away.PlayerAway;
-import edgruberman.bukkit.playeractivity.consumers.away.PlayerBack;
 import edgruberman.bukkit.sleep.util.CustomPlugin;
 
 /** sleep state management */
@@ -81,7 +79,10 @@ public final class Somnologist implements Listener {
         for (final Reward reward : state.rewards) this.plugin.getLogger().log(Level.CONFIG, "[{0}] Reward: {1}", new Object[] { world.getName(), reward.toString() });
         if (state.cot != null) this.plugin.getLogger().log(Level.CONFIG, "[{0}] Cots Enabled", world.getName());
         if (!state.sleep) this.plugin.getLogger().log(Level.CONFIG, "[{0}] Sleep Disabled", world.getName());
-        if (!state.away) this.plugin.getLogger().log(Level.CONFIG, "[{0}] Manual Away Enabled", world.getName());
+        if (config.getBoolean("away")) {
+            new AwayMonitor(state);
+            this.plugin.getLogger().log(Level.CONFIG, "[{0}] Manual Away Enabled", world.getName());
+        }
 
         this.states.put(world, state);
         return state;
@@ -163,30 +164,6 @@ public final class Somnologist implements Listener {
         if (state == null) return;
 
         state.leave(event.getPlayer(), event.getBed());
-    }
-
-    @EventHandler
-    public void onPlayerAway(final PlayerAway event) {
-        // ignore for untracked world sleep states
-        final State state = this.states.get(event.getPlayer().getWorld());
-        if (state == null) return;
-
-        // ignore for worlds that do not enable away sleep
-        if (!state.away) return;
-
-        state.ignore(event.getPlayer(), true, "away");
-    }
-
-    @EventHandler
-    public void onPlayerBack(final PlayerBack event) {
-        // Ignore for untracked world sleep states
-        final State state = this.states.get(event.getPlayer().getWorld());
-        if (state == null) return;
-
-        // ignore for worlds that do not enable away sleep
-        if (!state.away) return;
-
-        state.ignore(event.getPlayer(), false, "back");
     }
 
 }

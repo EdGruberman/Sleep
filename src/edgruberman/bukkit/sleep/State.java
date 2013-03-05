@@ -17,7 +17,6 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
-import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.Plugin;
 
 import edgruberman.bukkit.sleep.craftbukkit.CraftBukkit;
@@ -38,7 +37,6 @@ public final class State {
     public final int messageLimit;
     public final Collection<Reward> rewards = new ArrayList<Reward>();
     public final Cot cot;
-    public final boolean away;
     public final CraftBukkit craftBukkit;
 
     // need to track players manually as processing will sometimes occur mid-event before player is adjusted
@@ -55,7 +53,6 @@ public final class State {
         this.world = world;
         this.courier = ConfigurationCourier.Factory.create(plugin).setBase(messages).setFormatCode("format-code").build();
         this.messageLimit = config.getInt("message-limit");
-        this.away = config.getBoolean("away");
         this.forceCount = ( config.getBoolean("force.enabled") ? config.getInt("force.count") : -1 );
         this.forcePercent = ( config.getBoolean("force.enabled") ? config.getInt("force.percent") : -1 );
         this.loadRewards(config.getConfigurationSection("rewards"));
@@ -131,7 +128,6 @@ public final class State {
         this.lastBedLeaveMessage.put(joiner.getUniqueId(), 0L);
 
         if (joiner.hasPermission("sleep.ignore")) this.ignore(joiner, true, "permission");
-        if (this.isAway(joiner)) this.ignore(joiner, true, "away");
         if (this.forcing) this.ignore(joiner, true, "force");
 
         if (!joiner.isSleepingIgnored() && this.sleeping.size() >= 1) this.notify("add", joiner);
@@ -159,8 +155,6 @@ public final class State {
     void leave(final Player leaver, final Block bed) {
         this.plugin.getLogger().log(Level.FINEST, "[{0}] leave: {1} (Ignored: {2})", new Object[] { this.world.getName(), leaver.getName(), leaver.isSleepingIgnored() });
         this.sleeping.remove(leaver.getUniqueId());
-
-        if (this.isAway(leaver)) leaver.setSleepingIgnored(true);
 
         // player could leave bed after disconnect while in bed and reconnect in day time
         if (!this.players.contains(leaver)) return;
@@ -233,8 +227,15 @@ public final class State {
 
         this.plugin.getLogger().log(Level.FINEST, "[{0}] Setting {1} (Ignored: {2}) to {3,choice,0#not |1#}ignore sleep ({4})", new Object[] { this.world.getName(), player.getName(), player.isSleepingIgnored(), ignore?1:0, key });
 
-        // don't stop ignoring if any override is still active
-        if (!ignore && (player.hasPermission("sleep.ignore") || this.isAway(player) || this.forcing)) return;
+        if (!ignore && player.hasPermission("sleep.ignore")) {
+            this.plugin.getLogger().log(Level.FINEST, "[{0}] Cancelling {1} changing to not ignore sleep (permission)", new Object[] { this.world.getName(), player.getName()});
+            return;
+        }
+
+        if (!ignore && this.forcing) {
+            this.plugin.getLogger().log(Level.FINEST, "[{0}] Cancelling {1} changing to not ignore sleep (forcing)", new Object[] { this.world.getName(), player.getName()});
+            return;
+        }
 
         // allow overrides to cancel change
         final Event event = ( ignore ? new SleepIgnore(player) : new SleepAcknowledge(player) );
@@ -271,15 +272,6 @@ public final class State {
         final String name = this.courier.format("+player", player.getName(), player.getDisplayName());
         this.courier.world(this.world, key, name, needed, this.sleeping.size(), this.possible().size());
         if (needed == 0 && (this.forceCount != -1 || this.forcePercent != -1) && this.preventing().size() >= 1 ) this.force(null);
-    }
-
-    private boolean isAway(final Player player) {
-        if (!this.away || !player.hasPermission("sleep.away")) return false;
-
-        for (final MetadataValue value : player.getMetadata("away"))
-            return value.asBoolean();
-
-        return false;
     }
 
     /** players not ignored and not in bed */
