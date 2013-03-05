@@ -36,7 +36,7 @@ public final class State {
     public final int forcePercent;
     public final int messageLimit;
     public final Collection<Reward> rewards = new ArrayList<Reward>();
-    public final Cot cot;
+    public final CotModule cot;
     public final CraftBukkit craftBukkit;
 
     // need to track players manually as processing will sometimes occur mid-event before player is adjusted
@@ -74,7 +74,7 @@ public final class State {
                 plugin.getLogger().severe("Temporary Cots can not be enabled; Check " + plugin.getDescription().getWebsite() + " for updates");
                 this.cot = null;
             } else {
-                this.cot = new Cot(this, config.getLong("cot.duration") * Main.TICKS_PER_SECOND);
+                this.cot = new CotModule(this, config.getLong("cot.duration") * Main.TICKS_PER_SECOND);
             }
         }
 

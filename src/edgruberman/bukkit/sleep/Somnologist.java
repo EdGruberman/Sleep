@@ -68,7 +68,7 @@ public final class Somnologist implements Listener {
 
         final State state = new State(this.plugin, world, config, messages);
         if (config.getBoolean("idle.enabled")) {
-            final IdleMonitor idleMonitor = new IdleMonitor(state, config.getConfigurationSection("idle"));
+            final IdleModule idleMonitor = new IdleModule(state, config.getConfigurationSection("idle"));
             this.plugin.getLogger().log(Level.CONFIG, "[{0}] Idle Threshold (seconds): {1}", new Object[] { world.getName(), idleMonitor.tracker.getIdleThreshold() / 1000 });
             this.plugin.getLogger().log(Level.CONFIG, "[{0}] Monitored Activity: {1} events", new Object[] { world.getName(), idleMonitor.tracker.getInterpreters().size() });
         }
@@ -80,7 +80,7 @@ public final class Somnologist implements Listener {
         if (state.cot != null) this.plugin.getLogger().log(Level.CONFIG, "[{0}] Cots Enabled", world.getName());
         if (!state.sleep) this.plugin.getLogger().log(Level.CONFIG, "[{0}] Sleep Disabled", world.getName());
         if (config.getBoolean("away")) {
-            new AwayMonitor(state);
+            new AwayModule(state);
             this.plugin.getLogger().log(Level.CONFIG, "[{0}] Manual Away Enabled", world.getName());
         }
 
