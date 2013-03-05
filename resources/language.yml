@@ -13,10 +13,11 @@ temporary: '§f-> §8To §5revert§8 to previous spawn, §5destroy§8 this bed s
 temporary-reverted: '§f-> §2Reverted§8 spawn to previous bed'
 force-require: '§f-> §eNeed at least one§7 player in bed to force sleep'
 force-success: '§f-> §aForcing§7 sleep in {1}...' # 1 = World
+insomnia-eject: '§f-> Sleep is §edisabled§7'
 status-insomnia: '§f-> §7Sleep is §edisabled§7 for {1}' # 1 = World
 status-none: '§f-> §7No one is currently in bed'
 status-need:
-  format: '§f-> §7{1,choice,0#Everyone is asleep|1#§d{1} players§7 not in bed: {2}}' # 1 = Player Count Needed, 2 = Player Names Needed
+  format: '§f-> §7{1,choice,0#Everyone is asleep|1#§d{1} player§7 not in bed: {2}|1#§d{1} players§7 not in bed: {2}}' # 1 = Player Count Needed, 2 = Player Names Needed
   +delimiter: '§8, §7'
 status-summary: '§f-> §7{1,choice,0#Sleep §dneeds {2} more§7 in bed: |100#}{3} in bed / {4} possible = {1}%' # 1 = Percent In Bed, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
 +player: '{1}' # 0 = Name, 1 = Display Name

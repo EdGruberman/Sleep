@@ -15,6 +15,7 @@ import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.event.world.WorldUnloadEvent;
 import org.bukkit.plugin.Plugin;
 
+import edgruberman.bukkit.sleep.Main;
 import edgruberman.bukkit.sleep.craftbukkit.CraftBukkit;
 
 /** prevents deep sleep from occurring which would cause Minecraft to change the time to morning */
@@ -72,7 +73,7 @@ public class InsomniaModule implements Listener {
 
             this.taskId = Bukkit.getScheduler().runTaskLater(InsomniaModule.this.plugin, this, InsomniaModule.BEFORE_DEEP_SLEEP_TICKS).getTaskId();
             if (this.taskId == -1) {
-                InsomniaModule.this.logger.warning("Failed to schedule Insomnia task for " + this.player.getName());
+                InsomniaModule.this.logger.warning("Failed to schedule insomnia task for " + this.player.getName());
                 return;
             }
 
@@ -90,6 +91,7 @@ public class InsomniaModule implements Listener {
 
             // eject player from bed before sleep can complete, but set player's spawn point
             InsomniaModule.this.cb.bedEject(this.player);
+            Main.courier.send(this.player, "insomnia-eject");
         }
 
         @EventHandler
