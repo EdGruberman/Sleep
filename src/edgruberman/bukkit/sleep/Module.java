@@ -17,30 +17,30 @@ public class Module implements Listener {
 
     private static List<ModuleRegistration> registered = new ArrayList<ModuleRegistration>();
 
-    public static void register(final String section, final Plugin implementor, final Class<? extends Module> clazz) {
-        Module.registered.add(new ModuleRegistration(section, implementor, clazz));
+    public static void register(final Plugin implementor, final Class<? extends Module> module, final String section) {
+        Module.registered.add(new ModuleRegistration(implementor, module, section));
     }
 
     public static List<Module> loadModules(final State state, final ConfigurationSection config) {
         final List<Module> loaded = new ArrayList<Module>();
 
-        for (final ModuleRegistration registration : Module.registered) {
-            if (!registration.implementor.isEnabled()) continue;
+        for (final ModuleRegistration reg : Module.registered) {
+            if (!reg.implementor.isEnabled()) continue;
 
-            final ConfigurationSection moduleSection = config.getConfigurationSection(registration.section);
+            final ConfigurationSection moduleSection = config.getConfigurationSection(reg.section);
             if (moduleSection == null || !moduleSection.getBoolean("enable")) continue;
 
-            registration.implementor.getLogger().log(Level.CONFIG, "[{0}] Loading {1} module (section: {2}) ...", new Object[] { state.world.getName(), registration.clazz.getSimpleName(), registration.section });
+            reg.implementor.getLogger().log(Level.CONFIG, "[{0}] Loading {1} module (section: {2}) ...", new Object[] { state.world.getName(), reg.module.getSimpleName(), reg.section });
 
             Module module;
             try {
-                module = registration.clazz.getConstructor(Plugin.class, State.class, ConfigurationSection.class).newInstance(registration.implementor, state, moduleSection);
+                module = reg.module.getConstructor(Plugin.class, State.class, ConfigurationSection.class).newInstance(reg.implementor, state, moduleSection);
             } catch (final Exception e) {
-                registration.implementor.getLogger().log(Level.WARNING, "[{0}] Unable to load {1} module (section: {3}, class: {2}); {4}", new Object[] { state.world.getName(), registration.clazz.getSimpleName(), registration.clazz.getName(), registration.section, e });
+                reg.implementor.getLogger().log(Level.WARNING, "[{0}] Unable to load {1} module (section: {3}, class: {2}); {4}", new Object[] { state.world.getName(), reg.module.getSimpleName(), reg.module.getName(), reg.section, e });
                 continue;
             }
 
-            Bukkit.getPluginManager().registerEvents(module, registration.implementor);
+            Bukkit.getPluginManager().registerEvents(module, reg.implementor);
             loaded.add(module);
         }
 
@@ -49,14 +49,14 @@ public class Module implements Listener {
 
     private static class ModuleRegistration {
 
-        private final String section;
         private final Plugin implementor;
-        private final Class<? extends Module> clazz;
+        private final Class<? extends Module> module;
+        private final String section;
 
-        private ModuleRegistration(final String section, final Plugin implementor, final Class<? extends Module> clazz) {
-            this.section = section;
+        private ModuleRegistration(final Plugin implementor, final Class<? extends Module> module, final String section) {
             this.implementor = implementor;
-            this.clazz = clazz;
+            this.module = module;
+            this.section = section;
         }
 
     }
