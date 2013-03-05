@@ -6,8 +6,8 @@ import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 
-import edgruberman.bukkit.sleep.Main;
 import edgruberman.bukkit.sleep.util.CustomLevel;
 
 public class ExperienceOrb extends Reward {
@@ -15,8 +15,8 @@ public class ExperienceOrb extends Reward {
     public final int quantity;
     public final int experience;
 
-    public ExperienceOrb(final ConfigurationSection definition) {
-        super(definition);
+    public ExperienceOrb(final Plugin implementor, final ConfigurationSection definition) {
+        super(implementor, definition);
         this.quantity = definition.getInt("quantity");
         if (this.quantity == 0) throw new IllegalArgumentException("Quantity must be greater than 0");
         this.experience = definition.getInt("experience");
@@ -31,7 +31,7 @@ public class ExperienceOrb extends Reward {
             orb.setExperience(this.experience);
         }
 
-        Main.plugin.getLogger().log(CustomLevel.DEBUG, "Rewarded {0} by creating {1} experience orbs with {2} experience each"
+        this.implementor.getLogger().log(CustomLevel.DEBUG, "Rewarded {0} by creating {1} experience orbs with {2} experience each"
                 , new Object[] { player.getName(), result, this.experience });
     }
 

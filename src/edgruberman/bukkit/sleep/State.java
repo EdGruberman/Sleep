@@ -36,7 +36,6 @@ public final class State {
     public final int messageLimit;
     public final boolean insomnia;
     public final Collection<Reward> rewards = new ArrayList<Reward>();
-    private final List<Module> modules = new ArrayList<Module>();
 
     // need to track players manually as processing will sometimes occur mid-event before player is adjusted
     public final List<UUID> sleeping = new ArrayList<UUID>();
@@ -46,6 +45,7 @@ public final class State {
     private Integer participants = null;
     private final Map<UUID, Long> lastBedEnterMessage = new HashMap<UUID, Long>();
     private final Map<UUID, Long> lastBedLeaveMessage = new HashMap<UUID, Long>();
+    private final List<Module> modules = new ArrayList<Module>();
 
     State(final Plugin plugin, final World world, final ConfigurationSection config, final ConfigurationSection language) {
         this.plugin = plugin;
@@ -74,16 +74,15 @@ public final class State {
 
             final ConfigurationSection reward = rewards.getConfigurationSection(name);
             try {
-                this.rewards.add(Reward.create(reward.getString("class"), reward));
+                this.rewards.add(Reward.create(reward.getString("type"), reward));
             } catch (final Exception e) {
                 this.plugin.getLogger().log(Level.WARNING, "[{0}] Unable to create {1} reward; {2}", new Object[] { this.world.getName(), name, e });
+                continue;
             }
         }
-
-        for (final Reward reward : this.rewards) this.plugin.getLogger().log(Level.CONFIG, "[{0}] Reward: {1}", new Object[] { this.world.getName(), reward.toString() });
     }
 
-    void clear() {
+    void disable() {
         for (final Module module : this.modules) module.disable();
         for (final Player player : this.world.getPlayers()) this.remove(player);
         this.lastBedEnterMessage.clear();

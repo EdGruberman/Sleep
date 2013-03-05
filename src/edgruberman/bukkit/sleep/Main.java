@@ -4,7 +4,6 @@ import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.event.HandlerList;
-import org.bukkit.plugin.Plugin;
 
 import edgruberman.bukkit.playeractivity.PlayerMoveBlockEvent;
 import edgruberman.bukkit.sleep.commands.Force;
@@ -16,6 +15,14 @@ import edgruberman.bukkit.sleep.modules.Idle;
 import edgruberman.bukkit.sleep.modules.Insomnia;
 import edgruberman.bukkit.sleep.modules.Temporary;
 import edgruberman.bukkit.sleep.modules.Underground;
+import edgruberman.bukkit.sleep.modules.rewards.ConsoleCommand;
+import edgruberman.bukkit.sleep.modules.rewards.Experience;
+import edgruberman.bukkit.sleep.modules.rewards.ExperienceOrb;
+import edgruberman.bukkit.sleep.modules.rewards.Food;
+import edgruberman.bukkit.sleep.modules.rewards.Health;
+import edgruberman.bukkit.sleep.modules.rewards.Item;
+import edgruberman.bukkit.sleep.modules.rewards.PotionEffect;
+import edgruberman.bukkit.sleep.modules.rewards.Reward;
 import edgruberman.bukkit.sleep.util.CustomPlugin;
 import edgruberman.bukkit.sleep.util.PluginDependency;
 
@@ -25,7 +32,6 @@ public final class Main extends CustomPlugin {
     public static final String LANGUAGE_FILE = "language.yml";
 
     public static ConfigurationCourier courier;
-    public static Plugin plugin;
 
     private boolean loaded = false;
     private Somnologist somnologist = null;
@@ -70,13 +76,19 @@ public final class Main extends CustomPlugin {
 
         if (Bukkit.getPluginManager().getPlugin("PlayerActivity") == null) PlayerMoveBlockEvent.MovementTracker.initialize(this);
 
-        Main.plugin = this;
+        Module.register(this, Away.class, "away");
+        Module.register(this, Idle.class, "idle");
+        Module.register(this, Insomnia.class, "insomnia");
+        Module.register(this, Temporary.class, "temporary");
+        Module.register(this, Underground.class, "underground");
 
-        Module.register("away", this, Away.class);
-        Module.register("idle", this, Idle.class);
-        Module.register("insomnia", this, Insomnia.class);
-        Module.register("temporary", this, Temporary.class);
-        Module.register("underground", this, Underground.class);
+        Reward.register(this, ConsoleCommand.class, "ConsoleCommand");
+        Reward.register(this, Experience.class, "Experience");
+        Reward.register(this, ExperienceOrb.class, "ExperienceOrb");
+        Reward.register(this, Food.class, "Food");
+        Reward.register(this, Health.class, "Health");
+        Reward.register(this, Item.class, "Item");
+        Reward.register(this, PotionEffect.class, "PotionEffect");
 
         this.somnologist = new Somnologist(this, this.getConfig().getStringList("excluded"));
 
@@ -87,11 +99,10 @@ public final class Main extends CustomPlugin {
 
     @Override
     public void onDisable() {
+        if (this.somnologist != null) this.somnologist.disable();
         HandlerList.unregisterAll(this);
         Bukkit.getScheduler().cancelTasks(this);
-        if (this.somnologist != null) this.somnologist.clear();
         Main.courier = null;
-        Main.plugin = null;
     }
 
 }

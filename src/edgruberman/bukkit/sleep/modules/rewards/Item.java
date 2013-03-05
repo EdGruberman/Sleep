@@ -7,8 +7,8 @@ import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.Plugin;
 
-import edgruberman.bukkit.sleep.Main;
 import edgruberman.bukkit.sleep.util.CustomLevel;
 
 public class Item extends Reward {
@@ -17,8 +17,8 @@ public class Item extends Reward {
     public final Material material;
     public final short data;
 
-    public Item(final ConfigurationSection definition) {
-        super(definition);
+    public Item(final Plugin implementor, final ConfigurationSection definition) {
+        super(implementor, definition);
         this.quantity = definition.getInt("quantity");
         if (this.quantity <= 0) throw new IllegalArgumentException("Quantity must be greater than 0");
         this.material = Material.matchMaterial(definition.getString("material"));
@@ -33,7 +33,7 @@ public class Item extends Reward {
         for (final ItemStack remaining : player.getInventory().addItem(new ItemStack(this.material, result, this.data)).values())
             player.getWorld().dropItemNaturally(player.getLocation(), remaining);
 
-        Main.plugin.getLogger().log(CustomLevel.DEBUG, "Rewarded {0} by giving {1} {2} with data {3}"
+        this.implementor.getLogger().log(CustomLevel.DEBUG, "Rewarded {0} by giving {1} {2} with data {3}"
                 , new Object[] { player.getName(), result, this.material.name(), this.data } );
     }
 

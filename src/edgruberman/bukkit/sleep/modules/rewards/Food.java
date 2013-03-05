@@ -5,8 +5,8 @@ import java.text.MessageFormat;
 import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 
-import edgruberman.bukkit.sleep.Main;
 import edgruberman.bukkit.sleep.util.CustomLevel;
 
 public class Food extends Reward {
@@ -14,8 +14,8 @@ public class Food extends Reward {
     public final int level;
     public final float saturation;
 
-    public Food(final ConfigurationSection definition) {
-        super(definition);
+    public Food(final Plugin implementor, final ConfigurationSection definition) {
+        super(implementor, definition);
         this.level = definition.getInt("level");
         this.saturation = (float) definition.getDouble("saturation");
     }
@@ -25,14 +25,14 @@ public class Food extends Reward {
         if (this.level != 0) {
             final int result = this.factor(this.level, participants);
             player.setFoodLevel(Math.max(0, Math.min(20, player.getFoodLevel() + result)));
-            Main.plugin.getLogger().log(CustomLevel.DEBUG, "Rewarded {0} by adding {1} to food level which set it to {2}"
+            this.implementor.getLogger().log(CustomLevel.DEBUG, "Rewarded {0} by adding {1} to food level which set it to {2}"
                     , new Object[] { player.getName(), result, player.getFoodLevel() });
         }
 
         if (this.saturation != 0) {
             final float result = this.factor(this.saturation, participants);
             player.setSaturation(Math.max(0, Math.min(player.getFoodLevel(), player.getSaturation() + result)));
-            Main.plugin.getLogger().log(CustomLevel.DEBUG, "Rewarded {0} by adding {1,number,#.##} to saturation which set it to {2,number,#.##}"
+            this.implementor.getLogger().log(CustomLevel.DEBUG, "Rewarded {0} by adding {1,number,#.##} to saturation which set it to {2,number,#.##}"
                     , new Object[] { player.getName(), result, player.getSaturation() });
         }
     }

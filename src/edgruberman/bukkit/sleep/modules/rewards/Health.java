@@ -5,8 +5,8 @@ import java.text.MessageFormat;
 import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 
-import edgruberman.bukkit.sleep.Main;
 import edgruberman.bukkit.sleep.util.CustomLevel;
 
 public class Health extends Reward {
@@ -14,8 +14,8 @@ public class Health extends Reward {
     public final int health;
     public final float exhaustion;
 
-    public Health(final ConfigurationSection definition) {
-        super(definition);
+    public Health(final Plugin implementor, final ConfigurationSection definition) {
+        super(implementor, definition);
         this.health = definition.getInt("health");
         this.exhaustion = (float) definition.getDouble("exhaustion");
     }
@@ -25,13 +25,13 @@ public class Health extends Reward {
         if (this.health != 0) {
             final int result = this.factor(this.health, participants);
             player.setHealth(Math.max(0, Math.min(20, player.getHealth() + result)));
-            Main.plugin.getLogger().log(CustomLevel.DEBUG, "Rewarded {0} by adding {1} to health which set it to {2}", new Object[] { player.getName(), result, player.getHealth() });
+            this.implementor.getLogger().log(CustomLevel.DEBUG, "Rewarded {0} by adding {1} to health which set it to {2}", new Object[] { player.getName(), result, player.getHealth() });
         }
 
         if (this.exhaustion != 0) {
             final float result = this.factor(this.exhaustion, participants);
             player.setExhaustion(Math.max(0, player.getExhaustion() + result));
-            Main.plugin.getLogger().log(CustomLevel.DEBUG, "Rewarded {0} by adding {1,number,#.##} to exhaustion which set it to {2,number,#.##}"
+            this.implementor.getLogger().log(CustomLevel.DEBUG, "Rewarded {0} by adding {1,number,#.##} to exhaustion which set it to {2,number,#.##}"
                     , new Object[] { player.getName(), result, player.getExhaustion() });
 
         }

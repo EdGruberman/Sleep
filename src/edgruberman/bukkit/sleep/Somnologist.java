@@ -1,6 +1,7 @@
 package edgruberman.bukkit.sleep;
 
 import java.io.File;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -10,6 +11,8 @@ import java.util.logging.Level;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.World.Environment;
+import org.bukkit.configuration.Configuration;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -28,6 +31,21 @@ import edgruberman.bukkit.sleep.util.CustomPlugin;
 
 /** sleep state management */
 public final class Somnologist implements Listener {
+
+    private static final String WORLD_CONFIG_PATH = "Worlds/{0}/{1}"; // Relative to plugin data folder; 0 = World Name, 1 = File Name
+
+    private static ConfigurationSection loadWorldConfig(final Plugin plugin, final World world, final String fileName, final Configuration defaults) {
+        final File file = new File(plugin.getDataFolder(), MessageFormat.format(Somnologist.WORLD_CONFIG_PATH, world.getName(), fileName));
+        if (file.exists()) plugin.getLogger().log(Level.CONFIG, "[{0}] World specific configuration override found at {1}", new Object[] { world.getName(), file });
+
+        final YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
+        config.setDefaults(defaults);
+        config.options().copyDefaults(true);
+
+        return config;
+    }
+
+
 
     private final Plugin plugin;
     private final List<String> excluded = new ArrayList<String>();
@@ -54,19 +72,10 @@ public final class Somnologist implements Listener {
             return null;
         }
 
-        final File configWorld = new File(this.plugin.getDataFolder(), "Worlds/" + world.getName() + "/" + CustomPlugin.CONFIGURATION_FILE);
-        if (configWorld.exists()) this.plugin.getLogger().log(Level.CONFIG, "[{0}] World specific override file found for configuration: {1}", new Object[] { world.getName(), configWorld });
-        final YamlConfiguration config = YamlConfiguration.loadConfiguration(configWorld);
-        config.setDefaults(this.plugin.getConfig());
-        config.options().copyDefaults(true);
-
-        final File messagesWorld = new File(this.plugin.getDataFolder(), "Worlds/" + world.getName() + "/" + Main.LANGUAGE_FILE);
-        if (messagesWorld.exists()) this.plugin.getLogger().log(Level.CONFIG, "[{0}] World specific override file found for language: {1}", new Object[] { world.getName(), messagesWorld });
-        final YamlConfiguration language = YamlConfiguration.loadConfiguration(messagesWorld);
-        language.setDefaults(Main.courier.getBase().getRoot());
-        language.options().copyDefaults(true);
-
+        final ConfigurationSection config = Somnologist.loadWorldConfig(this.plugin, world, CustomPlugin.CONFIGURATION_FILE, this.plugin.getConfig());
+        final ConfigurationSection language = Somnologist.loadWorldConfig(this.plugin, world, Main.LANGUAGE_FILE, Main.courier.getBase().getRoot());
         final State state = new State(this.plugin, world, config, language);
+
         this.states.put(world, state);
         return state;
     }
@@ -76,10 +85,10 @@ public final class Somnologist implements Listener {
     }
 
     /** disable sleep state tracking for all worlds */
-    void clear() {
+    void disable() {
         HandlerList.unregisterAll(this);
 
-        for (final State state : this.states.values()) state.clear();
+        for (final State state : this.states.values()) state.disable();
         this.states.clear();
 
         this.excluded.clear();
@@ -95,7 +104,7 @@ public final class Somnologist implements Listener {
         final State state = this.states.get(event.getWorld());
         if (state == null) return;
 
-        state.clear();
+        state.disable();
         this.states.remove(state);
     }
 
