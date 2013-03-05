@@ -38,7 +38,7 @@ public class Force implements CommandExecutor {
         }
 
         if (state.sleeping.size() == 0) {
-            state.courier.send(sender, "require-sleeper");
+            state.courier.send(sender, "force-require");
             return true;
         }
 

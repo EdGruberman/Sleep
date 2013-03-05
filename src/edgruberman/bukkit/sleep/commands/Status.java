@@ -41,17 +41,17 @@ public class Status implements CommandExecutor {
 
         final State state = this.somnologist.getState(world);
         if (state == null) {
-            Main.courier.send(sender, "sleep-not-managed", world.getName());
+            Main.courier.send(sender, "status-excluded", world.getName());
             return true;
         }
 
-        if (!state.sleep) {
-            state.courier.send(sender, "sleep-disabled", world.getName());
+        if (state.insomnia) {
+            state.courier.send(sender, "status-insomnia", world.getName());
             return true;
         }
 
         if (state.sleeping.size() == 0) {
-            state.courier.send(sender, "none-in-bed");
+            state.courier.send(sender, "status-none");
 
         } else {
             final List<Player> preventing = state.preventing();
@@ -61,13 +61,13 @@ public class Status implements CommandExecutor {
             for (final Player player : preventing)
                 names.add(state.courier.format("+player", player.getName(), player.getDisplayName()));
 
-            state.courier.send(sender, "not-sleeping.format", names.size(), Status.join(names, state.courier.format("not-sleeping.+delimiter")));
+            state.courier.send(sender, "status-need.format", names.size(), Status.join(names, state.courier.format("status-need.+delimiter")));
         }
 
         final int sleeping = state.sleeping.size();
         final int possible = state.possible().size();
         final int percent = (int) Math.floor((double) sleeping / (possible > 0 ? possible : 1) * 100);
-        state.courier.send(sender, "summary", percent, state.needed(), sleeping, possible);
+        state.courier.send(sender, "status-summary", percent, state.needed(), sleeping, possible);
         return true;
     }
 

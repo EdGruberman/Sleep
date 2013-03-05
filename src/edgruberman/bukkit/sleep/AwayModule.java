@@ -20,7 +20,7 @@ import org.bukkit.plugin.Plugin;
 import edgruberman.bukkit.playeractivity.consumers.away.PlayerAway;
 import edgruberman.bukkit.playeractivity.consumers.away.PlayerBack;
 
-public class AwayModule implements Listener {
+class AwayModule implements Listener {
 
     private final State state;
     private final Plugin plugin;

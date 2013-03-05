@@ -97,8 +97,9 @@ public final class Somnologist implements Listener {
             }
         }
 
-        if (!state.sleep) {
+        if (config.getBoolean("insomnia.enabled")) {
             if (cb != null) {
+                new InsomniaModule(state.plugin, state.world, cb);
                 this.plugin.getLogger().log(Level.CONFIG, "[{0}] Sleep Disabled", world.getName());
             } else {
                 this.plugin.getLogger().severe("Insomnia can not be enabled; Check " + this.plugin.getDescription().getWebsite() + " for updates");

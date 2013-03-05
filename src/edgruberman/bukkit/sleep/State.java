@@ -19,7 +19,6 @@ import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.plugin.Plugin;
 
-import edgruberman.bukkit.sleep.craftbukkit.CraftBukkit;
 import edgruberman.bukkit.sleep.messaging.ConfigurationCourier;
 
 /** sleep state for a specific world */
@@ -31,10 +30,10 @@ public final class State {
     public final Plugin plugin;
     public final World world;
     public final ConfigurationCourier courier;
-    public final boolean sleep;
     public final int forceCount;
     public final int forcePercent;
     public final int messageLimit;
+    public final boolean insomnia;
     public final Collection<Reward> rewards = new ArrayList<Reward>();
 
     // need to track players manually as processing will sometimes occur mid-event before player is adjusted
@@ -51,20 +50,10 @@ public final class State {
         this.world = world;
         this.courier = ConfigurationCourier.Factory.create(plugin).setBase(messages).setFormatCode("format-code").build();
         this.messageLimit = config.getInt("message-limit");
+        this.insomnia = config.getBoolean("insomnia.enabled");
         this.forceCount = ( config.getBoolean("force.enabled") ? config.getInt("force.count") : -1 );
         this.forcePercent = ( config.getBoolean("force.enabled") ? config.getInt("force.percent") : -1 );
         this.loadRewards(config.getConfigurationSection("rewards"));
-
-        if (config.getBoolean("sleep")) {
-            this.sleep = true;
-        } else {
-            if (cb == null) {
-                plugin.getLogger().severe("Sleep can not be disabled; Check " + plugin.getDescription().getWebsite() + " for updates");
-                this.sleep = true;
-            } else {
-                this.sleep = false;
-            }
-        }
 
         for (final Player existing : world.getPlayers()) this.add(existing);
     }
@@ -112,17 +101,12 @@ public final class State {
         this.plugin.getLogger().log(Level.FINEST, "[{0}] enter: {1} (Ignored: {2})", new Object[] { this.world.getName(), enterer.getName(), enterer.isSleepingIgnored() });
         this.sleeping.add(enterer.getUniqueId());
 
-        if (!this.sleep) {
-            new Insomnia(this.plugin, this.craftBukkit, enterer);
-            return;
-        }
-
         if (enterer.hasPermission("sleep.enter.force")) {
             this.force(enterer);
             return;
         }
 
-        if (!enterer.isSleepingIgnored()) this.notify("enter", enterer);
+        if (!enterer.isSleepingIgnored() && !this.insomnia) this.notify("enter", enterer);
     }
 
     /** player left bed */
@@ -138,7 +122,7 @@ public final class State {
 
         // notify for manual bed leave at night
         if (this.world.getTime() != State.SLEEP_SUCCESS_TICKS) {
-            if (this.sleep && !leaver.isSleepingIgnored()) this.notify("leave", leaver);
+            if (!leaver.isSleepingIgnored() && !this.insomnia) this.notify("leave", leaver);
             return;
         }
 

@@ -48,6 +48,7 @@ rewards:
     factor: 0.5
 away:
   enabled: false # requires PlayerActivity plugin
-sleep: true
+insomnia:
+  enabled: false
 message-limit: 5 # Seconds (enter and leave only)
 version: @VERSION@
