@@ -13,6 +13,7 @@ import edgruberman.bukkit.sleep.modules.Away;
 import edgruberman.bukkit.sleep.modules.Idle;
 import edgruberman.bukkit.sleep.modules.Insomnia;
 import edgruberman.bukkit.sleep.modules.Temporary;
+import edgruberman.bukkit.sleep.modules.Underground;
 import edgruberman.bukkit.sleep.util.CustomPlugin;
 import edgruberman.bukkit.sleep.util.PluginDependency;
 
@@ -64,6 +65,7 @@ public final class Main extends CustomPlugin {
         Module.register(this, "idle", Idle.class);
         Module.register(this, "insomnia", Insomnia.class);
         Module.register(this, "temporary", Temporary.class);
+        Module.register(this, "underground", Underground.class);
 
         this.somnologist = new Somnologist(this, this.getConfig().getStringList("excluded"));
 
