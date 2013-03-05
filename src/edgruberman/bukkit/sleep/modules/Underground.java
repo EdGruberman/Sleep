@@ -88,7 +88,7 @@ public class Underground extends Module implements Runnable {
             }
         }
         if (sleepers) {
-            if (this.initial) Main.courier.world(this.state.world, "undergound.initial", this.count, this.state.needed(), this.state.sleeping.size(), this.state.possible().size());
+            if (this.initial) this.state.courier.world(this.state.world, "undergound.initial", this.count, this.state.needed(), this.state.sleeping.size(), this.state.possible().size());
             this.initial = false;
             return;
         }

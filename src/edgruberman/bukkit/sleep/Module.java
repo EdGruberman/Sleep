@@ -17,13 +17,15 @@ public class Module implements Listener {
 
     private static List<ModuleRegistration> registered = new ArrayList<ModuleRegistration>();
 
-    public static void register(final Plugin plugin, final String section, final Class<? extends Module> clazz) {
-        Module.registered.add(new ModuleRegistration(plugin, section, clazz));
+    public static void register(final String section, final Plugin implementor, final Class<? extends Module> clazz) {
+        Module.registered.add(new ModuleRegistration(section, implementor, clazz));
     }
 
-    public static void loadModules(final State state, final ConfigurationSection config) {
+    public static List<Module> loadModules(final State state, final ConfigurationSection config) {
+        final List<Module> loaded = new ArrayList<Module>();
+
         for (final ModuleRegistration registration : Module.registered) {
-            if (!registration.implementor.isEnabled()) return;
+            if (!registration.implementor.isEnabled()) continue;
 
             final ConfigurationSection moduleSection = config.getConfigurationSection(registration.section);
             if (moduleSection == null || !moduleSection.getBoolean("enable")) continue;
@@ -39,18 +41,21 @@ public class Module implements Listener {
             }
 
             Bukkit.getPluginManager().registerEvents(module, registration.implementor);
+            loaded.add(module);
         }
+
+        return loaded;
     }
 
     private static class ModuleRegistration {
 
-        private final Plugin implementor;
         private final String section;
+        private final Plugin implementor;
         private final Class<? extends Module> clazz;
 
-        private ModuleRegistration(final Plugin implementor, final String section, final Class<? extends Module> clazz) {
-            this.implementor = implementor;
+        private ModuleRegistration(final String section, final Plugin implementor, final Class<? extends Module> clazz) {
             this.section = section;
+            this.implementor = implementor;
             this.clazz = clazz;
         }
 
@@ -69,13 +74,16 @@ public class Module implements Listener {
     @EventHandler(ignoreCancelled = true)
     protected void onWorldUnload(final WorldUnloadEvent unload) {
         if (!unload.getWorld().equals(this.state.world)) return;
-        HandlerList.unregisterAll(this);
-        this.onDisable();
+        this.disable();
     }
 
     @EventHandler
     protected void onPluginDisable(final PluginDisableEvent disable) {
         if (!disable.getPlugin().equals(this.implementor)) return;
+        this.disable();
+    }
+
+    public void disable() {
         HandlerList.unregisterAll(this);
         this.onDisable();
     }

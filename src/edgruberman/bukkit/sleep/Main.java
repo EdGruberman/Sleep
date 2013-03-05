@@ -30,8 +30,8 @@ public final class Main extends CustomPlugin {
 
     @Override
     public void onLoad() {
-        this.putConfigMinimum("6.2.0a0");
-        this.putConfigMinimum(Main.LANGUAGE_FILE, "6.2.0a0");
+        this.putConfigMinimum("6.2.0a6");
+        this.putConfigMinimum(Main.LANGUAGE_FILE, "6.2.0a10");
 
         final PluginDependency dependency = new PluginDependency(this, "PlayerActivity", "edgruberman.bukkit.playeractivity", "4.1.2");
         if (dependency.isValid()) return;
@@ -61,11 +61,11 @@ public final class Main extends CustomPlugin {
 
         Main.plugin = this;
 
-        Module.register(this, "away", Away.class);
-        Module.register(this, "idle", Idle.class);
-        Module.register(this, "insomnia", Insomnia.class);
-        Module.register(this, "temporary", Temporary.class);
-        Module.register(this, "underground", Underground.class);
+        Module.register("away", this, Away.class);
+        Module.register("idle", this, Idle.class);
+        Module.register("insomnia", this, Insomnia.class);
+        Module.register("temporary", this, Temporary.class);
+        Module.register("underground", this, Underground.class);
 
         this.somnologist = new Somnologist(this, this.getConfig().getStringList("excluded"));
 

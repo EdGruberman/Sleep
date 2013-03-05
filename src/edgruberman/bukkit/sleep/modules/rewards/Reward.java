@@ -1,4 +1,4 @@
-package edgruberman.bukkit.sleep.modules;
+package edgruberman.bukkit.sleep.modules.rewards;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -19,7 +19,7 @@ public abstract class Reward {
 
     public static Class<? extends Reward> find(final String className) throws ClassNotFoundException, ClassCastException {
         try {
-            return Class.forName(Reward.class.getPackage().getName() + ".rewards." + className).asSubclass(Reward.class);
+            return Class.forName(Reward.class.getPackage().getName() + "." + className).asSubclass(Reward.class);
         } catch (final Exception e) {
             return Class.forName(className).asSubclass(Reward.class);
         }

@@ -26,7 +26,7 @@ underground:
   above: '§8{0,time,HH:mm:ss} {1} moved up from underground ({3,choice,0#§5no one in bed§8|1#§dneed +{2} to sleep§8})' # 1 = Player, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
   below: '§8{0,time,HH:mm:ss} {1} is deep underground ({2,choice,0#§5no more sleepers needed§8|1#§dneed +{2} to sleep§8})' # 1 = Player, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
 common:
-  status-excluded: '§f-> §7Sleep state is §enot managed§7 for §b§o{1}' # 1 = World
+  excluded: '§f-> §7Sleep state is §enot managed§7 for §b§o{1}' # 1 = World
   unknown-argument: '§f-> §eUnknown§f value for §b§o{1}§7: §f{2}' # 1 = Argument Name, 2 = Argument Value
   requires-argument: '§f-> §cMissing §7required argument: §b§o{1}' # 1 = Argument Name
   reload: '§f-> §2Reloaded §7{1} plugin' # 1 = Plugin Name

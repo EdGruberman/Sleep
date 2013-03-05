@@ -24,7 +24,6 @@ import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.event.world.WorldUnloadEvent;
 import org.bukkit.plugin.Plugin;
 
-import edgruberman.bukkit.sleep.modules.Reward;
 import edgruberman.bukkit.sleep.util.CustomPlugin;
 
 /** sleep state management */
@@ -56,24 +55,18 @@ public final class Somnologist implements Listener {
         }
 
         final File configWorld = new File(this.plugin.getDataFolder(), "Worlds/" + world.getName() + "/" + CustomPlugin.CONFIGURATION_FILE);
+        if (configWorld.exists()) this.plugin.getLogger().log(Level.CONFIG, "[{0}] World specific override file found for configuration: {1}", new Object[] { world.getName(), configWorld });
         final YamlConfiguration config = YamlConfiguration.loadConfiguration(configWorld);
         config.setDefaults(this.plugin.getConfig());
         config.options().copyDefaults(true);
-        if (configWorld.exists()) this.plugin.getLogger().log(Level.CONFIG, "[{0}] World specific override file found for configuration: {1}", new Object[] { world.getName(), configWorld });
 
         final File messagesWorld = new File(this.plugin.getDataFolder(), "Worlds/" + world.getName() + "/" + Main.LANGUAGE_FILE);
-        final YamlConfiguration messages = YamlConfiguration.loadConfiguration(messagesWorld);
-        messages.setDefaults(Main.courier.getBase().getRoot());
-        messages.options().copyDefaults(true);
-        if (messagesWorld.exists()) this.plugin.getLogger().log(Level.CONFIG, "[{0}] World specific override file found for messages: {1}", new Object[] { world.getName(), messagesWorld });
+        if (messagesWorld.exists()) this.plugin.getLogger().log(Level.CONFIG, "[{0}] World specific override file found for language: {1}", new Object[] { world.getName(), messagesWorld });
+        final YamlConfiguration language = YamlConfiguration.loadConfiguration(messagesWorld);
+        language.setDefaults(Main.courier.getBase().getRoot());
+        language.options().copyDefaults(true);
 
-        final State state = new State(this.plugin, world, config, messages);
-        if (state.forceCount != -1 || state.forcePercent != -1) {
-            this.plugin.getLogger().log(Level.CONFIG, "[{0}] Forced Sleep Minimum Count: {1}", new Object[] { world.getName(),  state.forceCount });
-            this.plugin.getLogger().log(Level.CONFIG, "[{0}] Forced Sleep Minimum Percent: {1}", new Object[] { world.getName(), state.forcePercent });
-        }
-        for (final Reward reward : state.rewards) this.plugin.getLogger().log(Level.CONFIG, "[{0}] Reward: {1}", new Object[] { world.getName(), reward.toString() });
-        Module.loadModules(state, config);
+        final State state = new State(this.plugin, world, config, language);
         this.states.put(world, state);
         return state;
     }

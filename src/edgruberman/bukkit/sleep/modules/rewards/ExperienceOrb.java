@@ -8,7 +8,6 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 
 import edgruberman.bukkit.sleep.Main;
-import edgruberman.bukkit.sleep.modules.Reward;
 import edgruberman.bukkit.sleep.util.CustomLevel;
 
 public class ExperienceOrb extends Reward {

@@ -11,7 +11,6 @@ import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerBedLeaveEvent;
 import org.bukkit.plugin.Plugin;
 
-import edgruberman.bukkit.sleep.Main;
 import edgruberman.bukkit.sleep.Module;
 import edgruberman.bukkit.sleep.State;
 import edgruberman.bukkit.sleep.craftbukkit.CraftBukkit;
@@ -71,7 +70,7 @@ public class Insomnia extends Module {
 
             // eject player from bed before sleep can complete, but set player's spawn point
             Insomnia.this.cb.bedEject(this.player);
-            Main.courier.send(this.player, "insomnia-eject");
+            Insomnia.this.state.courier.send(this.player, "insomnia-eject");
         }
 
         @EventHandler

@@ -20,7 +20,7 @@ import org.bukkit.event.Event;
 import org.bukkit.plugin.Plugin;
 
 import edgruberman.bukkit.sleep.messaging.ConfigurationCourier;
-import edgruberman.bukkit.sleep.modules.Reward;
+import edgruberman.bukkit.sleep.modules.rewards.Reward;
 
 /** sleep state for a specific world */
 public final class State {
@@ -36,6 +36,7 @@ public final class State {
     public final int messageLimit;
     public final boolean insomnia;
     public final Collection<Reward> rewards = new ArrayList<Reward>();
+    private final List<Module> modules = new ArrayList<Module>();
 
     // need to track players manually as processing will sometimes occur mid-event before player is adjusted
     public final List<UUID> sleeping = new ArrayList<UUID>();
@@ -46,17 +47,23 @@ public final class State {
     private final Map<UUID, Long> lastBedEnterMessage = new HashMap<UUID, Long>();
     private final Map<UUID, Long> lastBedLeaveMessage = new HashMap<UUID, Long>();
 
-    State(final Plugin plugin, final World world, final ConfigurationSection config, final ConfigurationSection messages) {
+    State(final Plugin plugin, final World world, final ConfigurationSection config, final ConfigurationSection language) {
         this.plugin = plugin;
         this.world = world;
-        this.courier = ConfigurationCourier.Factory.create(plugin).setBase(messages).setFormatCode("format-code").build();
+        this.courier = ConfigurationCourier.Factory.create(plugin).setBase(language).setFormatCode("format-code").build();
         this.messageLimit = config.getInt("message-limit");
         this.insomnia = config.getBoolean("insomnia.enabled");
+
         this.forceCount = ( config.getBoolean("force.enabled") ? config.getInt("force.count") : -1 );
         this.forcePercent = ( config.getBoolean("force.enabled") ? config.getInt("force.percent") : -1 );
+        if (this.forceCount > 0) this.plugin.getLogger().log(Level.CONFIG, "[{0}] Force sleep minimum count: {1}", new Object[] { world.getName(),  this.forceCount });
+        if (this.forcePercent > 0 ) this.plugin.getLogger().log(Level.CONFIG, "[{0}] Force sleep minimum percent: {1}", new Object[] { world.getName(), this.forcePercent });
+
         this.loadRewards(config.getConfigurationSection("rewards"));
 
         for (final Player existing : world.getPlayers()) this.add(existing);
+
+        this.modules.addAll(Module.loadModules(this, config));
     }
 
     private void loadRewards(final ConfigurationSection rewards) {
@@ -69,12 +76,15 @@ public final class State {
             try {
                 this.rewards.add(Reward.create(reward.getString("class"), reward));
             } catch (final Exception e) {
-                this.plugin.getLogger().warning("Unable to create reward for [" + this.world.getName() + "]: " + name + "; " + e);
+                this.plugin.getLogger().log(Level.WARNING, "[{0}] Unable to create {1} reward; {2}", new Object[] { this.world.getName(), name, e });
             }
         }
+
+        for (final Reward reward : this.rewards) this.plugin.getLogger().log(Level.CONFIG, "[{0}] Reward: {1}", new Object[] { this.world.getName(), reward.toString() });
     }
 
     void clear() {
+        for (final Module module : this.modules) module.disable();
         for (final Player player : this.world.getPlayers()) this.remove(player);
         this.lastBedEnterMessage.clear();
         this.lastBedLeaveMessage.clear();

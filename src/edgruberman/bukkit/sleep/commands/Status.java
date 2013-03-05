@@ -41,7 +41,7 @@ public class Status implements CommandExecutor {
 
         final State state = this.somnologist.getState(world);
         if (state == null) {
-            Main.courier.send(sender, "status-excluded", world.getName());
+            Main.courier.send(sender, "excluded", world.getName());
             return true;
         }
 

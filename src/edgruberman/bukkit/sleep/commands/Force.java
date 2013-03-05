@@ -33,7 +33,7 @@ public class Force implements CommandExecutor {
 
         final State state = this.somnologist.getState(world);
         if (state == null) {
-            Main.courier.send(sender, "sleep-not-managed", world.getName());
+            Main.courier.send(sender, "excluded", world.getName());
             return true;
         }
 
