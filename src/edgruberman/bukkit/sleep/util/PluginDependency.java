@@ -2,6 +2,8 @@ package edgruberman.bukkit.sleep.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.jar.JarInputStream;
@@ -41,7 +43,7 @@ public class PluginDependency {
         return Bukkit.getPluginManager().getPlugin(this.pluginName) != null;
     }
 
-    public URL extract() {
+    public URL extract() throws SecurityException, NoSuchMethodException, IllegalArgumentException, IllegalAccessException, InvocationTargetException {
         final File utilityFile = new File(this.dependent.getDataFolder(), this.pluginName + ".jar");
         URL utilityURL = null;
         try { utilityURL = utilityFile.toURI().toURL(); } catch (final MalformedURLException e) { throw new RuntimeException(e); }
@@ -61,8 +63,10 @@ public class PluginDependency {
         this.dependent.saveResource(utilityFile.getName(), true);
 
         // first time extraction requires late class path addition
-        ((PluginClassLoader) this.dependent.getClass().getClassLoader()).addURL(utilityURL);
-
+        final Method getClassLoader = JavaPlugin.class.getDeclaredMethod("getClassLoader");
+        getClassLoader.setAccessible(true);
+        final PluginClassLoader loader = (PluginClassLoader) getClassLoader.invoke(this.dependent);
+        loader.addURL(utilityURL);
         return utilityURL;
     }
 

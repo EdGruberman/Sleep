@@ -1,5 +1,7 @@
 package edgruberman.bukkit.sleep;
 
+import java.util.logging.Level;
+
 import org.bukkit.Bukkit;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.Plugin;
@@ -25,7 +27,7 @@ public final class Main extends CustomPlugin {
     public static ConfigurationCourier courier;
     public static Plugin plugin;
 
-    private boolean prepared = true;
+    private boolean loaded = false;
     private Somnologist somnologist = null;
 
     @Override
@@ -34,22 +36,31 @@ public final class Main extends CustomPlugin {
         this.putConfigMinimum(Main.LANGUAGE_FILE, "6.2.0a10");
 
         final PluginDependency dependency = new PluginDependency(this, "PlayerActivity", "edgruberman.bukkit.playeractivity", "4.1.2");
-        if (dependency.isValid()) return;
-
-        if (!dependency.isInstalled()) {
-            dependency.extract();
+        if (dependency.isValid()) {
+            this.loaded = true;
             return;
         }
 
         // manual intervention required if dependency previously installed and out of date
-        this.prepared = false;
-        this.getLogger().severe("PlayerActivity plugin out of date;  Stop server, delete \"plugins/PlayerActivity.jar\", and then restart server");
+        if (dependency.isInstalled()) {
+            this.getLogger().log(Level.SEVERE, "PlayerActivity plugin out of date;  Stop server, delete \"plugins/PlayerActivity.jar\", and then restart server");
+            return;
+        }
+
+        try {
+            dependency.extract();
+        } catch (final Exception e) {
+            this.getLogger().log(Level.SEVERE, "Unable to add PlayerActivity utility jar to class loader; Restart server to enable plugin; " + e);
+            return;
+        }
+
+        this.loaded = true;
     }
 
     @Override
     public void onEnable() {
-        if (!this.prepared) {
-            this.getLogger().severe("Disabling plugin; Dependencies not met");
+        if (!this.loaded) {
+            this.getLogger().log(Level.SEVERE, "Disabling plugin; Dependencies not met during plugin load");
             this.setEnabled(false);
             return;
         }
