@@ -13,6 +13,7 @@ import edgruberman.bukkit.sleep.messaging.ConfigurationCourier;
 import edgruberman.bukkit.sleep.modules.Away;
 import edgruberman.bukkit.sleep.modules.Idle;
 import edgruberman.bukkit.sleep.modules.Insomnia;
+import edgruberman.bukkit.sleep.modules.Rewards;
 import edgruberman.bukkit.sleep.modules.Temporary;
 import edgruberman.bukkit.sleep.modules.Underground;
 import edgruberman.bukkit.sleep.modules.rewards.ConsoleCommand;
@@ -22,7 +23,6 @@ import edgruberman.bukkit.sleep.modules.rewards.Food;
 import edgruberman.bukkit.sleep.modules.rewards.Health;
 import edgruberman.bukkit.sleep.modules.rewards.Item;
 import edgruberman.bukkit.sleep.modules.rewards.PotionEffect;
-import edgruberman.bukkit.sleep.modules.rewards.Reward;
 import edgruberman.bukkit.sleep.util.CustomPlugin;
 import edgruberman.bukkit.sleep.util.PluginDependency;
 
@@ -38,7 +38,7 @@ public final class Main extends CustomPlugin {
 
     @Override
     public void onLoad() {
-        this.putConfigMinimum("6.2.0a6");
+        this.putConfigMinimum("6.2.0a17");
         this.putConfigMinimum(Main.LANGUAGE_FILE, "6.2.0a10");
 
         final PluginDependency dependency = new PluginDependency(this, "PlayerActivity", "edgruberman.bukkit.playeractivity", "4.1.2");
@@ -76,19 +76,20 @@ public final class Main extends CustomPlugin {
 
         if (Bukkit.getPluginManager().getPlugin("PlayerActivity") == null) PlayerMoveBlockEvent.MovementTracker.initialize(this);
 
+        Rewards.register(this, ConsoleCommand.class, "ConsoleCommand");
+        Rewards.register(this, Experience.class, "Experience");
+        Rewards.register(this, ExperienceOrb.class, "ExperienceOrb");
+        Rewards.register(this, Food.class, "Food");
+        Rewards.register(this, Health.class, "Health");
+        Rewards.register(this, Item.class, "Item");
+        Rewards.register(this, PotionEffect.class, "PotionEffect");
+        Module.register(this, Rewards.class, "rewards");
+
         Module.register(this, Away.class, "away");
         Module.register(this, Idle.class, "idle");
         Module.register(this, Insomnia.class, "insomnia");
         Module.register(this, Temporary.class, "temporary");
         Module.register(this, Underground.class, "underground");
-
-        Reward.register(this, ConsoleCommand.class, "ConsoleCommand");
-        Reward.register(this, Experience.class, "Experience");
-        Reward.register(this, ExperienceOrb.class, "ExperienceOrb");
-        Reward.register(this, Food.class, "Food");
-        Reward.register(this, Health.class, "Health");
-        Reward.register(this, Item.class, "Item");
-        Reward.register(this, PotionEffect.class, "PotionEffect");
 
         this.somnologist = new Somnologist(this, this.getConfig().getStringList("excluded"));
 

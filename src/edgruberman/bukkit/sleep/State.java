@@ -1,7 +1,6 @@
 package edgruberman.bukkit.sleep;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -20,13 +19,12 @@ import org.bukkit.event.Event;
 import org.bukkit.plugin.Plugin;
 
 import edgruberman.bukkit.sleep.messaging.ConfigurationCourier;
-import edgruberman.bukkit.sleep.modules.rewards.Reward;
 
 /** sleep state for a specific world */
 public final class State {
 
-    private static final long SLEEP_FAILED_TICKS = 23460; //  bed leave in morning after failed sleep
-    private static final long SLEEP_SUCCESS_TICKS = 0; // bed leave in morning after sleep completes
+    public static final long SLEEP_FAILED_TICKS = 23460; //  bed leave in morning after failed sleep
+    public static final long SLEEP_SUCCESS_TICKS = 0; // bed leave in morning after sleep completes
 
     public final Plugin plugin;
     public final World world;
@@ -35,14 +33,12 @@ public final class State {
     public final int forcePercent;
     public final int messageLimit;
     public final boolean insomnia;
-    public final Collection<Reward> rewards = new ArrayList<Reward>();
 
     // need to track players manually as processing will sometimes occur mid-event before player is adjusted
     public final List<UUID> sleeping = new ArrayList<UUID>();
     public final List<Player> players = new ArrayList<Player>();
 
     private boolean forcing = false;
-    private Integer participants = null;
     private final Map<UUID, Long> lastBedEnterMessage = new HashMap<UUID, Long>();
     private final Map<UUID, Long> lastBedLeaveMessage = new HashMap<UUID, Long>();
     private final List<Module> modules = new ArrayList<Module>();
@@ -59,27 +55,9 @@ public final class State {
         if (this.forceCount > 0) this.plugin.getLogger().log(Level.CONFIG, "[{0}] Force sleep minimum count: {1}", new Object[] { world.getName(),  this.forceCount });
         if (this.forcePercent > 0 ) this.plugin.getLogger().log(Level.CONFIG, "[{0}] Force sleep minimum percent: {1}", new Object[] { world.getName(), this.forcePercent });
 
-        this.loadRewards(config.getConfigurationSection("rewards"));
-
         for (final Player existing : world.getPlayers()) this.add(existing);
 
         this.modules.addAll(Module.loadModules(this, config));
-    }
-
-    private void loadRewards(final ConfigurationSection rewards) {
-        if (rewards == null || !rewards.getBoolean("enabled")) return;
-
-        for (final String name : rewards.getKeys(false)) {
-            if (name.equals("enabled")) continue;
-
-            final ConfigurationSection reward = rewards.getConfigurationSection(name);
-            try {
-                this.rewards.add(Reward.create(reward.getString("type"), reward));
-            } catch (final Exception e) {
-                this.plugin.getLogger().log(Level.WARNING, "[{0}] Unable to create {1} reward; {2}", new Object[] { this.world.getName(), name, e });
-                continue;
-            }
-        }
     }
 
     void disable() {
@@ -87,7 +65,6 @@ public final class State {
         for (final Player player : this.world.getPlayers()) this.remove(player);
         this.lastBedEnterMessage.clear();
         this.lastBedLeaveMessage.clear();
-        this.rewards.clear();
         this.sleeping.clear();
         this.players.clear();
     }
@@ -124,32 +101,19 @@ public final class State {
         this.plugin.getLogger().log(Level.FINEST, "[{0}] leave: {1} (Ignored: {2})", new Object[] { this.world.getName(), leaver.getName(), leaver.isSleepingIgnored() });
         this.sleeping.remove(leaver.getUniqueId());
 
-        // player could leave bed after disconnect while in bed and reconnect in day time
+        // player could leave bed after disconnect while in bed and reconnect in day time TODO really?
         if (!this.players.contains(leaver)) return;
 
-        // skip notify and skip reward when morning occurs and sleep did not complete
-        if (this.world.getTime() == State.SLEEP_FAILED_TICKS) return;
-
         // notify for manual bed leave at night
-        if (this.world.getTime() != State.SLEEP_SUCCESS_TICKS) {
-            if (!leaver.isSleepingIgnored() && !this.insomnia) this.notify("leave", leaver);
-            return;
+        if (!leaver.isSleepingIgnored() && !this.insomnia && this.world.getTime() != State.SLEEP_SUCCESS_TICKS && this.world.getTime() != State.SLEEP_FAILED_TICKS) {
+            this.notify("leave", leaver);
         }
 
-        // morning
-
-        // apply reward
-        if (this.participants == null) this.participants = this.sleeping.size() + 1;
-        for (final Reward reward : this.rewards) reward.apply(leaver, bed, this.participants);
-
-        // clean-up if last player to leave bed
-        if (this.sleeping.size() != 0) return;
-        this.participants = null;
-
-        // reset forced sleep
-        if (!this.forcing) return;
-        this.forcing = false;
-        for (final Player player : this.world.getPlayers()) this.ignore(player, false, "reset");
+        // reset forced sleep after last player leaves bed
+        if (this.forcing && this.sleeping.size() == 0) {
+            this.forcing = false;
+            for (final Player player : this.world.getPlayers()) this.ignore(player, false, "reset");
+        }
     }
 
     /** player left world */

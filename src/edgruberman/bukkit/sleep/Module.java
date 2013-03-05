@@ -83,7 +83,7 @@ public class Module implements Listener {
         this.disable();
     }
 
-    public void disable() {
+    public final void disable() {
         HandlerList.unregisterAll(this);
         this.onDisable();
     }
