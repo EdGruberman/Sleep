@@ -1,11 +1,11 @@
 # For detailed information refer to http://dev.bukkit.org/server-mods/sleep/pages/configuration/
 log-level: INFO
 force:
-  enabled: false
+  enable: false
   count: -1
   percent: -1
 idle:
-  enabled: true
+  enable: true
   duration: 60 # seconds
   activity:
     - PlayerMoveBlockEvent
@@ -21,10 +21,10 @@ idle:
     - PrepareItemEnchantEvent
     - InventoryClickEvent
 temporary:
-  enabled: false
+  enable: false
   duration: 500 # seconds (<1 day cycle)
 rewards:
-  enabled: false
+  enable: false
   Golden Apple Satiation:
     class: Food
     saturation: 9.6
@@ -47,8 +47,8 @@ rewards:
     experience: 5
     factor: 0.5
 away:
-  enabled: false # requires PlayerActivity plugin
+  enable: false # requires PlayerActivity plugin
 insomnia:
-  enabled: false
+  enable: false
 message-limit: 5 # Seconds (enter and leave only)
 version: @VERSION@

@@ -9,6 +9,10 @@ import edgruberman.bukkit.sleep.commands.Force;
 import edgruberman.bukkit.sleep.commands.Reload;
 import edgruberman.bukkit.sleep.commands.Status;
 import edgruberman.bukkit.sleep.messaging.ConfigurationCourier;
+import edgruberman.bukkit.sleep.modules.Away;
+import edgruberman.bukkit.sleep.modules.Idle;
+import edgruberman.bukkit.sleep.modules.Insomnia;
+import edgruberman.bukkit.sleep.modules.Temporary;
 import edgruberman.bukkit.sleep.util.CustomPlugin;
 import edgruberman.bukkit.sleep.util.PluginDependency;
 
@@ -26,7 +30,7 @@ public final class Main extends CustomPlugin {
     @Override
     public void onLoad() {
         this.putConfigMinimum("6.2.0a0");
-        this.putConfigMinimum(Main.LANGUAGE_FILE, "6.1.0");
+        this.putConfigMinimum(Main.LANGUAGE_FILE, "6.2.0a0");
 
         final PluginDependency dependency = new PluginDependency(this, "PlayerActivity", "edgruberman.bukkit.playeractivity", "4.1.2");
         if (dependency.isValid()) return;
@@ -55,6 +59,12 @@ public final class Main extends CustomPlugin {
         if (Bukkit.getPluginManager().getPlugin("PlayerActivity") == null) PlayerMoveBlockEvent.MovementTracker.initialize(this);
 
         Main.plugin = this;
+
+        Module.register(this, "away", Away.class);
+        Module.register(this, "idle", Idle.class);
+        Module.register(this, "insomnia", Insomnia.class);
+        Module.register(this, "temporary", Temporary.class);
+
         this.somnologist = new Somnologist(this, this.getConfig().getStringList("excluded"));
 
         this.getCommand("sleep:status").setExecutor(new Status(this.somnologist));

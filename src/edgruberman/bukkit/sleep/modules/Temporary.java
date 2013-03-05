@@ -2,66 +2,51 @@ package edgruberman.bukkit.sleep.modules;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
+import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
-import org.bukkit.event.HandlerList;
-import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerBedLeaveEvent;
-import org.bukkit.event.server.PluginDisableEvent;
-import org.bukkit.event.world.WorldUnloadEvent;
 import org.bukkit.material.Bed;
 import org.bukkit.plugin.Plugin;
 
 import edgruberman.bukkit.sleep.Main;
+import edgruberman.bukkit.sleep.Module;
+import edgruberman.bukkit.sleep.State;
 import edgruberman.bukkit.sleep.craftbukkit.CraftBukkit;
 import edgruberman.bukkit.sleep.util.CustomLevel;
 
 /** temporary bed manager */
-public class TemporaryModule implements Listener {
+public class Temporary extends Module {
 
-    private final Plugin plugin;
-    private final World world;
     private final long duration;
-    private final Logger logger;
     private final CraftBukkit cb;
     private final Map<String, Location> previous = new HashMap<String, Location>();
     private final Map<String, Integer> committers = new HashMap<String, Integer>();
 
-    public TemporaryModule(final Plugin plugin, final World world, final long duration, final CraftBukkit cb) {
-        this.plugin = plugin;
-        this.world = world;
-        this.duration = duration;
-        this.logger = plugin.getLogger();
-        this.cb = cb;
+    public Temporary(final Plugin implementor, final State state, final ConfigurationSection config) {
+        super(implementor, state ,config);
+        this.duration = config.getLong("duration") * Main.TICKS_PER_SECOND;
 
+        try {
+            this.cb = CraftBukkit.create();
+        } catch (final Exception e) {
+            throw new IllegalStateException("Unsupported CraftBukkit version " + Bukkit.getVersion() + "; Check for updates at " + this.implementor.getDescription().getWebsite(), e);
+        }
 
-        Bukkit.getPluginManager().registerEvents(this, this.plugin);
+        this.implementor.getLogger().log(Level.CONFIG, "[{0}] Temporary bed duration: {1} seconds)", new Object[] { this.state.world.getName(), this.duration / Main.TICKS_PER_SECOND });
     }
 
-    @EventHandler(ignoreCancelled = true)
-    private void onWorldUnload(final WorldUnloadEvent unload) {
-        if (!unload.getWorld().equals(this.world)) return;
-        this.disable();
-    }
-
-    @EventHandler
-    private void onPluginDisable(final PluginDisableEvent unload) {
-        if (!unload.getPlugin().equals(this.plugin)) return;
-        this.disable();
-    }
-
-    void disable() {
-        HandlerList.unregisterAll(this);
+    @Override
+    protected void onDisable() {
         for (final int taskId : this.committers.values()) Bukkit.getScheduler().cancelTask(taskId);
         this.previous.clear();
         this.committers.clear();
@@ -69,7 +54,7 @@ public class TemporaryModule implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerBedEnter(final PlayerBedEnterEvent event) {
-        if (!event.getPlayer().getWorld().equals(this.world)) return;
+        if (!event.getPlayer().getWorld().equals(this.state.world)) return;
 
         final Location previous = this.cb.getBed(event.getPlayer());
         if (previous == null) return; // ignore if no previous bed spawn exists
@@ -81,7 +66,7 @@ public class TemporaryModule implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerBedLeave(final PlayerBedLeaveEvent event) {
-        if (!event.getPlayer().getWorld().equals(this.world)) return;
+        if (!event.getPlayer().getWorld().equals(this.state.world)) return;
 
         final Location previous = this.previous.get(event.getPlayer().getName());
         if (previous == null) return;
@@ -93,19 +78,19 @@ public class TemporaryModule implements Listener {
             return;
         }
 
-        this.logger.log(CustomLevel.TRACE, "Temporary bed used by {0} at {2}; Previous: {1}", new Object[]{event.getPlayer().getName(), previous, event.getBed()});
-        Main.courier.send(event.getPlayer(), "temporary", TemporaryModule.readableDuration(this.duration / 20 * 1000)
+        this.implementor.getLogger().log(CustomLevel.TRACE, "Temporary bed used by {0} at {2}; Previous: {1}", new Object[]{event.getPlayer().getName(), previous, event.getBed()});
+        Main.courier.send(event.getPlayer(), "temporary", Temporary.readableDuration(this.duration / 20 * 1000)
                 , previous.getWorld().getName(), previous.getBlockX(), previous.getBlockY(), previous.getBlockZ()
                 , event.getBed().getWorld().getName(), event.getBed().getX(), event.getBed().getY(), event.getBed().getZ());
 
         // bed spawn changed, commit change after specified duration has elapsed
-        final int taskId = Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin, new BedChangeCommitter(event.getPlayer()), this.duration);
+        final int taskId = Bukkit.getScheduler().scheduleSyncDelayedTask(this.implementor, new BedChangeCommitter(event.getPlayer()), this.duration);
         this.committers.put(event.getPlayer().getName(), taskId);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onBlockBreak(final BlockBreakEvent broken) {
-        if (!broken.getBlock().getWorld().equals(this.world)) return;
+        if (!broken.getBlock().getWorld().equals(this.state.world)) return;
 
         if (broken.getBlock().getTypeId() != Material.BED_BLOCK.getId()) return;
 
@@ -123,7 +108,7 @@ public class TemporaryModule implements Listener {
         broken.getPlayer().setBedSpawnLocation(previous);
         this.previous.remove(broken.getPlayer().getName());
 
-        this.logger.log(CustomLevel.TRACE, "Temporary bed reverted by {0} to {1}; Temporary: {2}", new Object[]{broken.getPlayer().getName(), previous, head});
+        this.implementor.getLogger().log(CustomLevel.TRACE, "Temporary bed reverted by {0} to {1}; Temporary: {2}", new Object[]{broken.getPlayer().getName(), previous, head});
         Main.courier.send(broken.getPlayer(), "temporary-reverted"
                 , previous.getWorld().getName(), previous.getBlockX(), previous.getBlockY(), previous.getBlockZ()
                 , head.getWorld().getName(), head.getX(), head.getY(), head.getZ());
@@ -141,8 +126,8 @@ public class TemporaryModule implements Listener {
 
         @Override
         public void run() {
-            TemporaryModule.this.previous.remove(this.player.getName());
-            TemporaryModule.this.committers.remove(this.player.getName());
+            Temporary.this.previous.remove(this.player.getName());
+            Temporary.this.committers.remove(this.player.getName());
         }
 
     }

@@ -24,12 +24,7 @@ import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.event.world.WorldUnloadEvent;
 import org.bukkit.plugin.Plugin;
 
-import edgruberman.bukkit.sleep.craftbukkit.CraftBukkit;
-import edgruberman.bukkit.sleep.modules.AwayModule;
-import edgruberman.bukkit.sleep.modules.IdleModule;
-import edgruberman.bukkit.sleep.modules.InsomniaModule;
 import edgruberman.bukkit.sleep.modules.Reward;
-import edgruberman.bukkit.sleep.modules.TemporaryModule;
 import edgruberman.bukkit.sleep.util.CustomPlugin;
 
 /** sleep state management */
@@ -73,49 +68,12 @@ public final class Somnologist implements Listener {
         if (messagesWorld.exists()) this.plugin.getLogger().log(Level.CONFIG, "[{0}] World specific override file found for messages: {1}", new Object[] { world.getName(), messagesWorld });
 
         final State state = new State(this.plugin, world, config, messages);
-        if (config.getBoolean("idle.enabled")) {
-            final IdleModule idleMonitor = new IdleModule(state, config.getConfigurationSection("idle"));
-            this.plugin.getLogger().log(Level.CONFIG, "[{0}] Idle Threshold (seconds): {1}", new Object[] { world.getName(), idleMonitor.tracker.getIdleThreshold() / 1000 });
-            this.plugin.getLogger().log(Level.CONFIG, "[{0}] Monitored Activity: {1} events", new Object[] { world.getName(), idleMonitor.tracker.getInterpreters().size() });
-        }
         if (state.forceCount != -1 || state.forcePercent != -1) {
             this.plugin.getLogger().log(Level.CONFIG, "[{0}] Forced Sleep Minimum Count: {1}", new Object[] { world.getName(),  state.forceCount });
             this.plugin.getLogger().log(Level.CONFIG, "[{0}] Forced Sleep Minimum Percent: {1}", new Object[] { world.getName(), state.forcePercent });
         }
         for (final Reward reward : state.rewards) this.plugin.getLogger().log(Level.CONFIG, "[{0}] Reward: {1}", new Object[] { world.getName(), reward.toString() });
-
-        CraftBukkit cb = null;
-        if (config.getBoolean("cot.enabled") || !config.getBoolean("insomnia.enabled")) {
-            try {
-                cb = CraftBukkit.create();
-            } catch (final Exception e) {
-                this.plugin.getLogger().severe("Unsupported CraftBukkit version " + Bukkit.getVersion() + "; " + e);
-            }
-        }
-
-        if (config.getBoolean("cot.enabled")) {
-            if (cb != null) {
-                new TemporaryModule(state.plugin, state.world, config.getLong("cot.duration") * Main.TICKS_PER_SECOND, cb);
-                this.plugin.getLogger().log(Level.CONFIG, "[{0}] Cots Enabled", world.getName());
-            } else {
-                this.plugin.getLogger().severe("Temporary Cots can not be enabled; Check " + this.plugin.getDescription().getWebsite() + " for updates");
-            }
-        }
-
-        if (config.getBoolean("insomnia.enabled")) {
-            if (cb != null) {
-                new InsomniaModule(state.plugin, state.world, cb);
-                this.plugin.getLogger().log(Level.CONFIG, "[{0}] Sleep Disabled", world.getName());
-            } else {
-                this.plugin.getLogger().severe("Insomnia can not be enabled; Check " + this.plugin.getDescription().getWebsite() + " for updates");
-            }
-        }
-
-        if (config.getBoolean("away.enabled")) {
-            new AwayModule(state);
-            this.plugin.getLogger().log(Level.CONFIG, "[{0}] Manual Away Enabled", world.getName());
-        }
-
+        Module.loadModules(state, config);
         this.states.put(world, state);
         return state;
     }
