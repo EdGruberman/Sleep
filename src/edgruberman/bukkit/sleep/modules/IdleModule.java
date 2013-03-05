@@ -32,6 +32,8 @@ public class IdleModule implements Observer, Listener {
     private final Logger logger;
     public final StatusTracker tracker;
 
+    private boolean allowAcknowledge = false;
+
     public IdleModule(final State state, final ConfigurationSection config) {
         this.state = state;
         this.plugin = state.plugin;
@@ -71,11 +73,14 @@ public class IdleModule implements Observer, Listener {
         if (!this.tracker.getIdle().contains(active.player.getName())) return;
 
         this.logger.log(Level.FINEST, "[{0}] active: {1} (Ignored: {2}); {3}", new Object[] { this.world.getName(), active.player.getName(), active.player.isSleepingIgnored(), active.event.getSimpleName() });
+        this.allowAcknowledge = true;
         this.state.ignore(active.player, false, "active");
+        this.allowAcknowledge = false;
     }
 
     @EventHandler(ignoreCancelled = true)
     private void onSleepAcknowledge(final SleepAcknowledge ack) {
+        if (this.allowAcknowledge) return;
         if (!ack.getPlayer().getWorld().equals(this.world)) return;
         if (!this.tracker.getIdle().contains(ack.getPlayer().getName())) return;
         this.logger.log(Level.FINEST, "[{0}] Cancelling {1} changing to not ignore sleep (idle)", new Object[] { this.world.getName(), ack.getPlayer().getName()});

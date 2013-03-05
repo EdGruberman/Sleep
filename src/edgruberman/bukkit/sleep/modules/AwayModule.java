@@ -29,6 +29,8 @@ public class AwayModule implements Listener {
     private final World world;
     private final Logger logger;
 
+    private boolean allowAcknowledge = false;
+
     public AwayModule(final State state) {
         this.state = state;
         this.plugin = state.plugin;
@@ -56,11 +58,14 @@ public class AwayModule implements Listener {
     @EventHandler
     public void onPlayerBack(final PlayerBack event) {
         if (!event.getPlayer().getWorld().equals(this.world)) return;
+        this.allowAcknowledge = true;
         this.state.ignore(event.getPlayer(), false, "back");
+        this.allowAcknowledge = false;
     }
 
     @EventHandler(ignoreCancelled = true)
     private void onSleepAcknowledge(final SleepAcknowledge ack) {
+        if (this.allowAcknowledge) return;
         if (!ack.getPlayer().getWorld().equals(this.world)) return;
         if (!this.isAway(ack.getPlayer())) return;
         this.logger.log(Level.FINEST, "[{0}] Cancelling {1} changing to not ignore sleep (away)", new Object[] { this.world.getName(), ack.getPlayer().getName()});
