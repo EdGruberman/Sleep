@@ -16,6 +16,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
+import org.bukkit.event.Event;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.Plugin;
 
@@ -38,7 +39,6 @@ public final class State {
     public final Collection<Reward> rewards = new ArrayList<Reward>();
     public final Cot cot;
     public final boolean away;
-    public final IdleMonitor idleMonitor;
     public final CraftBukkit craftBukkit;
 
     // need to track players manually as processing will sometimes occur mid-event before player is adjusted
@@ -59,7 +59,6 @@ public final class State {
         this.forceCount = ( config.getBoolean("force.enabled") ? config.getInt("force.count") : -1 );
         this.forcePercent = ( config.getBoolean("force.enabled") ? config.getInt("force.percent") : -1 );
         this.loadRewards(config.getConfigurationSection("rewards"));
-        this.idleMonitor = ( config.getBoolean("idle.enabled") ? new IdleMonitor(this, config.getConfigurationSection("idle")) : null );
 
         CraftBukkit cb = null;
         if (config.getBoolean("cot.enabled") || !config.getBoolean("sleep")) {
@@ -114,7 +113,6 @@ public final class State {
     void clear() {
         for (final Player player : this.world.getPlayers()) this.remove(player);
 
-        if (this.idleMonitor != null) this.idleMonitor.clear();
         if (this.cot != null) this.cot.clear();
 
         this.lastBedEnterMessage.clear();
@@ -133,7 +131,6 @@ public final class State {
         this.lastBedLeaveMessage.put(joiner.getUniqueId(), 0L);
 
         if (joiner.hasPermission("sleep.ignore")) this.ignore(joiner, true, "permission");
-        if (this.isIdle(joiner)) this.ignore(joiner, true, "idle");
         if (this.isAway(joiner)) this.ignore(joiner, true, "away");
         if (this.forcing) this.ignore(joiner, true, "force");
 
@@ -163,7 +160,7 @@ public final class State {
         this.plugin.getLogger().log(Level.FINEST, "[{0}] leave: {1} (Ignored: {2})", new Object[] { this.world.getName(), leaver.getName(), leaver.isSleepingIgnored() });
         this.sleeping.remove(leaver.getUniqueId());
 
-        if (this.isIdle(leaver) || this.isAway(leaver)) leaver.setSleepingIgnored(true);
+        if (this.isAway(leaver)) leaver.setSleepingIgnored(true);
 
         // player could leave bed after disconnect while in bed and reconnect in day time
         if (!this.players.contains(leaver)) return;
@@ -232,18 +229,23 @@ public final class State {
 
     /** set whether or not a player ignores sleep status checks */
     public void ignore(final Player player, final boolean ignore, final String key) {
-        // don't modify if already set as expected, or already actively engaged in sleep
-        if (player.isSleepingIgnored() == ignore || this.sleeping.contains(player.getUniqueId())) return;
-
-        // don't stop ignoring if any override is still active
-        if (!ignore && (this.isIdle(player) || player.hasPermission("sleep.ignore") || this.isAway(player) || this.forcing)) return;
-
-        final Cancellable event = ( ignore ? new SleepIgnore(player) : new SleepAcknowledge(player) );
-        if (event.isCancelled()) return;
+        if (player.isSleepingIgnored() == ignore) return; // don't modify if already set as expected
 
         this.plugin.getLogger().log(Level.FINEST, "[{0}] Setting {1} (Ignored: {2}) to {3,choice,0#not |1#}ignore sleep ({4})", new Object[] { this.world.getName(), player.getName(), player.isSleepingIgnored(), ignore?1:0, key });
+
+        // don't stop ignoring if any override is still active
+        if (!ignore && (player.hasPermission("sleep.ignore") || this.isAway(player) || this.forcing)) return;
+
+        // allow overrides to cancel change
+        final Event event = ( ignore ? new SleepIgnore(player) : new SleepAcknowledge(player) );
+        Bukkit.getPluginManager().callEvent(event);
+        if (((Cancellable) event).isCancelled()) return;
+
+        final int before = this.needed();
         player.setSleepingIgnored(ignore);
-        if (this.sleeping.size() >= 1) this.notify(key, player);
+
+        // notify when at least one player in bed and the needed quantity changes
+        if ((this.sleeping.size() >= 1) && (before != this.needed())) this.notify(key, player);
     }
 
     void notify(final String key, final Player player) {
@@ -278,11 +280,6 @@ public final class State {
             return value.asBoolean();
 
         return false;
-    }
-
-    private boolean isIdle(final Player player) {
-        if (this.idleMonitor == null) return false;
-        return this.idleMonitor.isIdle(player);
     }
 
     /** players not ignored and not in bed */

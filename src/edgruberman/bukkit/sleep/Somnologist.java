@@ -69,9 +69,10 @@ public final class Somnologist implements Listener {
         if (messagesWorld.exists()) this.plugin.getLogger().log(Level.CONFIG, "[{0}] World specific override file found for messages: {1}", new Object[] { world.getName(), messagesWorld });
 
         final State state = new State(this.plugin, world, config, messages);
-        if (state.idleMonitor != null) {
-            this.plugin.getLogger().log(Level.CONFIG, "[{0}] Idle Threshold (seconds): {1}", new Object[] { world.getName(), state.idleMonitor.tracker.getIdleThreshold() / 1000 });
-            this.plugin.getLogger().log(Level.CONFIG, "[{0}] Monitored Activity: {1} events", new Object[] { world.getName(), state.idleMonitor.tracker.getInterpreters().size() });
+        if (config.getBoolean("idle.enabled")) {
+            final IdleMonitor idleMonitor = new IdleMonitor(state, config.getConfigurationSection("idle"));
+            this.plugin.getLogger().log(Level.CONFIG, "[{0}] Idle Threshold (seconds): {1}", new Object[] { world.getName(), idleMonitor.tracker.getIdleThreshold() / 1000 });
+            this.plugin.getLogger().log(Level.CONFIG, "[{0}] Monitored Activity: {1} events", new Object[] { world.getName(), idleMonitor.tracker.getInterpreters().size() });
         }
         if (state.forceCount != -1 || state.forcePercent != -1) {
             this.plugin.getLogger().log(Level.CONFIG, "[{0}] Forced Sleep Minimum Count: {1}", new Object[] { world.getName(),  state.forceCount });
