@@ -20,7 +20,7 @@ idle:
     - EnchantItemEvent
     - PrepareItemEnchantEvent
     - InventoryClickEvent
-temporary-bed:
+temporary:
   enabled: false
   duration: 500 # seconds (<1 day cycle)
 rewards:

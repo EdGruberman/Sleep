@@ -1,4 +1,4 @@
-package edgruberman.bukkit.sleep;
+package edgruberman.bukkit.sleep.modules;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -18,7 +18,7 @@ import org.bukkit.plugin.Plugin;
 import edgruberman.bukkit.sleep.craftbukkit.CraftBukkit;
 
 /** prevents deep sleep from occurring which would cause Minecraft to change the time to morning */
-class InsomniaModule implements Listener {
+public class InsomniaModule implements Listener {
 
     // TODO research if -10 is unnecessary to compensate for any background processing before task starts counting
     /** ticks in bed at which Minecraft declares deep sleep which causes morning  */
@@ -29,7 +29,7 @@ class InsomniaModule implements Listener {
     private final CraftBukkit cb;
     private final Logger logger;
 
-    InsomniaModule(final Plugin plugin, final World world, final CraftBukkit cb) {
+    public InsomniaModule(final Plugin plugin, final World world, final CraftBukkit cb) {
         this.plugin = plugin;
         this.world = world;
         this.cb = cb;

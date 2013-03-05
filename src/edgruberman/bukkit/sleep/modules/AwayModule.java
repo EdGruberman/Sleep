@@ -1,4 +1,4 @@
-package edgruberman.bukkit.sleep;
+package edgruberman.bukkit.sleep.modules;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -19,15 +19,17 @@ import org.bukkit.plugin.Plugin;
 
 import edgruberman.bukkit.playeractivity.consumers.away.PlayerAway;
 import edgruberman.bukkit.playeractivity.consumers.away.PlayerBack;
+import edgruberman.bukkit.sleep.SleepAcknowledge;
+import edgruberman.bukkit.sleep.State;
 
-class AwayModule implements Listener {
+public class AwayModule implements Listener {
 
     private final State state;
     private final Plugin plugin;
     private final World world;
     private final Logger logger;
 
-    AwayModule(final State state) {
+    public AwayModule(final State state) {
         this.state = state;
         this.plugin = state.plugin;
         this.world = state.world;

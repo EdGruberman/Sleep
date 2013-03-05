@@ -1,4 +1,4 @@
-package edgruberman.bukkit.sleep;
+package edgruberman.bukkit.sleep.modules;
 
 import java.util.Observable;
 import java.util.Observer;
@@ -21,6 +21,8 @@ import org.bukkit.plugin.Plugin;
 import edgruberman.bukkit.playeractivity.PlayerActive;
 import edgruberman.bukkit.playeractivity.PlayerIdle;
 import edgruberman.bukkit.playeractivity.StatusTracker;
+import edgruberman.bukkit.sleep.SleepAcknowledge;
+import edgruberman.bukkit.sleep.State;
 
 public class IdleModule implements Observer, Listener {
 
@@ -30,7 +32,7 @@ public class IdleModule implements Observer, Listener {
     private final Logger logger;
     public final StatusTracker tracker;
 
-    IdleModule(final State state, final ConfigurationSection config) {
+    public IdleModule(final State state, final ConfigurationSection config) {
         this.state = state;
         this.plugin = state.plugin;
         this.world = state.world;

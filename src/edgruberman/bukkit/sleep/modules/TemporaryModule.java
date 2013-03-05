@@ -1,4 +1,4 @@
-package edgruberman.bukkit.sleep;
+package edgruberman.bukkit.sleep.modules;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,11 +22,12 @@ import org.bukkit.event.world.WorldUnloadEvent;
 import org.bukkit.material.Bed;
 import org.bukkit.plugin.Plugin;
 
+import edgruberman.bukkit.sleep.Main;
 import edgruberman.bukkit.sleep.craftbukkit.CraftBukkit;
 import edgruberman.bukkit.sleep.util.CustomLevel;
 
 /** temporary bed manager */
-class TemporaryBedModule implements Listener {
+public class TemporaryModule implements Listener {
 
     private final Plugin plugin;
     private final World world;
@@ -36,7 +37,7 @@ class TemporaryBedModule implements Listener {
     private final Map<String, Location> previous = new HashMap<String, Location>();
     private final Map<String, Integer> committers = new HashMap<String, Integer>();
 
-    TemporaryBedModule(final Plugin plugin, final World world, final long duration, final CraftBukkit cb) {
+    public TemporaryModule(final Plugin plugin, final World world, final long duration, final CraftBukkit cb) {
         this.plugin = plugin;
         this.world = world;
         this.duration = duration;
@@ -93,7 +94,7 @@ class TemporaryBedModule implements Listener {
         }
 
         this.logger.log(CustomLevel.TRACE, "Temporary bed used by {0} at {2}; Previous: {1}", new Object[]{event.getPlayer().getName(), previous, event.getBed()});
-        Main.courier.send(event.getPlayer(), "temporary-bed", TemporaryBedModule.readableDuration(this.duration / 20 * 1000)
+        Main.courier.send(event.getPlayer(), "temporary", TemporaryModule.readableDuration(this.duration / 20 * 1000)
                 , previous.getWorld().getName(), previous.getBlockX(), previous.getBlockY(), previous.getBlockZ()
                 , event.getBed().getWorld().getName(), event.getBed().getX(), event.getBed().getY(), event.getBed().getZ());
 
@@ -123,7 +124,7 @@ class TemporaryBedModule implements Listener {
         this.previous.remove(broken.getPlayer().getName());
 
         this.logger.log(CustomLevel.TRACE, "Temporary bed reverted by {0} to {1}; Temporary: {2}", new Object[]{broken.getPlayer().getName(), previous, head});
-        Main.courier.send(broken.getPlayer(), "temporary-bed-reverted"
+        Main.courier.send(broken.getPlayer(), "temporary-reverted"
                 , previous.getWorld().getName(), previous.getBlockX(), previous.getBlockY(), previous.getBlockZ()
                 , head.getWorld().getName(), head.getX(), head.getY(), head.getZ());
     }
@@ -140,8 +141,8 @@ class TemporaryBedModule implements Listener {
 
         @Override
         public void run() {
-            TemporaryBedModule.this.previous.remove(this.player.getName());
-            TemporaryBedModule.this.committers.remove(this.player.getName());
+            TemporaryModule.this.previous.remove(this.player.getName());
+            TemporaryModule.this.committers.remove(this.player.getName());
         }
 
     }

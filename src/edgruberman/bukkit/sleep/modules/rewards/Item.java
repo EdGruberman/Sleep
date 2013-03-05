@@ -1,4 +1,4 @@
-package edgruberman.bukkit.sleep.rewards;
+package edgruberman.bukkit.sleep.modules.rewards;
 
 import java.text.MessageFormat;
 
@@ -9,7 +9,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 import edgruberman.bukkit.sleep.Main;
-import edgruberman.bukkit.sleep.Reward;
+import edgruberman.bukkit.sleep.modules.Reward;
 import edgruberman.bukkit.sleep.util.CustomLevel;
 
 public class Item extends Reward {

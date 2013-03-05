@@ -25,6 +25,11 @@ import org.bukkit.event.world.WorldUnloadEvent;
 import org.bukkit.plugin.Plugin;
 
 import edgruberman.bukkit.sleep.craftbukkit.CraftBukkit;
+import edgruberman.bukkit.sleep.modules.AwayModule;
+import edgruberman.bukkit.sleep.modules.IdleModule;
+import edgruberman.bukkit.sleep.modules.InsomniaModule;
+import edgruberman.bukkit.sleep.modules.Reward;
+import edgruberman.bukkit.sleep.modules.TemporaryModule;
 import edgruberman.bukkit.sleep.util.CustomPlugin;
 
 /** sleep state management */
@@ -90,7 +95,7 @@ public final class Somnologist implements Listener {
 
         if (config.getBoolean("cot.enabled")) {
             if (cb != null) {
-                new TemporaryBedModule(state.plugin, state.world, config.getLong("cot.duration") * Main.TICKS_PER_SECOND, cb);
+                new TemporaryModule(state.plugin, state.world, config.getLong("cot.duration") * Main.TICKS_PER_SECOND, cb);
                 this.plugin.getLogger().log(Level.CONFIG, "[{0}] Cots Enabled", world.getName());
             } else {
                 this.plugin.getLogger().severe("Temporary Cots can not be enabled; Check " + this.plugin.getDescription().getWebsite() + " for updates");

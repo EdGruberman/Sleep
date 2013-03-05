@@ -20,6 +20,7 @@ import org.bukkit.event.Event;
 import org.bukkit.plugin.Plugin;
 
 import edgruberman.bukkit.sleep.messaging.ConfigurationCourier;
+import edgruberman.bukkit.sleep.modules.Reward;
 
 /** sleep state for a specific world */
 public final class State {
