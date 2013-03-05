@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
-import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
@@ -29,13 +28,13 @@ public class Module implements Listener {
             final ConfigurationSection moduleSection = config.getConfigurationSection(registration.section);
             if (moduleSection == null || !moduleSection.getBoolean("enable")) continue;
 
-            registration.implementor.getLogger().log(Level.CONFIG, "[{0}] Enabling {1} Sleep Module (section: {2}) ...", new Object[] { state.world.getName(), registration.clazz.getSimpleName(), registration.section });
+            registration.implementor.getLogger().log(Level.CONFIG, "[{0}] Loading {1} module (section: {2}) ...", new Object[] { state.world.getName(), registration.clazz.getSimpleName(), registration.section });
 
             Module module;
             try {
-                module = registration.clazz.getConstructor(World.class, Plugin.class, ConfigurationSection.class).newInstance(registration.implementor, state, config);
+                module = registration.clazz.getConstructor(Plugin.class, State.class, ConfigurationSection.class).newInstance(registration.implementor, state, config);
             } catch (final Exception e) {
-                registration.implementor.getLogger().log(Level.WARNING, "[{2}] Unable to load Sleep module {0} with section {1}; {3}", new Object[] { registration.clazz.getName(), registration.section, state.world.getName(), e });
+                registration.implementor.getLogger().log(Level.WARNING, "[{0}] Unable to load {1} module (section: {3}, class: {2}); {4}", new Object[] { state.world.getName(), registration.clazz.getSimpleName(), registration.clazz.getName(), registration.section, e });
                 continue;
             }
 
