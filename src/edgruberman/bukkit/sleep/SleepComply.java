@@ -6,9 +6,9 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.event.player.PlayerEvent;
 
 /** raised when a player will stop ignoring sleep */
-public class SleepAcknowledge extends PlayerEvent implements Cancellable {
+public class SleepComply extends PlayerEvent implements Cancellable {
 
-    public SleepAcknowledge(final Player who) {
+    public SleepComply(final Player who) {
         super(who);
     }
 
@@ -31,12 +31,12 @@ public class SleepAcknowledge extends PlayerEvent implements Cancellable {
     private static final HandlerList handlers = new HandlerList();
 
     public static HandlerList getHandlerList() {
-        return SleepAcknowledge.handlers;
+        return SleepComply.handlers;
     }
 
     @Override
     public HandlerList getHandlers() {
-        return SleepAcknowledge.handlers;
+        return SleepComply.handlers;
     }
 
 }

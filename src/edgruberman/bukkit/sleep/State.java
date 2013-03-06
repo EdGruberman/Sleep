@@ -183,7 +183,7 @@ public final class State {
         }
 
         // allow overrides to cancel change
-        final Event event = ( ignore ? new SleepIgnore(player) : new SleepAcknowledge(player) );
+        final Event event = ( ignore ? new SleepIgnore(player) : new SleepComply(player) );
         Bukkit.getPluginManager().callEvent(event);
         if (((Cancellable) event).isCancelled()) return;
 

@@ -15,14 +15,14 @@ import edgruberman.bukkit.playeractivity.PlayerActive;
 import edgruberman.bukkit.playeractivity.PlayerIdle;
 import edgruberman.bukkit.playeractivity.StatusTracker;
 import edgruberman.bukkit.sleep.Module;
-import edgruberman.bukkit.sleep.SleepAcknowledge;
+import edgruberman.bukkit.sleep.SleepComply;
 import edgruberman.bukkit.sleep.State;
 
 public final class Idle extends Module implements Observer {
 
     private final StatusTracker tracker;
 
-    private boolean allowAcknowledge = false;
+    private boolean allowComply = false;
 
     public Idle(final Plugin implementor, final State state, final ConfigurationSection config) {
         super(implementor, state, config);
@@ -66,18 +66,18 @@ public final class Idle extends Module implements Observer {
         if (!this.tracker.getIdle().contains(active.player.getName())) return;
 
         this.implementor.getLogger().log(Level.FINEST, "[{0}] active: {1} (Ignored: {2}); {3}", new Object[] { this.state.world.getName(), active.player.getName(), active.player.isSleepingIgnored(), active.event.getSimpleName() });
-        this.allowAcknowledge = true;
+        this.allowComply = true;
         this.state.ignore(active.player, false, "active");
-        this.allowAcknowledge = false;
+        this.allowComply = false;
     }
 
     @EventHandler(ignoreCancelled = true)
-    private void onSleepAcknowledge(final SleepAcknowledge ack) {
-        if (this.allowAcknowledge) return;
-        if (!ack.getPlayer().getWorld().equals(this.state.world)) return;
-        if (!this.tracker.getIdle().contains(ack.getPlayer().getName())) return;
-        this.implementor.getLogger().log(Level.FINEST, "[{0}] Cancelling {1} changing to not ignore sleep (idle)", new Object[] { this.state.world.getName(), ack.getPlayer().getName()});
-        ack.setCancelled(true);
+    private void onSleepComply(final SleepComply comply) {
+        if (this.allowComply) return;
+        if (!comply.getPlayer().getWorld().equals(this.state.world)) return;
+        if (!this.tracker.getIdle().contains(comply.getPlayer().getName())) return;
+        this.implementor.getLogger().log(Level.FINEST, "[{0}] Cancelling {1} changing to not ignore sleep (idle)", new Object[] { this.state.world.getName(), comply.getPlayer().getName()});
+        comply.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.LOW) // process before state update to prevent leave notification

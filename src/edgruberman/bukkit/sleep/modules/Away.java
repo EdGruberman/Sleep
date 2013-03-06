@@ -14,12 +14,12 @@ import org.bukkit.plugin.Plugin;
 import edgruberman.bukkit.playeractivity.consumers.away.PlayerAway;
 import edgruberman.bukkit.playeractivity.consumers.away.PlayerBack;
 import edgruberman.bukkit.sleep.Module;
-import edgruberman.bukkit.sleep.SleepAcknowledge;
+import edgruberman.bukkit.sleep.SleepComply;
 import edgruberman.bukkit.sleep.State;
 
 public final class Away extends Module {
 
-    private boolean allowAcknowledge = false;
+    private boolean allowComply = false;
 
     public Away(final Plugin implementor, final State state, final ConfigurationSection config) {
         super(implementor, state, config);
@@ -43,19 +43,19 @@ public final class Away extends Module {
     @EventHandler
     private void onPlayerBack(final PlayerBack event) {
         if (!event.getPlayer().getWorld().equals(this.state.world)) return;
-        this.allowAcknowledge = true;
+        this.allowComply = true;
         this.state.ignore(event.getPlayer(), false, "back");
-        this.allowAcknowledge = false;
+        this.allowComply = false;
     }
 
     @EventHandler(ignoreCancelled = true)
-    private void onSleepAcknowledge(final SleepAcknowledge ack) {
-        if (this.allowAcknowledge) return;
-        if (!ack.getPlayer().getWorld().equals(this.state.world)) return;
-        if (!this.isAway(ack.getPlayer())) return;
+    private void onSleepComply(final SleepComply comply) {
+        if (this.allowComply) return;
+        if (!comply.getPlayer().getWorld().equals(this.state.world)) return;
+        if (!this.isAway(comply.getPlayer())) return;
         this.implementor.getLogger().log(Level.FINEST, "[{0}] Cancelling {1} changing to not ignore sleep (away)"
-                , new Object[] { this.state.world.getName(), ack.getPlayer().getName()});
-        ack.setCancelled(true);
+                , new Object[] { this.state.world.getName(), comply.getPlayer().getName()});
+        comply.setCancelled(true);
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOW) // process before state update to prevent leave notification

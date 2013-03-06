@@ -12,7 +12,7 @@ import org.bukkit.plugin.Plugin;
 
 import edgruberman.bukkit.sleep.Main;
 import edgruberman.bukkit.sleep.Module;
-import edgruberman.bukkit.sleep.SleepAcknowledge;
+import edgruberman.bukkit.sleep.SleepComply;
 import edgruberman.bukkit.sleep.State;
 
 public final class Underground extends Module implements Runnable {
@@ -25,7 +25,7 @@ public final class Underground extends Module implements Runnable {
     private int taskId = -1;
     private boolean initial = true;
     private int count = 0;
-    private boolean allowAcknowledge = false;
+    private boolean allowComply = false;
 
     public Underground(final Plugin implementor, final State state, final ConfigurationSection config) {
         super(implementor, state, config);
@@ -53,19 +53,19 @@ public final class Underground extends Module implements Runnable {
     }
 
     @EventHandler(ignoreCancelled = true)
-    private void onSleepAcknowledge(final SleepAcknowledge acknowledge) {
-        if (this.allowAcknowledge) return;
-        if (!acknowledge.getPlayer().getWorld().equals(this.state.world)) return;
-        if (!this.isBelow(acknowledge.getPlayer())) return;
+    private void onSleepComply(final SleepComply comply) {
+        if (this.allowComply) return;
+        if (!comply.getPlayer().getWorld().equals(this.state.world)) return;
+        if (!this.isBelow(comply.getPlayer())) return;
         this.implementor.getLogger().log(Level.FINEST, "[{0}] Cancelling {1} changing to not ignore sleep (idle)"
-                , new Object[] { this.state.world.getName(), acknowledge.getPlayer().getName()});
-        acknowledge.setCancelled(true);
+                , new Object[] { this.state.world.getName(), comply.getPlayer().getName()});
+        comply.setCancelled(true);
     }
 
     private void unignore(final Player player, final String key) {
-        this.allowAcknowledge = true;
+        this.allowComply = true;
         this.state.ignore(player, false, key);
-        this.allowAcknowledge = false;
+        this.allowComply = false;
     }
 
     @Override
