@@ -36,7 +36,7 @@ public final class Underground extends Module implements Runnable {
     }
 
     @Override
-    protected void onDisable() {
+    protected void onUnload() {
         Bukkit.getScheduler().cancelTask(this.taskId);
     }
 
@@ -47,7 +47,7 @@ public final class Underground extends Module implements Runnable {
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true) // process before state update to prevent leave notification
     private void onPlayerBedEnter(final PlayerBedEnterEvent event) {
         if (!event.getPlayer().getWorld().equals(this.state.world)) return;
-        if (this.taskId == -1) return;
+        if (this.taskId != -1) return;
         this.initial = true;
         this.taskId = Bukkit.getScheduler().runTaskTimer(this.implementor, this, this.delay, Underground.PERIOD).getTaskId();
     }
@@ -78,12 +78,12 @@ public final class Underground extends Module implements Runnable {
             }
 
             if (this.isBelow(player)) { // below
-                if (!player.isSleepingIgnored()) continue;
+                if (player.isSleepingIgnored()) continue;
                 Underground.this.state.ignore(player, true, ( this.initial ? "underground.below.batch" : "underground.below" ));
                 this.count++;
 
             } else { // at or above
-                if (player.isSleepingIgnored()) continue;
+                if (!player.isSleepingIgnored()) continue;
                 Underground.this.unignore(player, "underground.above");
             }
         }

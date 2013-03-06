@@ -45,6 +45,8 @@ public final class Rewards extends Module {
 
     }
 
+    // TODO onPluginDisable, remove associated registrations
+
 
 
     private final List<Reward> rewards = new ArrayList<Reward>();
@@ -71,9 +73,10 @@ public final class Rewards extends Module {
     }
 
     @Override
-    protected void onDisable() {
+    protected void onUnload() {
         for (final Reward reward : this.rewards) reward.onDisable();
         this.rewards.clear();
+        // TODO remove all registrations?
     }
 
     @EventHandler

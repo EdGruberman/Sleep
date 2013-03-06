@@ -43,7 +43,7 @@ public final class Idle extends Module implements Observer {
     }
 
     @Override
-    protected void onDisable() {
+    protected void onUnload() {
         this.tracker.clear();
     }
 

@@ -3,6 +3,8 @@ package edgruberman.bukkit.sleep;
 import java.io.File;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,11 +49,11 @@ public final class Somnologist implements Listener {
 
 
 
-    private final Plugin plugin;
+    private final Main plugin;
     private final List<String> excluded = new ArrayList<String>();
     private final Map<World, State> states = new HashMap<World, State>();
 
-    Somnologist(final Plugin plugin, final List<String> excluded) {
+    Somnologist(final Main plugin, final List<String> excluded) {
         this.plugin = plugin;
         if (excluded != null) this.excluded.addAll(excluded);
         if (this.excluded.size() > 0 ) this.plugin.getLogger().config("Excluded Worlds: " + excluded);
@@ -75,9 +77,14 @@ public final class Somnologist implements Listener {
         final ConfigurationSection config = Somnologist.loadWorldConfig(this.plugin, world, CustomPlugin.CONFIGURATION_FILE, this.plugin.getConfig());
         final ConfigurationSection language = Somnologist.loadWorldConfig(this.plugin, world, Main.LANGUAGE_FILE, Main.courier.getBase().getRoot());
         final State state = new State(this.plugin, world, config, language);
+        this.plugin.getModuleManager().loadModules(state);
 
         this.states.put(world, state);
         return state;
+    }
+
+    public Collection<State> getStates() {
+        return Collections.unmodifiableCollection(this.states.values());
     }
 
     public State getState(final World world) {
@@ -85,10 +92,10 @@ public final class Somnologist implements Listener {
     }
 
     /** disable sleep state tracking for all worlds */
-    void disable() {
+    void unload() {
         HandlerList.unregisterAll(this);
 
-        for (final State state : this.states.values()) state.disable();
+        for (final State state : this.states.values()) state.unload();
         this.states.clear();
 
         this.excluded.clear();
@@ -104,7 +111,7 @@ public final class Somnologist implements Listener {
         final State state = this.states.get(event.getWorld());
         if (state == null) return;
 
-        state.disable();
+        state.unload();
         this.states.remove(state);
     }
 

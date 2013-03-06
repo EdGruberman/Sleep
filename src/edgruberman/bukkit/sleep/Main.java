@@ -34,7 +34,8 @@ public final class Main extends CustomPlugin {
     public static ConfigurationCourier courier;
 
     private boolean loaded = false;
-    private Somnologist somnologist = null;
+    private ModuleManager moduleManager = null;
+    public Somnologist somnologist = null;
 
     @Override
     public void onLoad() {
@@ -83,13 +84,13 @@ public final class Main extends CustomPlugin {
         Rewards.register(this, Health.class, "Health");
         Rewards.register(this, Item.class, "Item");
         Rewards.register(this, PotionEffect.class, "PotionEffect");
-        Module.register(this, Rewards.class, "rewards");
+        this.getModuleManager().register(this, Rewards.class, "rewards");
 
-        Module.register(this, Away.class, "away");
-        Module.register(this, Idle.class, "idle");
-        Module.register(this, Insomnia.class, "insomnia");
-        Module.register(this, Temporary.class, "temporary");
-        Module.register(this, Underground.class, "underground");
+        this.getModuleManager().register(this, Away.class, "away");
+        this.getModuleManager().register(this, Idle.class, "idle");
+        this.getModuleManager().register(this, Insomnia.class, "insomnia");
+        this.getModuleManager().register(this, Temporary.class, "temporary");
+        this.getModuleManager().register(this, Underground.class, "underground");
 
         this.somnologist = new Somnologist(this, this.getConfig().getStringList("excluded"));
 
@@ -100,10 +101,16 @@ public final class Main extends CustomPlugin {
 
     @Override
     public void onDisable() {
-        if (this.somnologist != null) this.somnologist.disable();
+        if (this.somnologist != null) this.somnologist.unload();
+        if (this.moduleManager != null) this.moduleManager.unload();
         HandlerList.unregisterAll(this);
         Bukkit.getScheduler().cancelTasks(this);
         Main.courier = null;
+    }
+
+    public ModuleManager getModuleManager() {
+        if (this.moduleManager == null) this.moduleManager = new ModuleManager(this);
+        return this.moduleManager;
     }
 
 }

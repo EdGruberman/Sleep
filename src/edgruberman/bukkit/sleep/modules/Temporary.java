@@ -46,7 +46,7 @@ public final class Temporary extends Module {
     }
 
     @Override
-    protected void onDisable() {
+    protected void onUnload() {
         for (final int taskId : this.committers.values()) Bukkit.getScheduler().cancelTask(taskId);
         this.previous.clear();
         this.committers.clear();

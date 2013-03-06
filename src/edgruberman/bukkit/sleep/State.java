@@ -29,6 +29,7 @@ public final class State {
     public final Plugin plugin;
     public final World world;
     public final ConfigurationCourier courier;
+    public final ConfigurationSection config;
     public final int forceCount;
     public final int forcePercent;
     public final int messageLimit;
@@ -47,6 +48,7 @@ public final class State {
         this.plugin = plugin;
         this.world = world;
         this.courier = ConfigurationCourier.Factory.create(plugin).setBase(language).setFormatCode("format-code").build();
+        this.config = config;
         this.messageLimit = config.getInt("message-limit");
         this.insomnia = config.getBoolean("insomnia.enabled");
 
@@ -56,12 +58,22 @@ public final class State {
         if (this.forcePercent > 0 ) this.plugin.getLogger().log(Level.CONFIG, "[{0}] Force sleep minimum percent: {1}", new Object[] { world.getName(), this.forcePercent });
 
         for (final Player existing : world.getPlayers()) this.add(existing);
-
-        this.modules.addAll(Module.loadModules(this, config));
     }
 
-    void disable() {
-        for (final Module module : this.modules) module.disable();
+    List<Module> getModules() {
+        return this.modules;
+    }
+
+    void addModule(final Module module) {
+        this.modules.add(module);
+    }
+
+    void removeModule(final Module module) {
+        this.modules.remove(module);
+    }
+
+    void unload() {
+        for (final Module module : this.modules) module.unload();
         for (final Player player : this.world.getPlayers()) this.remove(player);
         this.lastBedEnterMessage.clear();
         this.lastBedLeaveMessage.clear();
