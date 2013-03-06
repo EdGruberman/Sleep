@@ -10,7 +10,7 @@ import edgruberman.bukkit.sleep.Main;
 import edgruberman.bukkit.sleep.Somnologist;
 import edgruberman.bukkit.sleep.State;
 
-public class Force implements CommandExecutor {
+public final class Force implements CommandExecutor {
 
     private final Somnologist somnologist;
 

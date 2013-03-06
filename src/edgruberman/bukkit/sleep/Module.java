@@ -47,7 +47,7 @@ public class Module implements Listener {
         return loaded;
     }
 
-    private static class ModuleRegistration {
+    private final static class ModuleRegistration {
 
         private final Plugin implementor;
         private final Class<? extends Module> module;

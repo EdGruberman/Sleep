@@ -16,7 +16,7 @@ import edgruberman.bukkit.sleep.State;
 import edgruberman.bukkit.sleep.craftbukkit.CraftBukkit;
 
 /** prevents deep sleep from occurring which would cause Minecraft to change the time to morning */
-public class Insomnia extends Module {
+public final class Insomnia extends Module {
 
     // TODO research if -10 is unnecessary to compensate for any background processing before task starts counting
     /** ticks in bed at which Minecraft declares deep sleep which causes morning  */
@@ -35,14 +35,14 @@ public class Insomnia extends Module {
     }
 
     @EventHandler(ignoreCancelled = true)
-    public void onPlayerBedEnter(final PlayerBedEnterEvent event) {
+    private void onPlayerBedEnter(final PlayerBedEnterEvent event) {
         if (!event.getPlayer().getWorld().equals(this.state.world)) return;
         new DelayedLoudNoise(event.getPlayer());
     }
 
 
 
-    private class DelayedLoudNoise implements Runnable, Listener {
+    private final class DelayedLoudNoise implements Runnable, Listener {
 
         private final Player player;
         private final int taskId;

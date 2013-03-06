@@ -17,7 +17,7 @@ import edgruberman.bukkit.sleep.Main;
 import edgruberman.bukkit.sleep.Somnologist;
 import edgruberman.bukkit.sleep.State;
 
-public class Status implements CommandExecutor {
+public final class Status implements CommandExecutor {
 
     private final Somnologist somnologist;
 

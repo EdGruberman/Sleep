@@ -25,7 +25,7 @@ import edgruberman.bukkit.sleep.craftbukkit.CraftBukkit;
 import edgruberman.bukkit.sleep.util.CustomLevel;
 
 /** temporary bed manager */
-public class Temporary extends Module {
+public final class Temporary extends Module {
 
     private final long duration;
     private final CraftBukkit cb;
@@ -53,7 +53,7 @@ public class Temporary extends Module {
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onPlayerBedEnter(final PlayerBedEnterEvent event) {
+    private void onPlayerBedEnter(final PlayerBedEnterEvent event) {
         if (!event.getPlayer().getWorld().equals(this.state.world)) return;
 
         final Location previous = this.cb.getBed(event.getPlayer());
@@ -65,7 +65,7 @@ public class Temporary extends Module {
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
-    public void onPlayerBedLeave(final PlayerBedLeaveEvent event) {
+    private void onPlayerBedLeave(final PlayerBedLeaveEvent event) {
         if (!event.getPlayer().getWorld().equals(this.state.world)) return;
 
         final Location previous = this.previous.get(event.getPlayer().getName());
@@ -89,7 +89,7 @@ public class Temporary extends Module {
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
-    public void onBlockBreak(final BlockBreakEvent broken) {
+    private void onBlockBreak(final BlockBreakEvent broken) {
         if (!broken.getBlock().getWorld().equals(this.state.world)) return;
 
         if (broken.getBlock().getTypeId() != Material.BED_BLOCK.getId()) return;
@@ -116,7 +116,7 @@ public class Temporary extends Module {
 
 
 
-    private class BedChangeCommitter implements Runnable {
+    private final class BedChangeCommitter implements Runnable {
 
         private final Player player;
 

@@ -18,9 +18,9 @@ import edgruberman.bukkit.sleep.Module;
 import edgruberman.bukkit.sleep.SleepAcknowledge;
 import edgruberman.bukkit.sleep.State;
 
-public class Idle extends Module implements Observer {
+public final class Idle extends Module implements Observer {
 
-    public final StatusTracker tracker;
+    private final StatusTracker tracker;
 
     private boolean allowAcknowledge = false;
 

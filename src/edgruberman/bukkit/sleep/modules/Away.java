@@ -17,7 +17,7 @@ import edgruberman.bukkit.sleep.Module;
 import edgruberman.bukkit.sleep.SleepAcknowledge;
 import edgruberman.bukkit.sleep.State;
 
-public class Away extends Module {
+public final class Away extends Module {
 
     private boolean allowAcknowledge = false;
 
@@ -35,13 +35,13 @@ public class Away extends Module {
     }
 
     @EventHandler
-    public void onPlayerAway(final PlayerAway event) {
+    private void onPlayerAway(final PlayerAway event) {
         if (!event.getPlayer().getWorld().equals(this.state.world)) return;
         this.state.ignore(event.getPlayer(), true, "away");
     }
 
     @EventHandler
-    public void onPlayerBack(final PlayerBack event) {
+    private void onPlayerBack(final PlayerBack event) {
         if (!event.getPlayer().getWorld().equals(this.state.world)) return;
         this.allowAcknowledge = true;
         this.state.ignore(event.getPlayer(), false, "back");
@@ -59,14 +59,14 @@ public class Away extends Module {
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOW) // process before state update to prevent leave notification
-    public void onPlayerChangedWorld(final PlayerChangedWorldEvent changed) {
+    private void onPlayerChangedWorld(final PlayerChangedWorldEvent changed) {
         if (!changed.getPlayer().getWorld().equals(this.state.world)) return;
         if (!this.isAway(changed.getPlayer())) return;
         this.state.ignore(changed.getPlayer(), true, "away");
     }
 
     @EventHandler(priority = EventPriority.LOW) // process before state update to prevent leave notification
-    public void onPlayerBedLeave(final PlayerBedLeaveEvent leave) {
+    private void onPlayerBedLeave(final PlayerBedLeaveEvent leave) {
         if (!leave.getPlayer().getWorld().equals(this.state.world)) return;
         if (!this.isAway(leave.getPlayer())) return;
         leave.getPlayer().setSleepingIgnored(true);

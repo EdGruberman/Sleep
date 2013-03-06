@@ -15,7 +15,7 @@ import edgruberman.bukkit.sleep.Module;
 import edgruberman.bukkit.sleep.SleepAcknowledge;
 import edgruberman.bukkit.sleep.State;
 
-public class Underground extends Module implements Runnable {
+public final class Underground extends Module implements Runnable {
 
     private final static long PERIOD = 1 * Main.TICKS_PER_SECOND;
 

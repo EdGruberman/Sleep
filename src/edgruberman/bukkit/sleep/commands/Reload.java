@@ -7,7 +7,7 @@ import org.bukkit.plugin.Plugin;
 
 import edgruberman.bukkit.sleep.Main;
 
-public class Reload implements CommandExecutor {
+public final class Reload implements CommandExecutor {
 
     private final Plugin plugin;
 

@@ -16,7 +16,7 @@ import edgruberman.bukkit.sleep.Module;
 import edgruberman.bukkit.sleep.State;
 import edgruberman.bukkit.sleep.modules.rewards.Reward;
 
-public class Rewards extends Module {
+public final class Rewards extends Module {
 
     private static final Map<String, RewardRegistration> registered = new HashMap<String, RewardRegistration>();
 
@@ -33,7 +33,7 @@ public class Rewards extends Module {
         return reg.reward.getConstructor(Plugin.class, ConfigurationSection.class).newInstance(reg.implementor, definition);
     }
 
-    private static class RewardRegistration {
+    private final static class RewardRegistration {
 
         private final Plugin implementor;
         private final Class<? extends Reward> reward;
