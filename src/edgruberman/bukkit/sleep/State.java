@@ -80,7 +80,7 @@ public final class State {
         if (joiner.hasPermission("sleep.ignore")) this.ignore(joiner, true, "permission");
         if (this.forcing) this.ignore(joiner, true, "force");
 
-        if (!joiner.isSleepingIgnored() && this.sleeping.size() >= 1) this.notify("add", joiner);
+        if (!joiner.isSleepingIgnored() && this.sleeping.size() >= 1) this.notify("add", joiner, this.needed());
     }
 
     /** player entered bed */
@@ -93,7 +93,7 @@ public final class State {
             return;
         }
 
-        if (!enterer.isSleepingIgnored() && !this.insomnia) this.notify("enter", enterer);
+        if (!enterer.isSleepingIgnored() && !this.insomnia) this.notify("enter", enterer, this.needed());
     }
 
     /** player left bed */
@@ -104,15 +104,15 @@ public final class State {
         // player could leave bed after disconnect while in bed and reconnect in day time TODO really?
         if (!this.players.contains(leaver)) return;
 
-        // notify for manual bed leave at night
-        if (!leaver.isSleepingIgnored() && !this.insomnia && this.world.getTime() != State.SLEEP_SUCCESS_TICKS && this.world.getTime() != State.SLEEP_FAILED_TICKS) {
-            this.notify("leave", leaver);
-        }
+        // notify for manual bed leave
+        if (!leaver.isSleepingIgnored() && !this.insomnia && this.world.getTime() != State.SLEEP_SUCCESS_TICKS && this.world.getTime() != State.SLEEP_FAILED_TICKS)
+            this.notify("leave", leaver, this.needed());
 
         // reset forced sleep after last player leaves bed
         if (this.forcing && this.sleeping.size() == 0) {
             this.forcing = false;
-            for (final Player player : this.world.getPlayers()) this.ignore(player, false, "reset");
+            for (final Player player : this.world.getPlayers())
+                this.ignore(player, false, "reset");
         }
     }
 
@@ -125,7 +125,8 @@ public final class State {
         this.lastBedEnterMessage.remove(remover.getUniqueId());
         this.lastBedLeaveMessage.remove(remover.getUniqueId());
 
-        if (!remover.isSleepingIgnored() && (wasAsleep || this.sleeping.size() >= 1)) this.notify("remove", remover);
+        // TODO why not use .ignore(false)?
+        if (!remover.isSleepingIgnored() && (wasAsleep || this.sleeping.size() >= 1)) this.notify("remove", remover, this.needed());
         remover.setSleepingIgnored(false);
     }
 
@@ -176,34 +177,42 @@ public final class State {
 
         final int before = this.needed();
         player.setSleepingIgnored(ignore);
+        final int after = this.needed();
 
         // notify when at least one player in bed and the needed quantity changes
-        if ((this.sleeping.size() >= 1) && (before != this.needed())) this.notify(key, player);
+        if ((this.sleeping.size() >= 1) && (before != after))
+            this.notify(key, player, after);
     }
 
-    void notify(final String key, final Player player) {
+    void notify(final String key, final Player player, final int needed) {
         if (this.forcing) return;
+
+        boolean send = true;
 
         if (key.equals("enter")) {
             if (System.currentTimeMillis() <= (this.lastBedEnterMessage.get(player.getUniqueId()) + (this.messageLimit * 1000))) {
+                send = false;
                 this.plugin.getLogger().log(Level.FINEST, "enter message limit of {0} seconds exceeded by {1}", new Object[] { this.messageLimit, player.getName() });
-                return;
+            } else {
+                this.lastBedEnterMessage.put(player.getUniqueId(), System.currentTimeMillis());
             }
-            this.lastBedEnterMessage.put(player.getUniqueId(), System.currentTimeMillis());
-        }
 
-        if (key.equals("leave")) {
+        } else if (key.equals("leave")) {
             if (System.currentTimeMillis() <= (this.lastBedLeaveMessage.get(player.getUniqueId()) + (this.messageLimit * 1000))) {
+                send = false;
                 this.plugin.getLogger().log(Level.FINEST, "leave message limit of {0} seconds exceeded by {1}", new Object[] { this.messageLimit, player.getName() });
-                return;
+            } else {
+                this.lastBedLeaveMessage.put(player.getUniqueId(), System.currentTimeMillis());
             }
-            this.lastBedLeaveMessage.put(player.getUniqueId(), System.currentTimeMillis());
         }
 
-        final int needed = this.needed();
-        final String name = this.courier.format("+player", player.getName(), player.getDisplayName());
-        this.courier.world(this.world, key, name, needed, this.sleeping.size(), this.possible().size());
-        if (needed == 0 && (this.forceCount != -1 || this.forcePercent != -1) && this.preventing().size() >= 1 ) this.force(null);
+        if (send) {
+            final String name = this.courier.format("+player", player.getName(), player.getDisplayName());
+            this.courier.world(this.world, key, name, needed, this.sleeping.size(), this.possible().size());
+        }
+
+        if (needed == 0 && (this.forceCount != -1 || this.forcePercent != -1) && this.preventing().size() >= 1 )
+            this.force(null);
     }
 
     /** players not ignored and not in bed */
