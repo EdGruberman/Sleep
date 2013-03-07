@@ -204,8 +204,12 @@ public final class State {
         }
 
         if (send) {
-            final String name = this.courier.format("+player", player.getName(), player.getDisplayName());
-            this.courier.world(this.world, key, name, needed, this.sleeping.size(), this.possible().size());
+            final SleepNotify event = new SleepNotify(this.world);
+            Bukkit.getPluginManager().callEvent(event);
+            if (!event.isCancelled()) {
+                final String name = this.courier.format("+player", player.getName(), player.getDisplayName());
+                this.courier.world(this.world, key, name, needed, this.sleeping.size(), this.possible().size());
+            }
         }
 
         if (needed == 0 && (this.forceCount != -1 || this.forcePercent != -1) && this.preventing().size() >= 1 )
