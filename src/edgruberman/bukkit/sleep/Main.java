@@ -101,8 +101,8 @@ public final class Main extends CustomPlugin {
 
     @Override
     public void onDisable() {
-        if (this.somnologist != null) this.somnologist.unload();
         if (this.moduleManager != null) this.moduleManager.unload();
+        if (this.somnologist != null) this.somnologist.unload();
         HandlerList.unregisterAll(this);
         Bukkit.getScheduler().cancelTasks(this);
         Main.courier = null;

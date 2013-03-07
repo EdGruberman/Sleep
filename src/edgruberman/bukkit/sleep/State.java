@@ -42,7 +42,6 @@ public final class State {
     private boolean forcing = false;
     private final Map<UUID, Long> lastBedEnterMessage = new HashMap<UUID, Long>();
     private final Map<UUID, Long> lastBedLeaveMessage = new HashMap<UUID, Long>();
-    private final List<Module> modules = new ArrayList<Module>();
 
     State(final Plugin plugin, final World world, final ConfigurationSection config, final ConfigurationSection language) {
         this.plugin = plugin;
@@ -60,25 +59,11 @@ public final class State {
         for (final Player existing : world.getPlayers()) this.add(existing);
     }
 
-    List<Module> getModules() {
-        return this.modules;
-    }
-
-    void addModule(final Module module) {
-        this.modules.add(module);
-    }
-
-    void removeModule(final Module module) {
-        this.modules.remove(module);
-    }
-
     void unload() {
-        for (final Module module : this.modules) module.unload();
-        for (final Player player : this.world.getPlayers()) this.remove(player);
+        for (final Player player : this.world.getPlayers()) this.remove(player); this.players.clear();
         this.lastBedEnterMessage.clear();
         this.lastBedLeaveMessage.clear();
         this.sleeping.clear();
-        this.players.clear();
     }
 
     /** player joined world */

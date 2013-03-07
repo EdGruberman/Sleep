@@ -38,97 +38,58 @@ public final class ModuleManager implements Listener {
         Bukkit.getPluginManager().registerEvents(this, plugin);
     }
 
-    public List<Module> register(final Plugin implementor, final Class<? extends Module> module, final String section) {
+    public void register(final Plugin implementor, final Class<? extends Module> module, final String section) {
         final ModuleRegistration reg = new ModuleRegistration(implementor, module, section);
         this.registered.add(reg);
 
         // load for existing states
-        final List<Module> loaded = new ArrayList<Module>();
-        if (this.plugin.somnologist == null) return loaded;
-
-        for (final State state : this.plugin.somnologist.getStates()) {
-            final Module instance = this.loadModule(reg, state);
-            if (instance != null) loaded.add(instance);
-        }
-        return loaded;
+        if (this.plugin.somnologist == null) return;
+        for (final State state : this.plugin.somnologist.getStates())
+            this.loadModule(reg, state);
     }
 
-    // TODO make this less ridiculous
     public void deregister(final Plugin implementor) {
         final Iterator<ModuleRegistration> it = this.registered.iterator();
         while (it.hasNext()) {
             final ModuleRegistration reg = it.next();
             if (reg.implementor.equals(implementor)) {
-                this.unload(reg);
                 it.remove();
+                Module.unload(reg.module);
             }
         }
     }
 
-    // TODO this too
     public void deregister(final Class<? extends Module> clazz) {
         final Iterator<ModuleRegistration> it = this.registered.iterator();
-        while (it.hasNext()) {
-            final ModuleRegistration reg = it.next();
-            if (reg.module.equals(clazz)) {
-                this.unload(reg);
+        while (it.hasNext())
+            if (it.next().module.equals(clazz))
                 it.remove();
-            }
-        }
+
+        Module.unload(clazz);
     }
 
-    // TODO and ofc this
-    private void unload(final ModuleRegistration reg) {
-        if (this.plugin.somnologist == null) return;
-        for (final State state : this.plugin.somnologist.getStates()) {
-            final Iterator<Module> it = state.getModules().iterator();
-            while (it.hasNext()) {
-                final Module instance = it.next();
-                if (reg.module.equals(instance.getClass())) {
-                    instance.unload();
-                    it.remove();
-                }
-            }
-        }
+    void loadModules(final State state) {
+        for (final ModuleRegistration reg : this.registered)
+            this.loadModule(reg, state);
     }
 
-    public List<Module> loadModules(final State state) {
-        final List<Module> loaded = new ArrayList<Module>();
-
-        for (final ModuleRegistration reg : this.registered) {
-            final Module module = this.loadModule(reg, state);
-            if (module != null) loaded.add(module);
-        }
-
-        return loaded;
-    }
-
-    private Module loadModule(final ModuleRegistration reg, final State state) {
+    private void loadModule(final ModuleRegistration reg, final State state) {
         final ConfigurationSection moduleSection = state.config.getConfigurationSection(reg.section);
-        if (moduleSection == null || !moduleSection.getBoolean("enable")) return null;
+        if (moduleSection == null || !moduleSection.getBoolean("enable")) return;
 
         reg.implementor.getLogger().log(Level.CONFIG, "[{0}] Loading {1} Sleep module (section: {2}) ...", new Object[] { state.world.getName(), reg.module.getSimpleName(), reg.section });
 
-        Module module;
         try {
-            module = reg.module.getConstructor(Plugin.class, State.class, ConfigurationSection.class).newInstance(reg.implementor, state, moduleSection);
+            reg.module.getConstructor(Plugin.class, State.class, ConfigurationSection.class).newInstance(reg.implementor, state, moduleSection);
         } catch (final Exception e) {
             reg.implementor.getLogger().log(Level.WARNING, "[{0}] Unable to load {1} Sleep module (section: {3}, class: {2}); {4}", new Object[] { state.world.getName(), reg.module.getSimpleName(), reg.module.getName(), reg.section, e });
-            return null;
         }
 
-        Bukkit.getPluginManager().registerEvents(module, reg.implementor);
-
-        state.addModule(module);
-        return module;
     }
 
-    public void unload() {
-        final Iterator<ModuleRegistration> it = this.registered.iterator();
-        while (it.hasNext()) {
-            this.unload(it.next());
-            it.remove();
-        }
+    void unload() {
+        Module.unloadAll();
+        this.registered.clear();
     }
 
     @EventHandler

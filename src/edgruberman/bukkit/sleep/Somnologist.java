@@ -94,10 +94,7 @@ public final class Somnologist implements Listener {
     /** disable sleep state tracking for all worlds */
     void unload() {
         HandlerList.unregisterAll(this);
-
-        for (final State state : this.states.values()) state.unload();
-        this.states.clear();
-
+        for (final State state : this.states.values()) state.unload(); this.states.clear();
         this.excluded.clear();
     }
 
@@ -106,7 +103,7 @@ public final class Somnologist implements Listener {
         this.loadState(event.getWorld());
     }
 
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true) // unload state last/after modules
     public void onWorldUnload(final WorldUnloadEvent event) {
         final State state = this.states.get(event.getWorld());
         if (state == null) return;
