@@ -6,14 +6,14 @@ add: '§8{0,time,HH:mm:ss} {1}§8 joined the world (§dneed +{2} to sleep§8)' #
 remove: '§8{0,time,HH:mm:ss} {1}§8 left the world ({2,choice,0#§5no more sleepers needed§8|1#§dneed +{2} to sleep§8})' # 1 = Player, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
 idle: '§8{0,time,HH:mm:ss} {1}§8 is now idle ({2,choice,0#§5no more sleepers needed§8|1#§dneed +{2} to sleep§8})' # 1 = Player, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
 active: '§8{0,time,HH:mm:ss} {1}§8 is no longer idle (§dneed +{2} to sleep§8)' # 1 = Player, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
-away: '§8{0,time,HH:mm:ss} {1}§8 is now away ({2,choice,0#§5no more needed§8|1#§dneed +{2} to sleep§8})' # 1 = Player, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
+away: '§8{0,time,HH:mm:ss} {1}§8 is now away ({2,choice,0#§5no more sleepers needed§8|1#§dneed +{2} to sleep§8})' # 1 = Player, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
 back: '§8{0,time,HH:mm:ss} {1}§8 is no longer away (§dneed +{2} to sleep§8)' # 1 = Player, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
 force: '§8{0,time,HH:mm:ss} {1}§8 is §5forcing§8 the sun to rise' # 1 = Player / Plugin Name
 temporary: '§f-> §8To §5revert§8 to previous spawn, §5destroy§8 this bed soon' # 1 = Duration
 temporary-reverted: '§f-> §2Reverted§8 spawn to previous bed'
 force-require: '§f-> §eNeed at least one§7 player in bed to force sleep'
 force-success: '§f-> §aForcing§7 sleep in {1}...' # 1 = World
-insomnia-eject: '§f-> Sleep is §edisabled§7'
+insomnia-eject: '§f-> §7Sleep is §edisabled§7'
 status-insomnia: '§f-> §7Sleep is §edisabled§7 for {1}' # 1 = World
 status-none: '§f-> §7No one is currently in bed'
 status-need:
@@ -22,9 +22,9 @@ status-need:
 status-summary: '§f-> §7{1,choice,0#Sleep §dneeds {2} more§7 in bed: |100#}{3} in bed / {4} possible = {1}%' # 1 = Percent In Bed, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
 +player: '{1}' # 0 = Name, 1 = Display Name
 underground:
-  initial: '§8{0,time,HH:mm:ss} Found {1} players deep underground ({2,choice,0#§5no more sleepers needed§8|1#§dneed +{2} to sleep§8})' # 1 = Player Count Below, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
-  above: '§8{0,time,HH:mm:ss} {1} moved up from underground ({3,choice,0#§5no one in bed§8|1#§dneed +{2} to sleep§8})' # 1 = Player, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
-  below: '§8{0,time,HH:mm:ss} {1} is deep underground ({2,choice,0#§5no more sleepers needed§8|1#§dneed +{2} to sleep§8})' # 1 = Player, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
+  initial: '§8{0,time,HH:mm:ss} {1} player{1,choice,1#|2#s} deep underground ({2,choice,0#§5no more sleepers needed§8|1#§dneed +{2} to sleep§8})' # 1 = Player Count Below, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
+  above: '§8{0,time,HH:mm:ss} {1} is no longer underground ({3,choice,0#§5no one in bed§8|1#§dneed +{2} to sleep§8})' # 1 = Player, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
+  below: '§8{0,time,HH:mm:ss} {1} is underground ({2,choice,0#§5no more sleepers needed§8|1#§dneed +{2} to sleep§8})' # 1 = Player, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
 common:
   excluded: '§f-> §7Sleep state is §enot managed§7 for §b§o{1}' # 1 = World
   unknown-argument: '§f-> §eUnknown§f value for §b§o{1}§7: §f{2}' # 1 = Argument Name, 2 = Argument Value

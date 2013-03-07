@@ -13,6 +13,7 @@ import org.bukkit.plugin.Plugin;
 import edgruberman.bukkit.sleep.Main;
 import edgruberman.bukkit.sleep.Module;
 import edgruberman.bukkit.sleep.SleepComply;
+import edgruberman.bukkit.sleep.SleepNotify;
 import edgruberman.bukkit.sleep.State;
 
 public final class Underground extends Module implements Runnable {
@@ -24,8 +25,7 @@ public final class Underground extends Module implements Runnable {
 
     private int taskId = -1;
     private boolean initial = true;
-    private int count = 0;
-    private boolean allowComply = false;
+    private boolean active = false;
 
     public Underground(final Plugin implementor, final State state, final ConfigurationSection config) {
         super(implementor, state, config);
@@ -41,36 +41,38 @@ public final class Underground extends Module implements Runnable {
     }
 
     private boolean isBelow(final Player player) {
-        return player.getLocation().getBlockY() < Underground.this.depth;
+        return player.getLocation().getBlockY() <= Underground.this.depth;
     }
 
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true) // process before state update to prevent leave notification
     private void onPlayerBedEnter(final PlayerBedEnterEvent event) {
-        if (!event.getPlayer().getWorld().equals(this.state.world)) return;
         if (this.taskId != -1) return;
+        if (!event.getPlayer().getWorld().equals(this.state.world)) return;
         this.initial = true;
         this.taskId = Bukkit.getScheduler().runTaskTimer(this.implementor, this, this.delay, Underground.PERIOD).getTaskId();
     }
 
     @EventHandler(ignoreCancelled = true)
     private void onSleepComply(final SleepComply comply) {
-        if (this.allowComply) return;
-        if (!comply.getPlayer().getWorld().equals(this.state.world)) return;
+        if (!this.active) return;
         if (!this.isBelow(comply.getPlayer())) return;
-        this.implementor.getLogger().log(Level.FINEST, "[{0}] Cancelling {1} changing to not ignore sleep (idle)"
+        if (!comply.getPlayer().getWorld().equals(this.state.world)) return;
+        this.implementor.getLogger().log(Level.FINEST, "[{0}] Cancelling {1} changing to not ignore sleep (underground)"
                 , new Object[] { this.state.world.getName(), comply.getPlayer().getName()});
         comply.setCancelled(true);
     }
 
-    private void unignore(final Player player, final String key) {
-        this.allowComply = true;
-        this.state.ignore(player, false, key);
-        this.allowComply = false;
+    @EventHandler(ignoreCancelled = true)
+    private void onSleepNotify(final SleepNotify notify) {
+        if (!(this.initial && this.active)) return;
+        notify.setCancelled(true);
     }
 
     @Override
     public void run() {
+        if (this.initial) this.active = true;
         boolean sleepers = false;
+        int below = 0;
         for (final Player player : this.state.players) {
             if (player.isSleeping()) { // in bed
                 sleepers = true;
@@ -79,26 +81,29 @@ public final class Underground extends Module implements Runnable {
 
             if (this.isBelow(player)) { // below
                 if (player.isSleepingIgnored()) continue;
-                Underground.this.state.ignore(player, true, ( this.initial ? "underground.below.batch" : "underground.below" ));
-                this.count++;
+                Underground.this.state.ignore(player, true, "underground.below");
+                below++;
 
             } else { // at or above
                 if (!player.isSleepingIgnored()) continue;
-                Underground.this.unignore(player, "underground.above");
+                this.active = false;
+                Underground.this.state.ignore(player, false, "underground.above");
+                this.active = true;
             }
         }
-        if (sleepers) {
-            if (this.initial) this.state.courier.world(this.state.world, "undergound.initial", this.count, this.state.needed(), this.state.sleeping.size(), this.state.possible().size());
-            this.initial = false;
-            return;
-        }
+        if (this.initial && below > 0)
+            this.state.courier.world(this.state.world, "underground.initial", below, this.state.needed(), this.state.sleeping.size(), this.state.possible().size());
 
-        // stop checking after no one is found in bed any longer
+        this.initial = false;
+        if (!sleepers) this.disable();
+    }
+
+    private void disable() {
         Bukkit.getScheduler().cancelTask(this.taskId);
+        this.active = false;
 
         for (final Player player : this.state.players)
-            if (!this.isBelow(player))
-                this.state.ignore(player, false, "underground.no-sleepers");
+            this.state.ignore(player, false, "underground.no-sleepers");
     }
 
 }
