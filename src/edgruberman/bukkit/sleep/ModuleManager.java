@@ -12,6 +12,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.plugin.Plugin;
 
+import edgruberman.bukkit.sleep.util.CustomLevel;
+
 public final class ModuleManager implements Listener {
 
     private final static class ModuleRegistration {
@@ -83,6 +85,7 @@ public final class ModuleManager implements Listener {
             reg.module.getConstructor(Plugin.class, State.class, ConfigurationSection.class).newInstance(reg.implementor, state, moduleSection);
         } catch (final Exception e) {
             reg.implementor.getLogger().log(Level.WARNING, "[{0}] Unable to load {1} Sleep module (section: {3}, class: {2}); {4}", new Object[] { state.world.getName(), reg.module.getSimpleName(), reg.module.getName(), reg.section, e });
+            reg.implementor.getLogger().log(CustomLevel.DEBUG, "Exception detail", e);
         }
 
     }

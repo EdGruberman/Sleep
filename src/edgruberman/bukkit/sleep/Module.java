@@ -17,6 +17,8 @@ import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.event.world.WorldUnloadEvent;
 import org.bukkit.plugin.Plugin;
 
+import edgruberman.bukkit.sleep.util.CustomLevel;
+
 public class Module implements Listener {
 
     private static final Map<Class<? extends Module>, List<Module>> instances = new HashMap<Class<? extends Module>, List<Module>>();
@@ -51,6 +53,7 @@ public class Module implements Listener {
                 logger.log(Level.SEVERE
                         , ( world != null ? "[" + ( world != null ? world.getName() : "(null)" ) + "]" : "" )
                         + " Unhandled exception unloading " + instance.getClass().getSimpleName() + "Sleep module", t);
+                logger.log(CustomLevel.DEBUG, "Exception detail", t);
             }
         }
     }
