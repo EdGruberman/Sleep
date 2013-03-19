@@ -14,10 +14,14 @@ import org.bukkit.plugin.Plugin;
 import edgruberman.bukkit.playeractivity.consumers.away.PlayerAway;
 import edgruberman.bukkit.playeractivity.consumers.away.PlayerBack;
 import edgruberman.bukkit.sleep.Module;
+import edgruberman.bukkit.sleep.Reason;
 import edgruberman.bukkit.sleep.SleepComply;
 import edgruberman.bukkit.sleep.State;
 
 public final class Away extends Module {
+
+    public static final Reason AWAY = new Reason("AWAY", "away");
+    public static final Reason BACK = new Reason("BACK", "back");
 
     private boolean allowComply = false;
 
@@ -37,14 +41,14 @@ public final class Away extends Module {
     @EventHandler
     private void onPlayerAway(final PlayerAway event) {
         if (!event.getPlayer().getWorld().equals(this.state.world)) return;
-        this.state.ignore(event.getPlayer(), true, "away");
+        this.state.ignore(event.getPlayer(), true, Away.AWAY);
     }
 
     @EventHandler
     private void onPlayerBack(final PlayerBack event) {
         if (!event.getPlayer().getWorld().equals(this.state.world)) return;
         this.allowComply = true;
-        this.state.ignore(event.getPlayer(), false, "back");
+        this.state.ignore(event.getPlayer(), false, Away.BACK);
         this.allowComply = false;
     }
 
@@ -62,7 +66,7 @@ public final class Away extends Module {
     private void onPlayerChangedWorld(final PlayerChangedWorldEvent changed) {
         if (!changed.getPlayer().getWorld().equals(this.state.world)) return;
         if (!this.isAway(changed.getPlayer())) return;
-        this.state.ignore(changed.getPlayer(), true, "away");
+        this.state.ignore(changed.getPlayer(), true, Away.AWAY);
     }
 
     @EventHandler(priority = EventPriority.LOW) // process before state update to prevent leave notification

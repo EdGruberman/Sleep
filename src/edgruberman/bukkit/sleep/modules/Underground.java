@@ -12,11 +12,16 @@ import org.bukkit.plugin.Plugin;
 
 import edgruberman.bukkit.sleep.Main;
 import edgruberman.bukkit.sleep.Module;
+import edgruberman.bukkit.sleep.Reason;
 import edgruberman.bukkit.sleep.SleepComply;
 import edgruberman.bukkit.sleep.SleepNotify;
 import edgruberman.bukkit.sleep.State;
 
 public final class Underground extends Module implements Runnable {
+
+    public static final Reason ABOVE = new Reason("ABOVE", "underground.above");
+    public static final Reason BELOW = new Reason("BELOW", "underground.below");
+    public static final Reason NO_SLEEPERS = new Reason("NO_SLEEPERS", "underground.no-sleepers");
 
     private final static long PERIOD = 1 * Main.TICKS_PER_SECOND;
 
@@ -64,6 +69,7 @@ public final class Underground extends Module implements Runnable {
 
     @EventHandler(ignoreCancelled = true)
     private void onSleepNotify(final SleepNotify notify) {
+        if (!notify.getWorld().equals(this.state.world)) return;
         if (!(this.initial && this.active)) return;
         notify.setCancelled(true);
     }
@@ -81,13 +87,13 @@ public final class Underground extends Module implements Runnable {
 
             if (this.isBelow(player)) { // below
                 if (player.isSleepingIgnored()) continue;
-                Underground.this.state.ignore(player, true, "underground.below");
+                Underground.this.state.ignore(player, true, Underground.BELOW);
                 below++;
 
             } else { // at or above
                 if (!player.isSleepingIgnored()) continue;
                 this.active = false;
-                Underground.this.state.ignore(player, false, "underground.above");
+                Underground.this.state.ignore(player, false, Underground.ABOVE);
                 this.active = true;
             }
         }
@@ -103,7 +109,7 @@ public final class Underground extends Module implements Runnable {
         this.active = false;
 
         for (final Player player : this.state.players)
-            this.state.ignore(player, false, "underground.no-sleepers");
+            this.state.ignore(player, false, Underground.NO_SLEEPERS);
     }
 
 }

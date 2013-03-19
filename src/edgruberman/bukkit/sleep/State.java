@@ -74,10 +74,10 @@ public final class State {
         this.lastBedEnterMessage.put(joiner.getUniqueId(), 0L);
         this.lastBedLeaveMessage.put(joiner.getUniqueId(), 0L);
 
-        if (joiner.hasPermission("sleep.ignore")) this.ignore(joiner, true, "permission");
-        if (this.forcing) this.ignore(joiner, true, "force");
+        if (joiner.hasPermission("sleep.ignore")) this.ignore(joiner, true, Reason.PERMISSION);
+        if (this.forcing) this.ignore(joiner, true, Reason.FORCE);
 
-        if (!joiner.isSleepingIgnored() && this.sleeping.size() >= 1) this.notify("add", joiner, this.needed());
+        if (!joiner.isSleepingIgnored() && this.sleeping.size() >= 1) this.notify(Reason.ADD, joiner, this.needed());
     }
 
     /** player entered bed */
@@ -90,7 +90,7 @@ public final class State {
             return;
         }
 
-        if (!enterer.isSleepingIgnored() && !this.insomnia) this.notify("enter", enterer, this.needed());
+        if (!enterer.isSleepingIgnored() && !this.insomnia) this.notify(Reason.ENTER, enterer, this.needed());
     }
 
     /** player left bed */
@@ -103,13 +103,13 @@ public final class State {
 
         // notify for manual bed leave
         if (!leaver.isSleepingIgnored() && !this.insomnia && this.world.getTime() != State.SLEEP_SUCCESS_TICKS && this.world.getTime() != State.SLEEP_FAILED_TICKS)
-            this.notify("leave", leaver, this.needed());
+            this.notify(Reason.LEAVE, leaver, this.needed());
 
         // reset forced sleep after last player leaves bed
         if (this.forcing && this.sleeping.size() == 0) {
             this.forcing = false;
             for (final Player player : this.world.getPlayers())
-                this.ignore(player, false, "reset");
+                this.ignore(player, false, Reason.RESET);
         }
     }
 
@@ -123,7 +123,7 @@ public final class State {
         this.lastBedLeaveMessage.remove(remover.getUniqueId());
 
         // TODO why not use .ignore(false)?
-        if (!remover.isSleepingIgnored() && (wasAsleep || this.sleeping.size() >= 1)) this.notify("remove", remover, this.needed());
+        if (!remover.isSleepingIgnored() && (wasAsleep || this.sleeping.size() >= 1)) this.notify(Reason.REMOVE, remover, this.needed());
         remover.setSleepingIgnored(false);
     }
 
@@ -137,7 +137,7 @@ public final class State {
 
         // set sleeping ignored for all players
         for (final Player player : this.world.getPlayers())
-            this.ignore(player, true, "force");
+            this.ignore(player, true, Reason.FORCE);
 
         String name = this.plugin.getName();
         if (forcer != null) {
@@ -152,10 +152,10 @@ public final class State {
     }
 
     /** set whether or not a player ignores sleep status checks */
-    public void ignore(final Player player, final boolean ignore, final String key) {
+    public void ignore(final Player player, final boolean ignore, final Reason reason) {
         if (player.isSleepingIgnored() == ignore) return; // don't modify if already set as expected
 
-        this.plugin.getLogger().log(Level.FINEST, "[{0}] Setting {1} (Ignored: {2}) to {3,choice,0#not |1#}ignore sleep ({4})", new Object[] { this.world.getName(), player.getName(), player.isSleepingIgnored(), ignore?1:0, key });
+        this.plugin.getLogger().log(Level.FINEST, "[{0}] Setting {1} (Ignored: {2}) to {3,choice,0#not |1#}ignore sleep ({4})", new Object[] { this.world.getName(), player.getName(), player.isSleepingIgnored(), ignore?1:0, reason.getKey() });
 
         if (!ignore && player.hasPermission("sleep.ignore")) {
             this.plugin.getLogger().log(Level.FINEST, "[{0}] Cancelling {1} changing to not ignore sleep (permission)", new Object[] { this.world.getName(), player.getName()});
@@ -178,15 +178,15 @@ public final class State {
 
         // notify when at least one player in bed and the needed quantity changes
         if ((this.sleeping.size() >= 1) && (before != after))
-            this.notify(key, player, after);
+            this.notify(reason, player, after);
     }
 
-    void notify(final String key, final Player player, final int needed) {
+    void notify(final Reason reason, final Player player, final int needed) {
         if (this.forcing) return;
 
         boolean send = true;
 
-        if (key.equals("enter")) {
+        if (reason == Reason.ENTER) {
             if (System.currentTimeMillis() <= (this.lastBedEnterMessage.get(player.getUniqueId()) + (this.messageLimit * 1000))) {
                 send = false;
                 this.plugin.getLogger().log(Level.FINEST, "enter message limit of {0} seconds exceeded by {1}", new Object[] { this.messageLimit, player.getName() });
@@ -194,7 +194,7 @@ public final class State {
                 this.lastBedEnterMessage.put(player.getUniqueId(), System.currentTimeMillis());
             }
 
-        } else if (key.equals("leave")) {
+        } else if (reason == Reason.LEAVE) {
             if (System.currentTimeMillis() <= (this.lastBedLeaveMessage.get(player.getUniqueId()) + (this.messageLimit * 1000))) {
                 send = false;
                 this.plugin.getLogger().log(Level.FINEST, "leave message limit of {0} seconds exceeded by {1}", new Object[] { this.messageLimit, player.getName() });
@@ -204,11 +204,12 @@ public final class State {
         }
 
         if (send) {
-            final SleepNotify event = new SleepNotify(this.world);
+            final List<Player> possible = this.possible();
+            final SleepNotify event = new SleepNotify(this.world, reason, player, needed, this.sleeping.size(), possible.size());
             Bukkit.getPluginManager().callEvent(event);
             if (!event.isCancelled()) {
                 final String name = this.courier.format("+player", player.getName(), player.getDisplayName());
-                this.courier.world(this.world, key, name, needed, this.sleeping.size(), this.possible().size());
+                this.courier.world(this.world, reason.getKey(), name, needed, this.sleeping.size(), possible.size());
             }
         }
 
