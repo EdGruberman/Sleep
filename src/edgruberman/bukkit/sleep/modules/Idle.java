@@ -6,7 +6,6 @@ import java.util.logging.Level;
 
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.player.PlayerBedLeaveEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.plugin.Plugin;
@@ -16,6 +15,7 @@ import edgruberman.bukkit.playeractivity.PlayerIdle;
 import edgruberman.bukkit.playeractivity.StatusTracker;
 import edgruberman.bukkit.sleep.Module;
 import edgruberman.bukkit.sleep.SleepComply;
+import edgruberman.bukkit.sleep.SleepNotify;
 import edgruberman.bukkit.sleep.State;
 
 public final class Idle extends Module implements Observer {
@@ -80,18 +80,24 @@ public final class Idle extends Module implements Observer {
         comply.setCancelled(true);
     }
 
-    @EventHandler(priority = EventPriority.LOW) // process before state update to prevent leave notification
+    @EventHandler // process after tracker update to confirm still idle, but before state update to prevent leave notification
     private void onPlayerBedLeave(final PlayerBedLeaveEvent leave) {
         if (!leave.getPlayer().getWorld().equals(this.state.world)) return;
         if (!this.tracker.getIdle().contains(leave.getPlayer().getName())) return;
         this.state.ignore(leave.getPlayer(), true, "idle");
     }
 
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOW) // process before state update to prevent leave notification
+    @EventHandler(ignoreCancelled = true) // process after tracker update to confirm still idle, but before state update to prevent leave notification
     private void onPlayerChangedWorld(final PlayerChangedWorldEvent changed) {
         if (!changed.getPlayer().getWorld().equals(this.state.world)) return;
         if (!this.tracker.getIdle().contains(changed.getPlayer().getName())) return;
         this.state.ignore(changed.getPlayer(), true, "idle");
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    private void onSleepNotify(final SleepNotify notify) {
+        if (notify.getWorld().getTime() != State.SLEEP_FAILED_TICKS && notify.getWorld().getTime() != State.SLEEP_SUCCESS_TICKS) return;
+        notify.setCancelled(true);
     }
 
 }

@@ -153,7 +153,7 @@ public final class Somnologist implements Listener {
         state.enter(event.getPlayer());
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH) // process after modules
     public void onPlayerBedLeave(final PlayerBedLeaveEvent event) {
         // Ignore for untracked world sleep states
         final State state = this.states.get(event.getPlayer().getWorld());
