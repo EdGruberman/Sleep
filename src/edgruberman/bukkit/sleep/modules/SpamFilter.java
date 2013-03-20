@@ -64,4 +64,10 @@ public final class SpamFilter extends Module {
         this.lasts.remove(quit.getPlayer().getUniqueId());
     }
 
+    @Override
+    protected void onUnload() {
+        this.reasons.clear();
+        this.lasts.clear();
+    }
+
 }
