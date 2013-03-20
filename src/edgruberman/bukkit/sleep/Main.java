@@ -11,6 +11,7 @@ import edgruberman.bukkit.sleep.commands.Reload;
 import edgruberman.bukkit.sleep.commands.Status;
 import edgruberman.bukkit.sleep.messaging.ConfigurationCourier;
 import edgruberman.bukkit.sleep.modules.Away;
+import edgruberman.bukkit.sleep.modules.FastForward;
 import edgruberman.bukkit.sleep.modules.Idle;
 import edgruberman.bukkit.sleep.modules.Insomnia;
 import edgruberman.bukkit.sleep.modules.Rewards;
@@ -40,8 +41,8 @@ public final class Main extends CustomPlugin {
 
     @Override
     public void onLoad() {
-        this.putConfigMinimum("7.0.0b3");
-        this.putConfigMinimum(Main.LANGUAGE_FILE, "7.0.0b0");
+        this.putConfigMinimum("7.0.0b21");
+        this.putConfigMinimum(Main.LANGUAGE_FILE, "7.0.0b21");
 
         final PluginDependency dependency = new PluginDependency(this, "PlayerActivity", "edgruberman.bukkit.playeractivity", "4.1.2");
         if (dependency.isValid()) {
@@ -93,6 +94,7 @@ public final class Main extends CustomPlugin {
         this.getModuleManager().register(this, Temporary.class, "temporary");
         this.getModuleManager().register(this, Underground.class, "underground");
         this.getModuleManager().register(this, SpamFilter.class, "spam-filter");
+        this.getModuleManager().register(this, FastForward.class, "fast-forward");
 
         this.somnologist = new Somnologist(this, this.getConfig().getStringList("excluded"));
 

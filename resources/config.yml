@@ -58,4 +58,10 @@ spam-filter:
   enable: true
   cooldown: 5 # seconds
   reasons: [ENTER, LEAVE]
+fast-forward:
+  enable: false
+  min: 30 # percent required to start advancing time
+  max: 70 # percent at which to force sleep
+  scale: true # adjust rate of time advance relative to min/max instead of total players possible
+  speed: 20 # ticks to wait between each time change
 version: @VERSION@
