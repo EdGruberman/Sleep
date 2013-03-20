@@ -30,7 +30,6 @@ public final class State {
     public final ConfigurationSection config;
     public final int forceCount;
     public final int forcePercent;
-    public final boolean insomnia;
 
     // need to track players manually as processing will sometimes occur mid-event before player is adjusted
     public final List<UUID> sleeping = new ArrayList<UUID>();
@@ -43,7 +42,6 @@ public final class State {
         this.world = world;
         this.courier = ConfigurationCourier.Factory.create(plugin).setBase(language).setFormatCode("format-code").build();
         this.config = config;
-        this.insomnia = config.getBoolean("insomnia.enabled");
 
         this.forceCount = ( config.getBoolean("force.enabled") ? config.getInt("force.count") : -1 );
         this.forcePercent = ( config.getBoolean("force.enabled") ? config.getInt("force.percent") : -1 );
@@ -79,7 +77,7 @@ public final class State {
             return;
         }
 
-        if (!enterer.isSleepingIgnored() && !this.insomnia) this.notify(Reason.ENTER, enterer, this.needed());
+        if (!enterer.isSleepingIgnored()) this.notify(Reason.ENTER, enterer, this.needed());
     }
 
     /** player left bed */
@@ -91,7 +89,7 @@ public final class State {
         if (!this.players.contains(leaver)) return;
 
         // notify for manual bed leave
-        if (!leaver.isSleepingIgnored() && !this.insomnia && this.world.getTime() != State.SLEEP_SUCCESS_TICKS && this.world.getTime() != State.SLEEP_FAILED_TICKS)
+        if (!leaver.isSleepingIgnored() && this.world.getTime() != State.SLEEP_SUCCESS_TICKS && this.world.getTime() != State.SLEEP_FAILED_TICKS)
             this.notify(Reason.LEAVE, leaver, this.needed());
 
         // reset forced sleep after last player leaves bed

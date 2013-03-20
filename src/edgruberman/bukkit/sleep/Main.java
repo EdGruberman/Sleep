@@ -13,8 +13,8 @@ import edgruberman.bukkit.sleep.messaging.ConfigurationCourier;
 import edgruberman.bukkit.sleep.modules.Away;
 import edgruberman.bukkit.sleep.modules.Idle;
 import edgruberman.bukkit.sleep.modules.Insomnia;
-import edgruberman.bukkit.sleep.modules.SpamFilter;
 import edgruberman.bukkit.sleep.modules.Rewards;
+import edgruberman.bukkit.sleep.modules.SpamFilter;
 import edgruberman.bukkit.sleep.modules.Temporary;
 import edgruberman.bukkit.sleep.modules.Underground;
 import edgruberman.bukkit.sleep.modules.rewards.ConsoleCommand;
@@ -40,7 +40,7 @@ public final class Main extends CustomPlugin {
 
     @Override
     public void onLoad() {
-        this.putConfigMinimum("7.0.0b0");
+        this.putConfigMinimum("7.0.0b3");
         this.putConfigMinimum(Main.LANGUAGE_FILE, "7.0.0b0");
 
         final PluginDependency dependency = new PluginDependency(this, "PlayerActivity", "edgruberman.bukkit.playeractivity", "4.1.2");
