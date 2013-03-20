@@ -54,5 +54,8 @@ underground:
   enable: false
   depth: 50 # y-axis value ignored when below
   delay: 5 # seconds to wait before ignored
-message-limit: 5 # seconds (enter and leave only)
+spam-filter:
+  enable: true
+  cooldown: 5 # seconds
+  reasons: [ENTER, LEAVE]
 version: @VERSION@

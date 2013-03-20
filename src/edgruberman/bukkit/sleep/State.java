@@ -1,10 +1,8 @@
 package edgruberman.bukkit.sleep;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
 
@@ -32,7 +30,6 @@ public final class State {
     public final ConfigurationSection config;
     public final int forceCount;
     public final int forcePercent;
-    public final int messageLimit;
     public final boolean insomnia;
 
     // need to track players manually as processing will sometimes occur mid-event before player is adjusted
@@ -40,15 +37,12 @@ public final class State {
     public final List<Player> players = new ArrayList<Player>();
 
     private boolean forcing = false;
-    private final Map<UUID, Long> lastBedEnterMessage = new HashMap<UUID, Long>();
-    private final Map<UUID, Long> lastBedLeaveMessage = new HashMap<UUID, Long>();
 
     State(final Plugin plugin, final World world, final ConfigurationSection config, final ConfigurationSection language) {
         this.plugin = plugin;
         this.world = world;
         this.courier = ConfigurationCourier.Factory.create(plugin).setBase(language).setFormatCode("format-code").build();
         this.config = config;
-        this.messageLimit = config.getInt("message-limit");
         this.insomnia = config.getBoolean("insomnia.enabled");
 
         this.forceCount = ( config.getBoolean("force.enabled") ? config.getInt("force.count") : -1 );
@@ -61,8 +55,6 @@ public final class State {
 
     void unload() {
         for (final Player player : this.world.getPlayers()) this.remove(player); this.players.clear();
-        this.lastBedEnterMessage.clear();
-        this.lastBedLeaveMessage.clear();
         this.sleeping.clear();
     }
 
@@ -70,9 +62,6 @@ public final class State {
     void add(final Player joiner) {
         this.plugin.getLogger().log(Level.FINEST, "[{0}] add: {1} (Ignored: {2})", new Object[] { this.world.getName(), joiner.getName(), joiner.isSleepingIgnored() });
         this.players.add(joiner);
-
-        this.lastBedEnterMessage.put(joiner.getUniqueId(), 0L);
-        this.lastBedLeaveMessage.put(joiner.getUniqueId(), 0L);
 
         if (joiner.hasPermission("sleep.ignore")) this.ignore(joiner, true, Reason.PERMISSION);
         if (this.forcing) this.ignore(joiner, true, Reason.FORCE);
@@ -118,9 +107,6 @@ public final class State {
         this.plugin.getLogger().log(Level.FINEST, "[{0}] remove: {1} (Current: [{3}]; Ignored: {2})", new Object[] { this.world.getName(), remover.getName(), remover.isSleepingIgnored(), remover.getWorld().getName() });
         this.players.remove(remover);
         final boolean wasAsleep = this.sleeping.remove(remover.getUniqueId());
-
-        this.lastBedEnterMessage.remove(remover.getUniqueId());
-        this.lastBedLeaveMessage.remove(remover.getUniqueId());
 
         // TODO why not use .ignore(false)?
         if (!remover.isSleepingIgnored() && (wasAsleep || this.sleeping.size() >= 1)) this.notify(Reason.REMOVE, remover, this.needed());
@@ -184,33 +170,12 @@ public final class State {
     void notify(final Reason reason, final Player player, final int needed) {
         if (this.forcing) return;
 
-        boolean send = true;
-
-        if (reason == Reason.ENTER) {
-            if (System.currentTimeMillis() <= (this.lastBedEnterMessage.get(player.getUniqueId()) + (this.messageLimit * 1000))) {
-                send = false;
-                this.plugin.getLogger().log(Level.FINEST, "enter message limit of {0} seconds exceeded by {1}", new Object[] { this.messageLimit, player.getName() });
-            } else {
-                this.lastBedEnterMessage.put(player.getUniqueId(), System.currentTimeMillis());
-            }
-
-        } else if (reason == Reason.LEAVE) {
-            if (System.currentTimeMillis() <= (this.lastBedLeaveMessage.get(player.getUniqueId()) + (this.messageLimit * 1000))) {
-                send = false;
-                this.plugin.getLogger().log(Level.FINEST, "leave message limit of {0} seconds exceeded by {1}", new Object[] { this.messageLimit, player.getName() });
-            } else {
-                this.lastBedLeaveMessage.put(player.getUniqueId(), System.currentTimeMillis());
-            }
-        }
-
-        if (send) {
-            final List<Player> possible = this.possible();
-            final SleepNotify event = new SleepNotify(this.world, reason, player, needed, this.sleeping.size(), possible.size());
-            Bukkit.getPluginManager().callEvent(event);
-            if (!event.isCancelled()) {
-                final String name = this.courier.format("+player", player.getName(), player.getDisplayName());
-                this.courier.world(this.world, reason.getKey(), name, needed, this.sleeping.size(), possible.size());
-            }
+        final List<Player> possible = this.possible();
+        final SleepNotify event = new SleepNotify(this.world, reason, player, needed, this.sleeping.size(), possible.size());
+        Bukkit.getPluginManager().callEvent(event);
+        if (!event.isCancelled()) {
+            final String name = this.courier.format("+player", player.getName(), player.getDisplayName());
+            this.courier.world(this.world, reason.getKey(), name, needed, this.sleeping.size(), possible.size());
         }
 
         if (needed == 0 && (this.forceCount != -1 || this.forcePercent != -1) && this.preventing().size() >= 1 )

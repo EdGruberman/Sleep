@@ -13,6 +13,7 @@ import edgruberman.bukkit.sleep.messaging.ConfigurationCourier;
 import edgruberman.bukkit.sleep.modules.Away;
 import edgruberman.bukkit.sleep.modules.Idle;
 import edgruberman.bukkit.sleep.modules.Insomnia;
+import edgruberman.bukkit.sleep.modules.SpamFilter;
 import edgruberman.bukkit.sleep.modules.Rewards;
 import edgruberman.bukkit.sleep.modules.Temporary;
 import edgruberman.bukkit.sleep.modules.Underground;
@@ -91,6 +92,7 @@ public final class Main extends CustomPlugin {
         this.getModuleManager().register(this, Insomnia.class, "insomnia");
         this.getModuleManager().register(this, Temporary.class, "temporary");
         this.getModuleManager().register(this, Underground.class, "underground");
+        this.getModuleManager().register(this, SpamFilter.class, "spam-filter");
 
         this.somnologist = new Somnologist(this, this.getConfig().getStringList("excluded"));
 
