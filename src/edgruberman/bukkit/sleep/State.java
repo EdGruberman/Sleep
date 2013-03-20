@@ -16,6 +16,13 @@ import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.plugin.Plugin;
 
+import edgruberman.bukkit.sleep.events.SleepAdd;
+import edgruberman.bukkit.sleep.events.SleepComply;
+import edgruberman.bukkit.sleep.events.SleepEnter;
+import edgruberman.bukkit.sleep.events.SleepIgnore;
+import edgruberman.bukkit.sleep.events.SleepLeave;
+import edgruberman.bukkit.sleep.events.SleepNotify;
+import edgruberman.bukkit.sleep.events.SleepRemove;
 import edgruberman.bukkit.sleep.messaging.ConfigurationCourier;
 
 /** sleep state for a specific world */
@@ -64,6 +71,9 @@ public final class State {
         if (joiner.hasPermission("sleep.ignore")) this.ignore(joiner, true, Reason.PERMISSION);
         if (this.forcing) this.ignore(joiner, true, Reason.FORCE);
 
+        final SleepAdd event = new SleepAdd(joiner, this);
+        Bukkit.getPluginManager().callEvent(event);
+
         if (!joiner.isSleepingIgnored() && this.sleeping.size() >= 1) this.notify(Reason.ADD, joiner, this.needed());
     }
 
@@ -71,6 +81,9 @@ public final class State {
     void enter(final Player enterer) {
         this.plugin.getLogger().log(Level.FINEST, "[{0}] enter: {1} (Ignored: {2})", new Object[] { this.world.getName(), enterer.getName(), enterer.isSleepingIgnored() });
         this.sleeping.add(enterer.getUniqueId());
+
+        final SleepEnter event = new SleepEnter(enterer, this);
+        Bukkit.getPluginManager().callEvent(event);
 
         if (enterer.hasPermission("sleep.enter.force")) {
             this.force(enterer);
@@ -87,6 +100,9 @@ public final class State {
 
         // player could leave bed after disconnect while in bed and reconnect in day time TODO really?
         if (!this.players.contains(leaver)) return;
+
+        final SleepLeave event = new SleepLeave(leaver, this);
+        Bukkit.getPluginManager().callEvent(event);
 
         // notify for manual bed leave
         if (!leaver.isSleepingIgnored() && this.world.getTime() != State.SLEEP_SUCCESS_TICKS && this.world.getTime() != State.SLEEP_FAILED_TICKS)
@@ -105,6 +121,9 @@ public final class State {
         this.plugin.getLogger().log(Level.FINEST, "[{0}] remove: {1} (Current: [{3}]; Ignored: {2})", new Object[] { this.world.getName(), remover.getName(), remover.isSleepingIgnored(), remover.getWorld().getName() });
         this.players.remove(remover);
         final boolean wasAsleep = this.sleeping.remove(remover.getUniqueId());
+
+        final SleepRemove event = new SleepRemove(remover, this);
+        Bukkit.getPluginManager().callEvent(event);
 
         // TODO why not use .ignore(false)?
         if (!remover.isSleepingIgnored() && (wasAsleep || this.sleeping.size() >= 1)) this.notify(Reason.REMOVE, remover, this.needed());
@@ -152,7 +171,7 @@ public final class State {
         }
 
         // allow overrides to cancel change
-        final Event event = ( ignore ? new SleepIgnore(player) : new SleepComply(player) );
+        final Event event = ( ignore ? new SleepIgnore(player, reason) : new SleepComply(player, reason) );
         Bukkit.getPluginManager().callEvent(event);
         if (((Cancellable) event).isCancelled()) return;
 
@@ -168,15 +187,14 @@ public final class State {
     void notify(final Reason reason, final Player player, final int needed) {
         if (this.forcing) return;
 
-        final List<Player> possible = this.possible();
-        final SleepNotify event = new SleepNotify(this.world, reason, player, needed, this.sleeping.size(), possible.size());
+        final SleepNotify event = new SleepNotify(this.world, reason, player, this.sleeping.size(), this.possible().size(), needed);
         Bukkit.getPluginManager().callEvent(event);
         if (!event.isCancelled()) {
             final String name = this.courier.format("+player", player.getName(), player.getDisplayName());
-            this.courier.world(this.world, reason.getKey(), name, needed, this.sleeping.size(), possible.size());
+            this.courier.world(this.world, reason.getKey(), name, event.getNeeded(), event.getSleeping(), event.getPossible());
         }
 
-        if (needed == 0 && (this.forceCount != -1 || this.forcePercent != -1) && this.preventing().size() >= 1 )
+        if (event.getNeeded() == 0 && (this.forceCount != -1 || this.forcePercent != -1) && this.preventing().size() >= 1 )
             this.force(null);
     }
 

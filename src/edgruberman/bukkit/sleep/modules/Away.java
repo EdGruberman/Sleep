@@ -15,8 +15,8 @@ import edgruberman.bukkit.playeractivity.consumers.away.PlayerAway;
 import edgruberman.bukkit.playeractivity.consumers.away.PlayerBack;
 import edgruberman.bukkit.sleep.Module;
 import edgruberman.bukkit.sleep.Reason;
-import edgruberman.bukkit.sleep.SleepComply;
 import edgruberman.bukkit.sleep.State;
+import edgruberman.bukkit.sleep.events.SleepComply;
 
 public final class Away extends Module {
 

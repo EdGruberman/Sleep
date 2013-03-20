@@ -15,9 +15,9 @@ import edgruberman.bukkit.playeractivity.PlayerIdle;
 import edgruberman.bukkit.playeractivity.StatusTracker;
 import edgruberman.bukkit.sleep.Module;
 import edgruberman.bukkit.sleep.Reason;
-import edgruberman.bukkit.sleep.SleepComply;
-import edgruberman.bukkit.sleep.SleepNotify;
 import edgruberman.bukkit.sleep.State;
+import edgruberman.bukkit.sleep.events.SleepComply;
+import edgruberman.bukkit.sleep.events.SleepNotify;
 
 public final class Idle extends Module implements Observer {
 

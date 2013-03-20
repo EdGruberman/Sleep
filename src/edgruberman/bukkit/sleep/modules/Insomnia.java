@@ -13,10 +13,10 @@ import org.bukkit.plugin.Plugin;
 
 import edgruberman.bukkit.sleep.Module;
 import edgruberman.bukkit.sleep.Reason;
-import edgruberman.bukkit.sleep.SleepNotify;
 import edgruberman.bukkit.sleep.State;
-import edgruberman.bukkit.sleep.commands.Status.SleepStatusRequested;
 import edgruberman.bukkit.sleep.craftbukkit.CraftBukkit;
+import edgruberman.bukkit.sleep.events.SleepNotify;
+import edgruberman.bukkit.sleep.events.SleepStatus;
 
 /** prevents deep sleep from occurring which would cause Minecraft to change the time to morning */
 public final class Insomnia extends Module {
@@ -51,7 +51,7 @@ public final class Insomnia extends Module {
     }
 
     @EventHandler(ignoreCancelled = true)
-    private void onSleepStatus(final SleepStatusRequested request) {
+    private void onSleepStatus(final SleepStatus request) {
         if (!request.getWorld().equals(this.state.world)) return;
         request.setCancelled(true);
         this.state.courier.send(request.getRequestor(), "status-insomnia", this.state.world.getName());

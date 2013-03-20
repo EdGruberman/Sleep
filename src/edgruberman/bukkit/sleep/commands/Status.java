@@ -14,12 +14,11 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
-import org.bukkit.event.HandlerList;
-import org.bukkit.event.world.WorldEvent;
 
 import edgruberman.bukkit.sleep.Main;
 import edgruberman.bukkit.sleep.Somnologist;
 import edgruberman.bukkit.sleep.State;
+import edgruberman.bukkit.sleep.events.SleepStatus;
 
 public final class Status implements CommandExecutor {
 
@@ -49,7 +48,7 @@ public final class Status implements CommandExecutor {
             return true;
         }
 
-        final Cancellable event = new SleepStatusRequested(world, sender);
+        final Cancellable event = new SleepStatus(world, sender);
         Bukkit.getPluginManager().callEvent((Event) event);
         if (event.isCancelled()) return true;
 
@@ -117,50 +116,6 @@ public final class Status implements CommandExecutor {
         sb.delete(sb.length() - delim.length(), sb.length());
 
         return sb.toString();
-    }
-
-
-
-    public static class SleepStatusRequested extends WorldEvent implements Cancellable {
-
-        private final CommandSender requestor;
-
-        public SleepStatusRequested(final World world, final CommandSender requestor) {
-            super(world);
-            this.requestor = requestor;
-        }
-
-        public CommandSender getRequestor() {
-            return this.requestor;
-        }
-
-        // --- cancellable event ----
-
-        private boolean cancelled = false;
-
-        @Override
-        public boolean isCancelled() {
-            return this.cancelled;
-        }
-
-        @Override
-        public void setCancelled(final boolean cancel) {
-            this.cancelled = cancel;
-        }
-
-        // ---- event handlers ----
-
-        private static final HandlerList handlers = new HandlerList();
-
-        public static HandlerList getHandlerList() {
-            return SleepStatusRequested.handlers;
-        }
-
-        @Override
-        public HandlerList getHandlers() {
-            return SleepStatusRequested.handlers;
-        }
-
     }
 
 }

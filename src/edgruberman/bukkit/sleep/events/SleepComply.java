@@ -1,15 +1,24 @@
-package edgruberman.bukkit.sleep;
+package edgruberman.bukkit.sleep.events;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.player.PlayerEvent;
 
-/** raised when a player will start ignoring sleep */
-public class SleepIgnore extends PlayerEvent implements Cancellable {
+import edgruberman.bukkit.sleep.Reason;
 
-    public SleepIgnore(final Player who) {
+/** raised when a player will stop ignoring sleep */
+public class SleepComply extends PlayerEvent implements Cancellable {
+
+    private final Reason reason;
+
+    public SleepComply(final Player who, final Reason reason) {
         super(who);
+        this.reason = reason;
+    }
+
+    public Reason getReason() {
+        return this.reason;
     }
 
     // --- cancellable event ----
@@ -31,12 +40,12 @@ public class SleepIgnore extends PlayerEvent implements Cancellable {
     private static final HandlerList handlers = new HandlerList();
 
     public static HandlerList getHandlerList() {
-        return SleepIgnore.handlers;
+        return SleepComply.handlers;
     }
 
     @Override
     public HandlerList getHandlers() {
-        return SleepIgnore.handlers;
+        return SleepComply.handlers;
     }
 
 }
