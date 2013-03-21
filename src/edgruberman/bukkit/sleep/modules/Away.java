@@ -20,8 +20,8 @@ import edgruberman.bukkit.sleep.events.SleepComply;
 
 public final class Away extends Module {
 
-    public static final Reason AWAY = new Reason("AWAY", "away");
-    public static final Reason BACK = new Reason("BACK", "back");
+    public static final Reason AWAY = new Reason("AWAY", "away.away");
+    public static final Reason BACK = new Reason("BACK", "away.back");
 
     private boolean allowComply = false;
 

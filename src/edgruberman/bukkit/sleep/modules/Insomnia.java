@@ -54,7 +54,7 @@ public final class Insomnia extends Module {
     private void onSleepStatus(final SleepStatus request) {
         if (!request.getWorld().equals(this.state.world)) return;
         request.setCancelled(true);
-        this.state.courier.send(request.getRequestor(), "status-insomnia", this.state.world.getName());
+        this.state.courier.send(request.getRequestor(), "insomnia.status", this.state.world.getName());
     }
 
 
@@ -87,7 +87,7 @@ public final class Insomnia extends Module {
 
             // eject player from bed before sleep can complete, but set player's spawn point
             Insomnia.this.cb.bedEject(this.player);
-            Insomnia.this.state.courier.send(this.player, "insomnia-eject");
+            Insomnia.this.state.courier.send(this.player, "insomnia.eject");
         }
 
         @EventHandler

@@ -146,7 +146,7 @@ public final class State {
         if (forcer != null) {
             if (forcer instanceof Player) {
                 final Player player = (Player) forcer;
-                this.courier.format("+player", player.getName(), player.getDisplayName());
+                this.courier.format("player", player.getName(), player.getDisplayName());
             } else {
                 name = forcer.getName();
             }
@@ -190,7 +190,7 @@ public final class State {
         final SleepNotify event = new SleepNotify(this.world, reason, player, this.sleeping.size(), this.possible().size(), needed);
         Bukkit.getPluginManager().callEvent(event);
         if (!event.isCancelled()) {
-            final String name = this.courier.format("+player", player.getName(), player.getDisplayName());
+            final String name = this.courier.format("player", player.getName(), player.getDisplayName());
             this.courier.world(this.world, reason.getKey(), name, event.getNeeded(), event.getSleeping(), event.getPossible());
         }
 

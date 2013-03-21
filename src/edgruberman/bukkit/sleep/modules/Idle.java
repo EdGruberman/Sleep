@@ -21,8 +21,8 @@ import edgruberman.bukkit.sleep.events.SleepNotify;
 
 public final class Idle extends Module implements Observer {
 
-    public static final Reason IDLE = new Reason("IDLE", "idle");
-    public static final Reason ACTIVE = new Reason("ACTIVE", "active");
+    public static final Reason IDLE = new Reason("IDLE", "idle.idle");
+    public static final Reason ACTIVE = new Reason("ACTIVE", "idle.active");
 
     private final StatusTracker tracker;
 

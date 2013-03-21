@@ -1,7 +1,5 @@
 package edgruberman.bukkit.sleep.commands;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -19,6 +17,7 @@ import edgruberman.bukkit.sleep.Main;
 import edgruberman.bukkit.sleep.Somnologist;
 import edgruberman.bukkit.sleep.State;
 import edgruberman.bukkit.sleep.events.SleepStatus;
+import edgruberman.bukkit.sleep.util.JoinList;
 
 public final class Status implements CommandExecutor {
 
@@ -53,23 +52,21 @@ public final class Status implements CommandExecutor {
         if (event.isCancelled()) return true;
 
         if (state.sleeping.size() == 0) {
-            state.courier.send(sender, "status-none");
+            state.courier.send(sender, "command-status.none");
 
         } else {
             final List<Player> preventing = state.preventing();
             Collections.sort(preventing, new DisplayNameComparator());
 
-            final List<String> names = new ArrayList<String>();
-            for (final Player player : preventing)
-                names.add(state.courier.format("+player", player.getName(), player.getDisplayName()));
-
-            state.courier.send(sender, "status-need.format", names.size(), Status.join(names, state.courier.format("status-need.+delimiter")));
+            final List<String> names = new JoinList<String>(state.courier.getBase().getConfigurationSection("command-status.need-players"));
+            for (final Player player : preventing) names.add(state.courier.format("player", player.getName(), player.getDisplayName()));
+            state.courier.send(sender, "command-status.need", names.size(), names);
         }
 
         final int sleeping = state.sleeping.size();
         final int possible = state.possible().size();
         final int percent = (int) Math.floor((double) sleeping / (possible > 0 ? possible : 1) * 100);
-        state.courier.send(sender, "status-summary", percent, state.needed(), sleeping, possible);
+        state.courier.send(sender, "command-status.summary", percent, state.needed(), sleeping, possible);
         return true;
     }
 
@@ -99,23 +96,6 @@ public final class Status implements CommandExecutor {
             return o1.getDisplayName().compareTo(o2.getDisplayName());
         }
 
-    }
-
-    /**
-     * Concatenate a collection with a delimiter
-     *
-     * @param col entries to concatenate
-     * @param delim placed between each entry
-     * @return entries concatenated; empty string if no entries
-     */
-    private static String join(final Collection<? extends String> col, final String delim) {
-        if (col == null || col.isEmpty()) return "";
-
-        final StringBuilder sb = new StringBuilder();
-        for (final String s : col) sb.append(s + delim);
-        sb.delete(sb.length() - delim.length(), sb.length());
-
-        return sb.toString();
     }
 
 }
