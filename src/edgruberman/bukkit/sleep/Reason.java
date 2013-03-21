@@ -12,7 +12,7 @@ public class Reason {
     public static final Reason LEAVE = new Reason("LEAVE", "leave");
     public static final Reason ADD = new Reason("ADD", "add");
     public static final Reason REMOVE = new Reason("REMOVE", "remove");
-    public static final Reason FORCE = new Reason("FORCE", "force");
+    public static final Reason FORCE = new Reason("FORCE", "force.notify");
     public static final Reason RESET = new Reason("RESET", "reset");
     public static final Reason PERMISSION = new Reason("PERMISSION", "permission");
 

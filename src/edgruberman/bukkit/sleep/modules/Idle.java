@@ -58,7 +58,8 @@ public final class Idle extends Module implements Observer {
             final PlayerIdle idle = (PlayerIdle) arg;
             if (!idle.player.getWorld().equals(this.state.world)) return;
 
-            this.implementor.getLogger().log(Level.FINEST, "[{0}] idle: {1} (Ignored: {2}); {3}ms", new Object[] { this.state.world.getName(), idle.player.getName(), idle.player.isSleepingIgnored(), idle.duration });
+            this.implementor.getLogger().log(Level.FINEST, "[{0}] idle: {1} (Ignored: {2}); {3}ms"
+                    , new Object[] { this.state.world.getName(), idle.player.getName(), idle.player.isSleepingIgnored(), idle.duration });
             if (idle.player.isSleeping()) return; // do not ignore sleep if already in bed
             this.state.ignore(idle.player, true, Idle.IDLE);
             return;
@@ -69,7 +70,8 @@ public final class Idle extends Module implements Observer {
 
         if (!this.tracker.getIdle().contains(active.player.getName())) return;
 
-        this.implementor.getLogger().log(Level.FINEST, "[{0}] active: {1} (Ignored: {2}); {3}", new Object[] { this.state.world.getName(), active.player.getName(), active.player.isSleepingIgnored(), active.event.getSimpleName() });
+        this.implementor.getLogger().log(Level.FINEST, "[{0}] active: {1} (Ignored: {2}); {3}"
+                , new Object[] { this.state.world.getName(), active.player.getName(), active.player.isSleepingIgnored(), active.event.getSimpleName() });
         this.allowComply = true;
         this.state.ignore(active.player, false, Idle.ACTIVE);
         this.allowComply = false;
@@ -80,7 +82,8 @@ public final class Idle extends Module implements Observer {
         if (this.allowComply) return;
         if (!comply.getPlayer().getWorld().equals(this.state.world)) return;
         if (!this.tracker.getIdle().contains(comply.getPlayer().getName())) return;
-        this.implementor.getLogger().log(Level.FINEST, "[{0}] Cancelling {1} changing to not ignore sleep (idle)", new Object[] { this.state.world.getName(), comply.getPlayer().getName()});
+        this.implementor.getLogger().log(Level.FINEST, "[{0}] Cancelling {1} changing to not ignore sleep (idle)"
+                , new Object[] { this.state.world.getName(), comply.getPlayer().getName()});
         comply.setCancelled(true);
     }
 

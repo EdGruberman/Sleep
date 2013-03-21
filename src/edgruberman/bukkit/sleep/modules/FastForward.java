@@ -71,7 +71,8 @@ public final class FastForward extends Module implements Runnable {
     private void update() {
         this.percent = (double) this.state.sleeping.size() / (double) this.state.possible().size();
         if (Double.isNaN(this.percent)) this.percent = 0D;
-        this.implementor.getLogger().log(CustomLevel.DEBUG, "[{0}] Fast-Forward percent: {1,number,#.##%}", new Object[] { this.state.world.getName(), this.percent });
+        this.implementor.getLogger().log(CustomLevel.DEBUG, "[{0}] Fast-Forward percent: {1,number,#.##%}"
+                , new Object[] { this.state.world.getName(), this.percent });
 
         if (this.percent < this.min) {
             this.stop();
@@ -89,7 +90,8 @@ public final class FastForward extends Module implements Runnable {
         if (ticksNow == this.ticks) return;
 
         this.notify = true;
-        this.implementor.getLogger().log(CustomLevel.DEBUG, "[{0}] Fast-Forward scaled: {1,number,#.##%}; ticks: {2,number,#.##} (Previously: {3,number,#.##})", new Object[] { this.state.world.getName(), this.percent, ticksNow, this.ticks });
+        this.implementor.getLogger().log(CustomLevel.DEBUG, "[{0}] Fast-Forward scaled: {1,number,#.##%}; ticks: {2,number,#.##} (Previously: {3,number,#.##})"
+                , new Object[] { this.state.world.getName(), this.percent, ticksNow, this.ticks });
 
         if (ticksNow == 0) {
             this.stop();
@@ -114,7 +116,8 @@ public final class FastForward extends Module implements Runnable {
         final long to = from + (long) this.ticks + (long) this.carry;
         this.state.world.setTime(to);
         this.carry = this.carry % 1;
-        this.implementor.getLogger().log(CustomLevel.TRACE, "[{0}] Fast-Forward from: {1} to: {2} (carry: {3,number,#.##})", new Object[] { this.state.world.getName(), from, to, this.carry });
+        this.implementor.getLogger().log(CustomLevel.TRACE, "[{0}] Fast-Forward from: {1} to: {2} (carry: {3,number,#.##})"
+                , new Object[] { this.state.world.getName(), from, to, this.carry });
     }
 
     @EventHandler(ignoreCancelled = true)

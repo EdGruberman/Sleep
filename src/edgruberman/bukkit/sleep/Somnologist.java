@@ -65,7 +65,8 @@ public final class Somnologist implements Listener {
     /** create state based on configuration */
     State loadState(final World world) {
         if (world.getEnvironment() != Environment.NORMAL) {
-            this.plugin.getLogger().log(Level.CONFIG, "[{0}] World sleep state tracking excluded because environment is {1}", new Object[] { world.getName(), world.getEnvironment() });
+            this.plugin.getLogger().log(Level.CONFIG, "[{0}] World sleep state tracking excluded because environment is {1}"
+                    , new Object[] { world.getName(), world.getEnvironment() });
             return null;
         }
 

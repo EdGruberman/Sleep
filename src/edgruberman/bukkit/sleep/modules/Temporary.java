@@ -42,7 +42,8 @@ public final class Temporary extends Module {
             throw new IllegalStateException("Unsupported CraftBukkit version " + Bukkit.getVersion() + "; Check for updates at " + this.implementor.getDescription().getWebsite(), e);
         }
 
-        this.implementor.getLogger().log(Level.CONFIG, "[{0}] Temporary bed duration: {1} seconds", new Object[] { this.state.world.getName(), this.duration / Main.TICKS_PER_SECOND });
+        this.implementor.getLogger().log(Level.CONFIG, "[{0}] Temporary bed duration: {1} seconds"
+                , new Object[] { this.state.world.getName(), this.duration / Main.TICKS_PER_SECOND });
     }
 
     @Override
@@ -78,7 +79,8 @@ public final class Temporary extends Module {
             return;
         }
 
-        this.implementor.getLogger().log(CustomLevel.TRACE, "Temporary bed used by {0} at {2}; Previous: {1}", new Object[]{event.getPlayer().getName(), previous, event.getBed()});
+        this.implementor.getLogger().log(CustomLevel.TRACE, "Temporary bed used by {0} at {2}; Previous: {1}"
+                , new Object[]{event.getPlayer().getName(), previous, event.getBed()});
         this.state.courier.send(event.getPlayer(), "temporary.instruction", Temporary.readableDuration(this.duration / 20 * 1000)
                 , previous.getWorld().getName(), previous.getBlockX(), previous.getBlockY(), previous.getBlockZ()
                 , event.getBed().getWorld().getName(), event.getBed().getX(), event.getBed().getY(), event.getBed().getZ());
@@ -108,7 +110,8 @@ public final class Temporary extends Module {
         broken.getPlayer().setBedSpawnLocation(previous);
         this.previous.remove(broken.getPlayer().getName());
 
-        this.implementor.getLogger().log(CustomLevel.TRACE, "Temporary bed reverted by {0} to {1}; Temporary: {2}", new Object[]{broken.getPlayer().getName(), previous, head});
+        this.implementor.getLogger().log(CustomLevel.TRACE, "Temporary bed reverted by {0} to {1}; Temporary: {2}"
+                , new Object[]{broken.getPlayer().getName(), previous, head});
         this.state.courier.send(broken.getPlayer(), "temporary.reverted"
                 , previous.getWorld().getName(), previous.getBlockX(), previous.getBlockY(), previous.getBlockZ()
                 , head.getWorld().getName(), head.getX(), head.getY(), head.getZ());

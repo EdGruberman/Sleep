@@ -39,16 +39,16 @@ public final class Away extends Module {
     }
 
     @EventHandler
-    private void onPlayerAway(final PlayerAway event) {
-        if (!event.getPlayer().getWorld().equals(this.state.world)) return;
-        this.state.ignore(event.getPlayer(), true, Away.AWAY);
+    private void onPlayerAway(final PlayerAway away) {
+        if (!away.getPlayer().getWorld().equals(this.state.world)) return;
+        this.state.ignore(away.getPlayer(), true, Away.AWAY);
     }
 
     @EventHandler
-    private void onPlayerBack(final PlayerBack event) {
-        if (!event.getPlayer().getWorld().equals(this.state.world)) return;
+    private void onPlayerBack(final PlayerBack back) {
+        if (!back.getPlayer().getWorld().equals(this.state.world)) return;
         this.allowComply = true;
-        this.state.ignore(event.getPlayer(), false, Away.BACK);
+        this.state.ignore(back.getPlayer(), false, Away.BACK);
         this.allowComply = false;
     }
 

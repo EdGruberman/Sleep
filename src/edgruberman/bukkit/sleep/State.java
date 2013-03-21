@@ -52,8 +52,8 @@ public final class State {
 
         this.forceCount = ( config.getBoolean("force.enabled") ? config.getInt("force.count") : -1 );
         this.forcePercent = ( config.getBoolean("force.enabled") ? config.getInt("force.percent") : -1 );
-        if (this.forceCount > 0) this.plugin.getLogger().log(Level.CONFIG, "[{0}] Force sleep minimum count: {1}", new Object[] { world.getName(),  this.forceCount });
-        if (this.forcePercent > 0 ) this.plugin.getLogger().log(Level.CONFIG, "[{0}] Force sleep minimum percent: {1}", new Object[] { world.getName(), this.forcePercent });
+        if (this.forceCount > 0 || this.forcePercent > 0) this.plugin.getLogger().log(Level.CONFIG, "[{0}] Force sleep minimum count: {1}; minimum percent: {2}"
+                , new Object[] { world.getName(),  this.forceCount, this.forcePercent });
 
         for (final Player existing : world.getPlayers()) this.add(existing);
     }
@@ -65,7 +65,8 @@ public final class State {
 
     /** player joined world */
     void add(final Player joiner) {
-        this.plugin.getLogger().log(Level.FINEST, "[{0}] add: {1} (Ignored: {2})", new Object[] { this.world.getName(), joiner.getName(), joiner.isSleepingIgnored() });
+        this.plugin.getLogger().log(Level.FINEST, "[{0}] add: {1} (Ignored: {2})"
+                , new Object[] { this.world.getName(), joiner.getName(), joiner.isSleepingIgnored() });
         this.players.add(joiner);
 
         if (joiner.hasPermission("sleep.ignore")) this.ignore(joiner, true, Reason.PERMISSION);
@@ -79,7 +80,8 @@ public final class State {
 
     /** player entered bed */
     void enter(final Player enterer) {
-        this.plugin.getLogger().log(Level.FINEST, "[{0}] enter: {1} (Ignored: {2})", new Object[] { this.world.getName(), enterer.getName(), enterer.isSleepingIgnored() });
+        this.plugin.getLogger().log(Level.FINEST, "[{0}] enter: {1} (Ignored: {2})"
+                , new Object[] { this.world.getName(), enterer.getName(), enterer.isSleepingIgnored() });
         this.sleeping.add(enterer.getUniqueId());
 
         final SleepEnter event = new SleepEnter(enterer, this);
@@ -95,7 +97,8 @@ public final class State {
 
     /** player left bed */
     void leave(final Player leaver, final Block bed) {
-        this.plugin.getLogger().log(Level.FINEST, "[{0}] leave: {1} (Ignored: {2})", new Object[] { this.world.getName(), leaver.getName(), leaver.isSleepingIgnored() });
+        this.plugin.getLogger().log(Level.FINEST, "[{0}] leave: {1} (Ignored: {2})"
+                , new Object[] { this.world.getName(), leaver.getName(), leaver.isSleepingIgnored() });
         this.sleeping.remove(leaver.getUniqueId());
 
         // player could leave bed after disconnect while in bed and reconnect in day time TODO really?
@@ -118,7 +121,8 @@ public final class State {
 
     /** player left world */
     void remove(final Player remover) {
-        this.plugin.getLogger().log(Level.FINEST, "[{0}] remove: {1} (Current: [{3}]; Ignored: {2})", new Object[] { this.world.getName(), remover.getName(), remover.isSleepingIgnored(), remover.getWorld().getName() });
+        this.plugin.getLogger().log(Level.FINEST, "[{0}] remove: {1} (Current: [{3}]; Ignored: {2})"
+                , new Object[] { this.world.getName(), remover.getName(), remover.isSleepingIgnored(), remover.getWorld().getName() });
         this.players.remove(remover);
         final boolean wasAsleep = this.sleeping.remove(remover.getUniqueId());
 
@@ -158,15 +162,18 @@ public final class State {
     public void ignore(final Player player, final boolean ignore, final Reason reason) {
         if (player.isSleepingIgnored() == ignore) return; // don't modify if already set as expected
 
-        this.plugin.getLogger().log(Level.FINEST, "[{0}] Setting {1} (Ignored: {2}) to {3,choice,0#not |1#}ignore sleep ({4})", new Object[] { this.world.getName(), player.getName(), player.isSleepingIgnored(), ignore?1:0, reason.getKey() });
+        this.plugin.getLogger().log(Level.FINEST, "[{0}] Setting {1} (Ignored: {2}) to {3,choice,0#not |1#}ignore sleep ({4})"
+                , new Object[] { this.world.getName(), player.getName(), player.isSleepingIgnored(), ignore?1:0, reason.getKey() });
 
         if (!ignore && player.hasPermission("sleep.ignore")) {
-            this.plugin.getLogger().log(Level.FINEST, "[{0}] Cancelling {1} changing to not ignore sleep (permission)", new Object[] { this.world.getName(), player.getName()});
+            this.plugin.getLogger().log(Level.FINEST, "[{0}] Cancelling {1} changing to not ignore sleep (permission)"
+                    , new Object[] { this.world.getName(), player.getName()});
             return;
         }
 
         if (!ignore && this.forcing) {
-            this.plugin.getLogger().log(Level.FINEST, "[{0}] Cancelling {1} changing to not ignore sleep (forcing)", new Object[] { this.world.getName(), player.getName()});
+            this.plugin.getLogger().log(Level.FINEST, "[{0}] Cancelling {1} changing to not ignore sleep (forcing)"
+                    , new Object[] { this.world.getName(), player.getName()});
             return;
         }
 

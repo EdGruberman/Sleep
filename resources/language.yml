@@ -5,7 +5,8 @@ leave: '§8{0,time,HH:mm:ss} {1}§8 left bed ({3,choice,0#§5no one in bed§8|1#
 add: '§8{0,time,HH:mm:ss} {1}§8 joined the world (§dneed +{2} to sleep§8)' # 1 = Player, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
 remove: '§8{0,time,HH:mm:ss} {1}§8 left the world ({2,choice,0#§5no more sleepers needed§8|1#§dneed +{2} to sleep§8})' # 1 = Player, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
 player: '{1}' # 0 = Name, 1 = Display Name
-force: '§8{0,time,HH:mm:ss} {1}§8 is §5forcing§8 the sun to rise' # 1 = Player / Plugin Name
+force:
+  notify: '§8{0,time,HH:mm:ss} {1}§8 is §5forcing§8 the sun to rise' # 1 = Player / Plugin Name
 idle:
   idle: '§8{0,time,HH:mm:ss} {1}§8 is now idle ({2,choice,0#§5no more sleepers needed§8|1#§dneed +{2} to sleep§8})' # 1 = Player, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
   active: '§8{0,time,HH:mm:ss} {1}§8 is no longer idle (§dneed +{2} to sleep§8)' # 1 = Player, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible

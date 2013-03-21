@@ -79,12 +79,14 @@ public final class ModuleManager implements Listener {
         final ConfigurationSection moduleSection = state.config.getConfigurationSection(reg.section);
         if (moduleSection == null || !moduleSection.getBoolean("enable")) return;
 
-        reg.implementor.getLogger().log(Level.CONFIG, "[{0}] Loading {1} Sleep module (section: {2}) ...", new Object[] { state.world.getName(), reg.module.getSimpleName(), reg.section });
+        reg.implementor.getLogger().log(Level.CONFIG, "[{0}] Loading {1} Sleep module (section: {2}) ..."
+                , new Object[] { state.world.getName(), reg.module.getSimpleName(), reg.section });
 
         try {
             reg.module.getConstructor(Plugin.class, State.class, ConfigurationSection.class).newInstance(reg.implementor, state, moduleSection);
         } catch (final Exception e) {
-            reg.implementor.getLogger().log(Level.WARNING, "[{0}] Unable to load {1} Sleep module (section: {3}, class: {2}); {4}", new Object[] { state.world.getName(), reg.module.getSimpleName(), reg.module.getName(), reg.section, e });
+            reg.implementor.getLogger().log(Level.WARNING, "[{0}] Unable to load {1} Sleep module (section: {3}, class: {2}); {4}"
+                    , new Object[] { state.world.getName(), reg.module.getSimpleName(), reg.module.getName(), reg.section, e });
             reg.implementor.getLogger().log(CustomLevel.DEBUG, "Exception detail", e);
         }
 

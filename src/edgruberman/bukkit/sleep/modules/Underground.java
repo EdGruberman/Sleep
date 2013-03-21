@@ -37,7 +37,8 @@ public final class Underground extends Module implements Runnable {
         this.depth = config.getInt("depth");
         this.delay = config.getLong("delay") * Main.TICKS_PER_SECOND;
 
-        this.implementor.getLogger().log(Level.CONFIG, "[{0}] Underground depth: {1}; Underground delay: {2}", new Object[] { this.state.world.getName(), this.depth, this.delay });
+        this.implementor.getLogger().log(Level.CONFIG, "[{0}] Underground depth: {1}; Underground delay: {2}"
+                , new Object[] { this.state.world.getName(), this.depth, this.delay });
     }
 
     @Override
