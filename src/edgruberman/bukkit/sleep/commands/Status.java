@@ -10,8 +10,6 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Cancellable;
-import org.bukkit.event.Event;
 
 import edgruberman.bukkit.sleep.Main;
 import edgruberman.bukkit.sleep.Somnologist;
@@ -47,8 +45,12 @@ public final class Status implements CommandExecutor {
             return true;
         }
 
-        final Cancellable event = new SleepStatus(world, sender);
-        Bukkit.getPluginManager().callEvent((Event) event);
+        final int needed = state.needed();
+        final int sleeping = state.sleeping.size();
+        final int possible = state.possible().size();
+
+        final SleepStatus event = new SleepStatus(world, sender, needed, sleeping, possible);
+        Bukkit.getPluginManager().callEvent(event);
         if (event.isCancelled()) return true;
 
         if (state.sleeping.size() == 0) {
@@ -63,10 +65,8 @@ public final class Status implements CommandExecutor {
             state.courier.send(sender, "command-status.need", names.size(), names);
         }
 
-        final int sleeping = state.sleeping.size();
-        final int possible = state.possible().size();
-        final int percent = (int) Math.floor((double) sleeping / (possible > 0 ? possible : 1) * 100);
-        state.courier.send(sender, "command-status.summary", percent, state.needed(), sleeping, possible);
+        final int percent = (int) Math.floor((double) event.getSleeping() / ( event.getPossible() > 0 ? event.getPossible() : 1 ) * 100);
+        state.courier.send(sender, "command-status.summary", percent, event.getNeeded(), event.getSleeping(), event.getPossible());
         return true;
     }
 

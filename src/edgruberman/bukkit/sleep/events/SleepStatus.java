@@ -10,14 +10,36 @@ import org.bukkit.event.world.WorldEvent;
 public class SleepStatus extends WorldEvent implements Cancellable {
 
     private final CommandSender requestor;
+    private final int sleeping;
+    private final int possible;
+    private int needed;
 
-    public SleepStatus(final World world, final CommandSender requestor) {
+    public SleepStatus(final World world, final CommandSender requestor, final int sleeping, final int possible, final int needed) {
         super(world);
         this.requestor = requestor;
+        this.sleeping = sleeping;
+        this.possible = possible;
+        this.needed = needed;
     }
 
     public CommandSender getRequestor() {
         return this.requestor;
+    }
+
+    public int getSleeping() {
+        return this.sleeping;
+    }
+
+    public int getPossible() {
+        return this.possible;
+    }
+
+    public int getNeeded() {
+        return this.needed;
+    }
+
+    public void setNeeded(final int needed) {
+        this.needed = needed;
     }
 
     // --- cancellable event ----

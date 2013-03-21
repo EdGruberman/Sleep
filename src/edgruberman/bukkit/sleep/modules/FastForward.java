@@ -53,17 +53,19 @@ public final class FastForward extends Module implements Runnable {
 
         final int start = (int) Math.ceil(notify.getPossible() * this.min) + ( this.scale?1:0 );
         final int force = (int) Math.ceil(notify.getPossible() * this.max);
-        this.state.courier.world(this.state.world, "fast-forward.notify", this.percent, notify.getNeeded(), notify.getSleeping(), notify.getPossible(), start, force);
+        if (force < notify.getNeeded()) notify.setNeeded(force);
+        this.state.courier.world(this.state.world, "fast-forward.notify", this.percent, notify.getNeeded(), notify.getSleeping(), notify.getPossible(), start);
         this.notify = false;
     }
 
     @EventHandler(ignoreCancelled = true)
-    private void onSleepStatus(final SleepStatus request) {
-        if (!request.getWorld().equals(this.state.world)) return;
-        final int possible = this.state.possible().size();
-        final int start = (int) Math.ceil(possible * this.min) + ( this.scale?1:0 );
-        final int force = (int) Math.ceil(possible * this.max);
-        this.state.courier.send(request.getRequestor(), "fast-forward.status", this.percent, this.state.needed(), this.state.sleeping.size(), possible, start, force);
+    private void onSleepStatus(final SleepStatus status) {
+        if (!status.getWorld().equals(this.state.world)) return;
+
+        final int start = (int) Math.ceil(status.getPossible() * this.min) + ( this.scale?1:0 );
+        final int force = (int) Math.ceil(status.getPossible() * this.max);
+        if (force < status.getNeeded()) status.setNeeded(force);
+        this.state.courier.send(status.getRequestor(), "fast-forward.status", this.percent, status.getNeeded(), status.getSleeping(), status.getPossible(), start);
     }
 
     private void update() {

@@ -23,8 +23,8 @@ underground:
   above: '§8{0,time,HH:mm:ss} {1} is no longer underground ({3,choice,0#§5no one in bed§8|1#§dneed +{2} to sleep§8})' # 1 = Player, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
   below: '§8{0,time,HH:mm:ss} {1} is underground ({2,choice,0#§5no more sleepers needed§8|1#§dneed +{2} to sleep§8})' # 1 = Player, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
 fast-forward:
-  notify: '§8{0,time,HH:mm:ss} Fast-forwarding {1,choice,0#of night has stopped (§7{5} in bed will start again§8)|0.0<night by §7{1,number,percent}}' # 1 = Fast-Forwarding Percent, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible, 5 = Minimum Start, 6 = Maximum Force
-  status: '§f-> §7Fast-forwarding {1,choice,0#of night is stopped §8({5} in bed will start; {6} will force sleep§8)|0.0<night by §7{1,number,percent} (§7{6} in bed will force sleep§8)}' # 1 = Fast-Forwarding Percent, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible, 5 = Minimum Start, 6 = Maximum Force
+  notify: '§8{0,time,HH:mm:ss} Fast-forwarding {1,choice,0#of night has stopped (§7{5} in bed will start again§8)|0.0<night by §7{1,number,percent}}' # 1 = Fast-Forwarding Percent, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible, 5 = Minimum Start
+  status: '§f-> §7Fast-forwarding {1,choice,0#of night is stopped §8({5} in bed will start§8)|0.0<night by §7{1,number,percent}}' # 1 = Fast-Forwarding Percent, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible, 5 = Minimum Start
 command-status:
   need: '§f-> §7{1,choice,0#Everyone is asleep|1#§d{1} player§7 not in bed: {2}|2#§d{1} players§7 not in bed: {2}}' # 1 = Player Count Needed, 2 = Player Names Needed
   need-players:
