@@ -10,7 +10,7 @@ idle:
   activity:
     - PlayerMoveBlockEvent
     - AsyncPlayerChatEvent
-    - PlayerBedLeaveEvent
+    - PlayerManualBedLeaveEvent
     - PlayerInteractEvent
     - PlayerDropItemEvent
     - PlayerToggleSneakEvent
