@@ -7,7 +7,7 @@ import org.bukkit.event.player.PlayerEvent;
 import edgruberman.bukkit.sleep.State;
 
 /**
- * raised when a player is added to a world and is now considered part of
+ * raised after a player is added to a world and is now considered part of
  * sleep state calculations for that world
  */
 public class SleepAdd extends PlayerEvent {

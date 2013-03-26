@@ -7,7 +7,7 @@ import org.bukkit.event.player.PlayerEvent;
 import edgruberman.bukkit.sleep.State;
 
 /**
- * raised when a player is removed from a world and is no longer considered
+ * raised after a player is removed from a world and is no longer considered
  * part of sleep state calculations for that world
  */
 public class SleepRemove extends PlayerEvent {

@@ -7,7 +7,7 @@ import org.bukkit.event.player.PlayerEvent;
 import edgruberman.bukkit.sleep.State;
 
 /**
- * raised when a player has left bed and calculations have been updated
+ * raised after a player has left bed and calculations have been updated
  * for the sleep state in the world the player left bed in
  */
 public class SleepLeave extends PlayerEvent {

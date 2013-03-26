@@ -6,7 +6,7 @@ import org.bukkit.event.Cancellable;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.world.WorldEvent;
 
-/** raised when the status command has been executed */
+/** raised before the status command responds */
 public class SleepStatus extends WorldEvent implements Cancellable {
 
     private final CommandSender requestor;

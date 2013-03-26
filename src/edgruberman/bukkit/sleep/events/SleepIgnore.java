@@ -7,7 +7,7 @@ import org.bukkit.event.player.PlayerEvent;
 
 import edgruberman.bukkit.sleep.Reason;
 
-/** raised when a player will start ignoring sleep */
+/** raised before a player will start ignoring sleep */
 public class SleepIgnore extends PlayerEvent implements Cancellable {
 
     private final Reason reason;

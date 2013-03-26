@@ -8,7 +8,7 @@ import org.bukkit.event.world.WorldEvent;
 
 import edgruberman.bukkit.sleep.Reason;
 
-/** raised when a message will be generated to inform the world about sleep status */
+/** raised before a message will be generated to inform the world about sleep status */
 public class SleepNotify extends WorldEvent implements Cancellable {
 
     private final Reason reason;

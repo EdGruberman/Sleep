@@ -20,6 +20,7 @@ import edgruberman.bukkit.sleep.events.SleepAdd;
 import edgruberman.bukkit.sleep.events.SleepComply;
 import edgruberman.bukkit.sleep.events.SleepEnter;
 import edgruberman.bukkit.sleep.events.SleepIgnore;
+import edgruberman.bukkit.sleep.events.SleepIgnoredChanged;
 import edgruberman.bukkit.sleep.events.SleepLeave;
 import edgruberman.bukkit.sleep.events.SleepNotify;
 import edgruberman.bukkit.sleep.events.SleepRemove;
@@ -185,6 +186,9 @@ public final class State {
         final int before = this.needed();
         player.setSleepingIgnored(ignore);
         final int after = this.needed();
+
+        // alert to change
+        Bukkit.getPluginManager().callEvent(new SleepIgnoredChanged(player, reason));
 
         // notify when at least one player in bed and the needed quantity changes
         if ((this.sleeping.size() >= 1) && (before != after))

@@ -11,9 +11,8 @@ import edgruberman.bukkit.sleep.Module;
 import edgruberman.bukkit.sleep.Reason;
 import edgruberman.bukkit.sleep.State;
 import edgruberman.bukkit.sleep.events.SleepAdd;
-import edgruberman.bukkit.sleep.events.SleepComply;
 import edgruberman.bukkit.sleep.events.SleepEnter;
-import edgruberman.bukkit.sleep.events.SleepIgnore;
+import edgruberman.bukkit.sleep.events.SleepIgnoredChanged;
 import edgruberman.bukkit.sleep.events.SleepLeave;
 import edgruberman.bukkit.sleep.events.SleepNotify;
 import edgruberman.bukkit.sleep.events.SleepRemove;
@@ -51,7 +50,7 @@ public final class FastForward extends Module implements Runnable {
         if (needed < notify.getNeeded()) notify.setNeeded(needed);
         if (!this.notify) return;
 
-        final int start = (int) Math.ceil(notify.getPossible() * this.min) + ( this.scale?1:0 );
+        final int start = (int) Math.ceil(notify.getPossible() * this.min);
         final int force = (int) Math.ceil(notify.getPossible() * this.max);
         if (force < notify.getNeeded()) notify.setNeeded(force);
         this.state.courier.world(this.state.world, "fast-forward.notify", this.percent, notify.getNeeded(), notify.getSleeping(), notify.getPossible(), start);
@@ -62,17 +61,19 @@ public final class FastForward extends Module implements Runnable {
     private void onSleepStatus(final SleepStatus status) {
         if (!status.getWorld().equals(this.state.world)) return;
 
-        final int start = (int) Math.ceil(status.getPossible() * this.min) + ( this.scale?1:0 );
+        final int start = (int) Math.ceil(status.getPossible() * this.min);
         final int force = (int) Math.ceil(status.getPossible() * this.max);
         if (force < status.getNeeded()) status.setNeeded(force);
         this.state.courier.send(status.getRequestor(), "fast-forward.status", this.percent, status.getNeeded(), status.getSleeping(), status.getPossible(), start);
     }
 
     private void update() {
-        this.percent = (double) this.state.sleeping.size() / (double) this.state.possible().size();
+        final double sleeping = this.state.sleeping.size();
+        final double possible = this.state.possible().size();
+        this.percent = sleeping / possible ;
         if (Double.isNaN(this.percent)) this.percent = 0D;
-        this.implementor.getLogger().log(CustomLevel.DEBUG, "[{0}] Fast-Forward percent: {1,number,#.##%}"
-                , new Object[] { this.state.world.getName(), this.percent });
+        this.implementor.getLogger().log(CustomLevel.DEBUG, "[{0}] Fast-Forward percent: {1,number,#.##%} = {2,number,#} in bed / {3,number,#} possible"
+                , new Object[] { this.state.world.getName(), this.percent, sleeping, possible });
 
         if (this.percent < this.min) {
             this.stop();
@@ -99,6 +100,8 @@ public final class FastForward extends Module implements Runnable {
         }
 
         Bukkit.getScheduler().cancelTask(this.taskId);
+        this.ticks = ticksNow;
+        this.carry = 0;
         this.taskId = Bukkit.getScheduler().runTaskTimer(this.implementor, this, 0, this.speed).getTaskId();
     }
 
@@ -121,15 +124,9 @@ public final class FastForward extends Module implements Runnable {
     }
 
     @EventHandler(ignoreCancelled = true)
-    private void onSleepIgnore(final SleepIgnore ignore) {
-        if (!ignore.getPlayer().getWorld().equals(this.state.world)) return;
-        if (ignore.getReason() == Reason.FORCE) return;
-        this.update();
-    }
-
-    @EventHandler(ignoreCancelled = true)
-    private void onSleepComply(final SleepComply comply) {
-        if (!comply.getPlayer().getWorld().equals(this.state.world)) return;
+    private void onSleepIgnoredChange(final SleepIgnoredChanged changed) {
+        if (!changed.getPlayer().getWorld().equals(this.state.world)) return;
+        if (changed.getReason() == Reason.FORCE) return;
         this.update();
     }
 
