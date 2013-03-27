@@ -10,13 +10,14 @@ idle:
   activity:
     - PlayerMoveBlockEvent
     - AsyncPlayerChatEvent
-    - PlayerManualBedLeaveEvent
     - PlayerInteractEvent
     - PlayerDropItemEvent
     - PlayerToggleSneakEvent
     - PlayerItemHeldEvent
     - PlayerJoinEvent
     - PlayerChangedWorldEvent
+    - CraftItemEvent
+    - PrepareItemCraftEvent
     - EnchantItemEvent
     - PrepareItemEnchantEvent
     - InventoryClickEvent
