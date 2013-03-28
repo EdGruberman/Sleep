@@ -51,8 +51,8 @@ public final class State {
         this.courier = ConfigurationCourier.Factory.create(plugin).setBase(language).setFormatCode("format-code").build();
         this.config = config;
 
-        this.forceCount = ( config.getBoolean("force.enabled") ? config.getInt("force.count") : -1 );
-        this.forcePercent = ( config.getBoolean("force.enabled") ? config.getInt("force.percent") : -1 );
+        this.forceCount = ( config.getBoolean("force.enable") ? config.getInt("force.count") : -1 );
+        this.forcePercent = ( config.getBoolean("force.enable") ? config.getInt("force.percent") : -1 );
         if (this.forceCount > 0 || this.forcePercent > 0) this.plugin.getLogger().log(Level.CONFIG, "[{0}] Force sleep minimum count: {1}; minimum percent: {2}"
                 , new Object[] { world.getName(),  this.forceCount, this.forcePercent });
 
@@ -108,16 +108,16 @@ public final class State {
         final SleepLeave event = new SleepLeave(leaver, this);
         Bukkit.getPluginManager().callEvent(event);
 
-        // notify for manual bed leave
-        if (!leaver.isSleepingIgnored() && this.world.getTime() != State.SLEEP_SUCCESS_TICKS && this.world.getTime() != State.SLEEP_FAILED_TICKS)
-            this.notify(Reason.LEAVE, leaver, this.needed());
-
         // reset forced sleep after last player leaves bed
         if (this.forcing && this.sleeping.size() == 0) {
             this.forcing = false;
             for (final Player player : this.world.getPlayers())
                 this.ignore(player, false, Reason.RESET);
         }
+
+        // notify for manual bed leave
+        if (!leaver.isSleepingIgnored() && this.world.getTime() != State.SLEEP_SUCCESS_TICKS && this.world.getTime() != State.SLEEP_FAILED_TICKS)
+            this.notify(Reason.LEAVE, leaver, this.needed());
     }
 
     /** player left world */
@@ -156,7 +156,7 @@ public final class State {
                 name = forcer.getName();
             }
         }
-        this.courier.world(this.world, "force", name);
+        this.courier.world(this.world, Reason.FORCE.getKey(), name);
     }
 
     /** set whether or not a player ignores sleep status checks */

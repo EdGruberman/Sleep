@@ -32,7 +32,7 @@ command-status:
     item: '{0}' # 0 = Player
     delimiter: '§8, §7'
   none: '§f-> §7No one is currently in bed'
-  summary: '§f-> §7{1,choice,0#Sleep §dneeds {2} more§7 in bed: |100#}{3} in bed / {4} possible = {1}%' # 1 = Percent In Bed, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
+  summary: '§f-> §7Sleep {2,choice,0#§5|1#§d}needs {2} more§7 in bed: {3} in bed / {4} possible = {1}%' # 1 = Percent In Bed, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
 command-force:
   require: '§f-> §eNeed at least one§7 player in bed to force sleep'
   success: '§f-> §aForcing§7 sleep in {1}...' # 1 = World

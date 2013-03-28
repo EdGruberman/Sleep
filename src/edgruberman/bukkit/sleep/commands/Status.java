@@ -49,7 +49,7 @@ public final class Status implements CommandExecutor {
         final int sleeping = state.sleeping.size();
         final int possible = state.possible().size();
 
-        final SleepStatus event = new SleepStatus(world, sender, needed, sleeping, possible);
+        final SleepStatus event = new SleepStatus(world, sender, sleeping, possible, needed);
         Bukkit.getPluginManager().callEvent(event);
         if (event.isCancelled()) return true;
 
