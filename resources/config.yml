@@ -1,11 +1,11 @@
 # For detailed information refer to http://dev.bukkit.org/server-mods/sleep/pages/configuration/
 log-level: INFO
 force:
-  enable: false
+  enabled: false
   count: -1
   percent: -1
 idle:
-  enable: true
+  enabled: true
   duration: 60 # seconds
   activity:
     - PlayerMoveBlockEvent
@@ -22,10 +22,10 @@ idle:
     - PrepareItemEnchantEvent
     - InventoryClickEvent
 temporary:
-  enable: false
+  enabled: false
   duration: 500 # seconds (<1 day cycle)
 rewards:
-  enable: false
+  enabled: false
   Golden Apple Satiation:
     type: Food
     saturation: 9.6
@@ -48,21 +48,21 @@ rewards:
     experience: 5
     factor: 0.5
 away:
-  enable: false # requires PlayerActivity plugin
+  enabled: false # requires PlayerActivity plugin
 insomnia:
-  enable: false
+  enabled: false
 underground:
-  enable: false
+  enabled: false
   depth: 50 # y-axis value ignored when below
   delay: 5 # seconds to wait before ignored
 fast-forward:
-  enable: false
+  enabled: false
   min: 30 # percent required to start advancing time
   max: 70 # percent at which to force sleep
   scale: true # adjust rate of time advance relative to min/max instead of total players possible
   speed: 20 # ticks to wait between each time change
 spam-filter:
-  enable: true
+  enabled: true
   cooldown: 5 # seconds
   reasons: [ENTER, LEAVE]
 version: @VERSION@

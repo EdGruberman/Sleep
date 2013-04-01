@@ -51,8 +51,8 @@ public final class State {
         this.courier = ConfigurationCourier.Factory.create(plugin).setBase(language).setFormatCode("format-code").build();
         this.config = config;
 
-        this.forceCount = ( config.getBoolean("force.enable") ? config.getInt("force.count") : -1 );
-        this.forcePercent = ( config.getBoolean("force.enable") ? config.getInt("force.percent") : -1 );
+        this.forceCount = ( config.getBoolean("force.enabled") ? config.getInt("force.count") : -1 );
+        this.forcePercent = ( config.getBoolean("force.enabled") ? config.getInt("force.percent") : -1 );
         if (this.forceCount > 0 || this.forcePercent > 0) this.plugin.getLogger().log(Level.CONFIG, "[{0}] Force sleep minimum count: {1}; minimum percent: {2}"
                 , new Object[] { world.getName(),  this.forceCount, this.forcePercent });
 

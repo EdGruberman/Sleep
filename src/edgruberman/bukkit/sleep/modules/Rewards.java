@@ -56,7 +56,7 @@ public final class Rewards extends Module {
         super(implementor, state, config);
 
         for (final String name : config.getKeys(false)) {
-            if (name.equals("enable")) continue;
+            if (name.equals("enabled")) continue;
 
             final ConfigurationSection section = config.getConfigurationSection(name);
             Reward reward;

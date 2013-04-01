@@ -41,7 +41,7 @@ public final class Main extends CustomPlugin {
 
     @Override
     public void onLoad() {
-        this.putConfigMinimum("7.0.0b21");
+        this.putConfigMinimum("7.1.0a1");
         this.putConfigMinimum(Main.LANGUAGE_FILE, "7.0.0b21");
 
         final PluginDependency dependency = new PluginDependency(this, "PlayerActivity", "edgruberman.bukkit.playeractivity", "4.2.0");

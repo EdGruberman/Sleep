@@ -77,7 +77,7 @@ public final class ModuleManager implements Listener {
 
     private void loadModule(final ModuleRegistration reg, final State state) {
         final ConfigurationSection moduleSection = state.config.getConfigurationSection(reg.section);
-        if (moduleSection == null || !moduleSection.getBoolean("enable")) return;
+        if (moduleSection == null || !moduleSection.getBoolean("enabled")) return;
 
         reg.implementor.getLogger().log(Level.CONFIG, "[{0}] Loading {1} Sleep module (section: {2}) ..."
                 , new Object[] { state.world.getName(), reg.module.getSimpleName(), reg.section });
