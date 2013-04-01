@@ -32,12 +32,13 @@ permissions:
         description: Can use basic features of Sleep plugin
         default: true
         children:
+            sleep.consider: true
             sleep.status: true
             sleep.idle: true
             sleep.away: true
-    sleep.ignore:
-        description: Will always be ignored for sleep
-        default: false
+    sleep.consider:
+      description: Will prevent sleep if not in bed
+      default: false
     sleep.idle:
         description: Will be ignored for sleep while idle
         default: false
@@ -56,3 +57,8 @@ permissions:
     sleep.reload:
         description: Can use sleep:reload command
         default: false
+    sleep.ignore:
+        description: DEPRECATED - Use sleep.consider instead
+        default: false
+        children:
+          sleep.consider: false

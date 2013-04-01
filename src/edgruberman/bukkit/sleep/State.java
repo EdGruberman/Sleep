@@ -70,7 +70,7 @@ public final class State {
                 , new Object[] { this.world.getName(), joiner.getName(), joiner.isSleepingIgnored() });
         this.players.add(joiner);
 
-        if (joiner.hasPermission("sleep.ignore")) this.ignore(joiner, true, Reason.PERMISSION);
+        if (!joiner.hasPermission("sleep.consider")) this.ignore(joiner, true, Reason.PERMISSION);
         if (this.forcing) this.ignore(joiner, true, Reason.FORCE);
 
         final SleepAdd event = new SleepAdd(joiner, this);
@@ -166,7 +166,7 @@ public final class State {
         this.plugin.getLogger().log(Level.FINEST, "[{0}] Setting {1} (Ignored: {2}) to {3,choice,0#not |1#}ignore sleep ({4})"
                 , new Object[] { this.world.getName(), player.getName(), player.isSleepingIgnored(), ignore?1:0, reason.getKey() });
 
-        if (!ignore && player.hasPermission("sleep.ignore")) {
+        if (!ignore && !player.hasPermission("sleep.consider")) {
             this.plugin.getLogger().log(Level.FINEST, "[{0}] Cancelling {1} changing to not ignore sleep (permission)"
                     , new Object[] { this.world.getName(), player.getName()});
             return;
