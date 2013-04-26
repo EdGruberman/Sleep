@@ -1,4 +1,4 @@
-package edgruberman.bukkit.sleep.modules;
+package edgruberman.bukkit.sleep.supplements;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,12 +13,12 @@ import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
 
-import edgruberman.bukkit.sleep.Module;
+import edgruberman.bukkit.sleep.Supplement;
 import edgruberman.bukkit.sleep.Reason;
 import edgruberman.bukkit.sleep.State;
 import edgruberman.bukkit.sleep.events.SleepNotify;
 
-public final class SpamFilter extends Module {
+public final class SpamFilter extends Supplement {
 
     private final long cooldown;
     private final List<String> reasons = new ArrayList<String>();

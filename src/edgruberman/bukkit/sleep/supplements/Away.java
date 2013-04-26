@@ -1,4 +1,4 @@
-package edgruberman.bukkit.sleep.modules;
+package edgruberman.bukkit.sleep.supplements;
 
 import java.util.logging.Level;
 
@@ -13,12 +13,12 @@ import org.bukkit.plugin.Plugin;
 
 import edgruberman.bukkit.playeractivity.consumers.away.PlayerAway;
 import edgruberman.bukkit.playeractivity.consumers.away.PlayerBack;
-import edgruberman.bukkit.sleep.Module;
+import edgruberman.bukkit.sleep.Supplement;
 import edgruberman.bukkit.sleep.Reason;
 import edgruberman.bukkit.sleep.State;
 import edgruberman.bukkit.sleep.events.SleepComply;
 
-public final class Away extends Module {
+public final class Away extends Supplement {
 
     public static final Reason AWAY = new Reason("AWAY", "away.away");
     public static final Reason BACK = new Reason("BACK", "away.back");

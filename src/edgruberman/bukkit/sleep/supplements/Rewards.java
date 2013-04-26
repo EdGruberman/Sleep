@@ -1,4 +1,4 @@
-package edgruberman.bukkit.sleep.modules;
+package edgruberman.bukkit.sleep.supplements;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -7,16 +7,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 
+import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.player.PlayerBedLeaveEvent;
 import org.bukkit.plugin.Plugin;
 
-import edgruberman.bukkit.sleep.Module;
 import edgruberman.bukkit.sleep.State;
-import edgruberman.bukkit.sleep.modules.rewards.Reward;
+import edgruberman.bukkit.sleep.Supplement;
 
-public final class Rewards extends Module {
+public final class Rewards extends Supplement {
 
     private static final Map<String, RewardRegistration> registered = new HashMap<String, RewardRegistration>();
 
@@ -90,6 +91,34 @@ public final class Rewards extends Module {
             reward.apply(leave.getPlayer(), leave.getBed(), this.participants);
 
         if (this.state.sleeping.size() == 0) this.participants = null;
+    }
+
+
+
+    public static abstract class Reward {
+
+        protected final Plugin implementor;
+        protected final String name;
+        protected final float factor;
+
+        public Reward(final Plugin implementor, final ConfigurationSection definition) {
+            this.implementor = implementor;
+            this.name = definition.getName();
+            this.factor = (float) definition.getDouble("factor");
+        };
+
+        public abstract void apply(final Player player, final Block bed, final int participants);
+
+        public void onDisable() {}
+
+        protected int factor(final int value, final int participants) {
+            return value + (int) (value * this.factor * (participants - 1));
+        }
+
+        protected int factor(final float value, final int participants) {
+            return (int) (value + (value * this.factor * (participants - 1)));
+        }
+
     }
 
 }

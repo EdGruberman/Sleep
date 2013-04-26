@@ -78,7 +78,7 @@ public final class Somnologist implements Listener {
         final ConfigurationSection config = Somnologist.loadWorldConfig(this.plugin, world, CustomPlugin.CONFIGURATION_FILE, this.plugin.getConfig());
         final ConfigurationSection language = Somnologist.loadWorldConfig(this.plugin, world, Main.LANGUAGE_FILE, Main.courier.getBase().getRoot());
         final State state = new State(this.plugin, world, config, language);
-        this.plugin.getModuleManager().loadModules(state);
+        this.plugin.getSupplementManager().loadSupplements(state);
 
         this.states.put(world, state);
         return state;
@@ -104,7 +104,7 @@ public final class Somnologist implements Listener {
         this.loadState(event.getWorld());
     }
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true) // unload state last/after modules
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true) // unload state last/after supplements
     public void onWorldUnload(final WorldUnloadEvent event) {
         final State state = this.states.get(event.getWorld());
         if (state == null) return;
@@ -154,7 +154,7 @@ public final class Somnologist implements Listener {
         state.enter(event.getPlayer());
     }
 
-    @EventHandler(priority = EventPriority.HIGH) // process after modules
+    @EventHandler(priority = EventPriority.HIGH) // process after supplements
     public void onPlayerBedLeave(final PlayerBedLeaveEvent event) {
         // Ignore for untracked world sleep states
         final State state = this.states.get(event.getPlayer().getWorld());

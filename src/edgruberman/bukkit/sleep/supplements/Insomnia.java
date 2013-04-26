@@ -1,4 +1,4 @@
-package edgruberman.bukkit.sleep.modules;
+package edgruberman.bukkit.sleep.supplements;
 
 import java.util.logging.Level;
 
@@ -11,7 +11,7 @@ import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerBedLeaveEvent;
 import org.bukkit.plugin.Plugin;
 
-import edgruberman.bukkit.sleep.Module;
+import edgruberman.bukkit.sleep.Supplement;
 import edgruberman.bukkit.sleep.Reason;
 import edgruberman.bukkit.sleep.State;
 import edgruberman.bukkit.sleep.craftbukkit.CraftBukkit;
@@ -19,7 +19,7 @@ import edgruberman.bukkit.sleep.events.SleepNotify;
 import edgruberman.bukkit.sleep.events.SleepStatus;
 
 /** prevents deep sleep from occurring which would cause Minecraft to change the time to morning */
-public final class Insomnia extends Module {
+public final class Insomnia extends Supplement {
 
     // TODO research if -10 is unnecessary to compensate for any background processing before task starts counting
     /** ticks in bed at which Minecraft declares deep sleep which causes morning  */

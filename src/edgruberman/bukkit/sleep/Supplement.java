@@ -19,31 +19,31 @@ import org.bukkit.plugin.Plugin;
 
 import edgruberman.bukkit.sleep.util.CustomLevel;
 
-public class Module implements Listener {
+public class Supplement implements Listener {
 
-    private static final Map<Class<? extends Module>, List<Module>> instances = new HashMap<Class<? extends Module>, List<Module>>();
+    private static final Map<Class<? extends Supplement>, List<Supplement>> instances = new HashMap<Class<? extends Supplement>, List<Supplement>>();
 
-    private static void add(final Module instance) {
-        List<Module> instances = Module.instances.get(instance.getClass());
+    private static void add(final Supplement instance) {
+        List<Supplement> instances = Supplement.instances.get(instance.getClass());
         if (instances == null) {
-            instances = new ArrayList<Module>();
-            Module.instances.put(instance.getClass(), instances);
+            instances = new ArrayList<Supplement>();
+            Supplement.instances.put(instance.getClass(), instances);
         }
         instances.add(instance);
     }
 
-    static void unload(final Class<? extends Module> clazz) {
-        final List<Module> instances = Module.instances.remove(clazz);
-        if (instances != null) Module.unload(instances);
+    static void unload(final Class<? extends Supplement> clazz) {
+        final List<Supplement> instances = Supplement.instances.remove(clazz);
+        if (instances != null) Supplement.unload(instances);
     }
 
     static void unloadAll() {
-        for (final List<Module> instances : Module.instances.values()) Module.unload(instances);
-        Module.instances.clear();
+        for (final List<Supplement> instances : Supplement.instances.values()) Supplement.unload(instances);
+        Supplement.instances.clear();
     }
 
-    private static void unload(final List<Module> instances) {
-        for (final Module instance : instances) {
+    private static void unload(final List<Supplement> instances) {
+        for (final Supplement instance : instances) {
             final Plugin implementor = instance.implementor;
             final World world = instance.state.world;
             try {
@@ -52,7 +52,7 @@ public class Module implements Listener {
                 final Logger logger = ( implementor != null ? implementor.getLogger() : Bukkit.getLogger() );
                 logger.log(Level.SEVERE
                         , ( world != null ? "[" + ( world != null ? world.getName() : "(null)" ) + "]" : "" )
-                        + " Unhandled exception unloading " + instance.getClass().getSimpleName() + "Sleep module", t);
+                        + " Unhandled exception unloading " + instance.getClass().getSimpleName() + "Sleep supplement", t);
                 logger.log(CustomLevel.DEBUG, "Exception detail", t);
             }
         }
@@ -63,11 +63,11 @@ public class Module implements Listener {
     protected final State state;
     protected final Plugin implementor;
 
-    protected Module(final Plugin implementor, final State state, final ConfigurationSection config) {
+    protected Supplement(final Plugin implementor, final State state, final ConfigurationSection config) {
         this.state = state;
         this.implementor = implementor;
         Bukkit.getPluginManager().registerEvents(this, this.implementor);
-        Module.add(this);
+        Supplement.add(this);
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -87,7 +87,7 @@ public class Module implements Listener {
             this.onUnload();
         } finally {
             HandlerList.unregisterAll(this);
-            Module.instances.remove(this);
+            Supplement.instances.remove(this);
         }
     }
 

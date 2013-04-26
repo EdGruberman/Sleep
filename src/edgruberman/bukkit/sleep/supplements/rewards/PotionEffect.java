@@ -1,4 +1,4 @@
-package edgruberman.bukkit.sleep.modules.rewards;
+package edgruberman.bukkit.sleep.supplements.rewards;
 
 import java.text.MessageFormat;
 
@@ -8,6 +8,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.potion.PotionEffectType;
 
+import edgruberman.bukkit.sleep.supplements.Rewards.Reward;
 import edgruberman.bukkit.sleep.util.CustomLevel;
 
 public class PotionEffect extends Reward {

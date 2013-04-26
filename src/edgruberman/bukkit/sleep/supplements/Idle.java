@@ -1,4 +1,4 @@
-package edgruberman.bukkit.sleep.modules;
+package edgruberman.bukkit.sleep.supplements;
 
 import java.util.Observable;
 import java.util.Observer;
@@ -13,13 +13,13 @@ import org.bukkit.plugin.Plugin;
 import edgruberman.bukkit.playeractivity.PlayerActive;
 import edgruberman.bukkit.playeractivity.PlayerIdle;
 import edgruberman.bukkit.playeractivity.StatusTracker;
-import edgruberman.bukkit.sleep.Module;
+import edgruberman.bukkit.sleep.Supplement;
 import edgruberman.bukkit.sleep.Reason;
 import edgruberman.bukkit.sleep.State;
 import edgruberman.bukkit.sleep.events.SleepComply;
 import edgruberman.bukkit.sleep.events.SleepNotify;
 
-public final class Idle extends Module implements Observer {
+public final class Idle extends Supplement implements Observer {
 
     public static final Reason IDLE = new Reason("IDLE", "idle.idle");
     public static final Reason ACTIVE = new Reason("ACTIVE", "idle.active");

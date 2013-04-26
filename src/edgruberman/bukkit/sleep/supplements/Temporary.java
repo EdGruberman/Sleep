@@ -1,4 +1,4 @@
-package edgruberman.bukkit.sleep.modules;
+package edgruberman.bukkit.sleep.supplements;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,13 +19,13 @@ import org.bukkit.material.Bed;
 import org.bukkit.plugin.Plugin;
 
 import edgruberman.bukkit.sleep.Main;
-import edgruberman.bukkit.sleep.Module;
+import edgruberman.bukkit.sleep.Supplement;
 import edgruberman.bukkit.sleep.State;
 import edgruberman.bukkit.sleep.craftbukkit.CraftBukkit;
 import edgruberman.bukkit.sleep.util.CustomLevel;
 
 /** temporary bed manager */
-public final class Temporary extends Module {
+public final class Temporary extends Supplement {
 
     private final long duration;
     private final CraftBukkit cb;

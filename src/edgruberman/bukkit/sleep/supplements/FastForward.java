@@ -1,4 +1,4 @@
-package edgruberman.bukkit.sleep.modules;
+package edgruberman.bukkit.sleep.supplements;
 
 import java.util.logging.Level;
 
@@ -7,7 +7,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.event.EventHandler;
 import org.bukkit.plugin.Plugin;
 
-import edgruberman.bukkit.sleep.Module;
+import edgruberman.bukkit.sleep.Supplement;
 import edgruberman.bukkit.sleep.Reason;
 import edgruberman.bukkit.sleep.State;
 import edgruberman.bukkit.sleep.events.SleepAdd;
@@ -19,7 +19,7 @@ import edgruberman.bukkit.sleep.events.SleepRemove;
 import edgruberman.bukkit.sleep.events.SleepStatus;
 import edgruberman.bukkit.sleep.util.CustomLevel;
 
-public final class FastForward extends Module implements Runnable {
+public final class FastForward extends Supplement implements Runnable {
 
     private final double min;
     private final double max;

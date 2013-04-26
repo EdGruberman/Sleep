@@ -10,21 +10,21 @@ import edgruberman.bukkit.sleep.commands.Force;
 import edgruberman.bukkit.sleep.commands.Reload;
 import edgruberman.bukkit.sleep.commands.Status;
 import edgruberman.bukkit.sleep.messaging.ConfigurationCourier;
-import edgruberman.bukkit.sleep.modules.Away;
-import edgruberman.bukkit.sleep.modules.FastForward;
-import edgruberman.bukkit.sleep.modules.Idle;
-import edgruberman.bukkit.sleep.modules.Insomnia;
-import edgruberman.bukkit.sleep.modules.Rewards;
-import edgruberman.bukkit.sleep.modules.SpamFilter;
-import edgruberman.bukkit.sleep.modules.Temporary;
-import edgruberman.bukkit.sleep.modules.Underground;
-import edgruberman.bukkit.sleep.modules.rewards.ConsoleCommand;
-import edgruberman.bukkit.sleep.modules.rewards.Experience;
-import edgruberman.bukkit.sleep.modules.rewards.ExperienceOrb;
-import edgruberman.bukkit.sleep.modules.rewards.Food;
-import edgruberman.bukkit.sleep.modules.rewards.Health;
-import edgruberman.bukkit.sleep.modules.rewards.Item;
-import edgruberman.bukkit.sleep.modules.rewards.PotionEffect;
+import edgruberman.bukkit.sleep.supplements.Away;
+import edgruberman.bukkit.sleep.supplements.FastForward;
+import edgruberman.bukkit.sleep.supplements.Idle;
+import edgruberman.bukkit.sleep.supplements.Insomnia;
+import edgruberman.bukkit.sleep.supplements.Rewards;
+import edgruberman.bukkit.sleep.supplements.SpamFilter;
+import edgruberman.bukkit.sleep.supplements.Temporary;
+import edgruberman.bukkit.sleep.supplements.Underground;
+import edgruberman.bukkit.sleep.supplements.rewards.ConsoleCommand;
+import edgruberman.bukkit.sleep.supplements.rewards.Experience;
+import edgruberman.bukkit.sleep.supplements.rewards.ExperienceOrb;
+import edgruberman.bukkit.sleep.supplements.rewards.Food;
+import edgruberman.bukkit.sleep.supplements.rewards.Health;
+import edgruberman.bukkit.sleep.supplements.rewards.Item;
+import edgruberman.bukkit.sleep.supplements.rewards.PotionEffect;
 import edgruberman.bukkit.sleep.util.CustomPlugin;
 import edgruberman.bukkit.sleep.util.PluginDependency;
 
@@ -36,7 +36,7 @@ public final class Main extends CustomPlugin {
     public static ConfigurationCourier courier;
 
     private boolean loaded = false;
-    private ModuleManager moduleManager = null;
+    private SupplementManager supplementManager = null;
     public Somnologist somnologist = null;
 
     @Override
@@ -86,15 +86,15 @@ public final class Main extends CustomPlugin {
         Rewards.register(this, Health.class, "Health");
         Rewards.register(this, Item.class, "Item");
         Rewards.register(this, PotionEffect.class, "PotionEffect");
-        this.getModuleManager().register(this, Rewards.class, "rewards");
+        this.getSupplementManager().register(this, Rewards.class, "rewards");
 
-        this.getModuleManager().register(this, Away.class, "away");
-        this.getModuleManager().register(this, Idle.class, "idle");
-        this.getModuleManager().register(this, Insomnia.class, "insomnia");
-        this.getModuleManager().register(this, Temporary.class, "temporary");
-        this.getModuleManager().register(this, Underground.class, "underground");
-        this.getModuleManager().register(this, SpamFilter.class, "spam-filter");
-        this.getModuleManager().register(this, FastForward.class, "fast-forward");
+        this.getSupplementManager().register(this, Away.class, "away");
+        this.getSupplementManager().register(this, Idle.class, "idle");
+        this.getSupplementManager().register(this, Insomnia.class, "insomnia");
+        this.getSupplementManager().register(this, Temporary.class, "temporary");
+        this.getSupplementManager().register(this, Underground.class, "underground");
+        this.getSupplementManager().register(this, SpamFilter.class, "spam-filter");
+        this.getSupplementManager().register(this, FastForward.class, "fast-forward");
 
         this.somnologist = new Somnologist(this, this.getConfig().getStringList("excluded"));
 
@@ -105,16 +105,16 @@ public final class Main extends CustomPlugin {
 
     @Override
     public void onDisable() {
-        if (this.moduleManager != null) this.moduleManager.unload();
+        if (this.supplementManager != null) this.supplementManager.unload();
         if (this.somnologist != null) this.somnologist.unload();
         HandlerList.unregisterAll(this);
         Bukkit.getScheduler().cancelTasks(this);
         Main.courier = null;
     }
 
-    public ModuleManager getModuleManager() {
-        if (this.moduleManager == null) this.moduleManager = new ModuleManager(this);
-        return this.moduleManager;
+    public SupplementManager getSupplementManager() {
+        if (this.supplementManager == null) this.supplementManager = new SupplementManager(this);
+        return this.supplementManager;
     }
 
 }

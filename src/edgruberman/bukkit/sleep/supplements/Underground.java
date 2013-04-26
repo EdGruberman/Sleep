@@ -1,4 +1,4 @@
-package edgruberman.bukkit.sleep.modules;
+package edgruberman.bukkit.sleep.supplements;
 
 import java.util.logging.Level;
 
@@ -11,13 +11,13 @@ import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.plugin.Plugin;
 
 import edgruberman.bukkit.sleep.Main;
-import edgruberman.bukkit.sleep.Module;
+import edgruberman.bukkit.sleep.Supplement;
 import edgruberman.bukkit.sleep.Reason;
 import edgruberman.bukkit.sleep.State;
 import edgruberman.bukkit.sleep.events.SleepComply;
 import edgruberman.bukkit.sleep.events.SleepNotify;
 
-public final class Underground extends Module implements Runnable {
+public final class Underground extends Supplement implements Runnable {
 
     public static final Reason ABOVE = new Reason("ABOVE", "underground.above");
     public static final Reason BELOW = new Reason("BELOW", "underground.below");
