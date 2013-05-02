@@ -69,8 +69,8 @@ public final class SupplementManager implements Listener {
         try {
             reg.supplement.getConstructor(Plugin.class, State.class, ConfigurationSection.class).newInstance(reg.implementor, state, supplementSection);
         } catch (final Exception e) {
-            reg.implementor.getLogger().log(Level.WARNING, "[{0}] Unable to load {1} Sleep supplement (section: {3}, class: {2}); {4}"
-                    , new Object[] { state.world.getName(), reg.supplement.getSimpleName(), reg.supplement.getName(), reg.section, e });
+            reg.implementor.getLogger().log(Level.WARNING, "[{0}] Unable to load {1} Sleep supplement (section: {3}, class: {2}); {4}: {5}"
+                    , new Object[] { state.world.getName(), reg.supplement.getSimpleName(), reg.supplement.getName(), reg.section, e, e.getCause() });
             reg.implementor.getLogger().log(CustomLevel.DEBUG, "Exception detail", e);
         }
 
