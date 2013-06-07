@@ -1,8 +1,8 @@
 package edgruberman.bukkit.sleep.supplements;
 
+import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -19,8 +19,8 @@ import org.bukkit.material.Bed;
 import org.bukkit.plugin.Plugin;
 
 import edgruberman.bukkit.sleep.Main;
-import edgruberman.bukkit.sleep.Supplement;
 import edgruberman.bukkit.sleep.State;
+import edgruberman.bukkit.sleep.Supplement;
 import edgruberman.bukkit.sleep.craftbukkit.CraftBukkit;
 import edgruberman.bukkit.sleep.util.CustomLevel;
 
@@ -42,8 +42,7 @@ public final class Temporary extends Supplement {
             throw new IllegalStateException("Unsupported CraftBukkit version " + Bukkit.getVersion() + "; Check for updates at " + this.implementor.getDescription().getWebsite(), e);
         }
 
-        this.implementor.getLogger().log(Level.CONFIG, "[{0}] Temporary bed duration: {1} seconds"
-                , new Object[] { this.state.world.getName(), this.duration / Main.TICKS_PER_SECOND });
+        this.logConfig(MessageFormat.format("Temporary bed duration: {0} seconds", this.duration / Main.TICKS_PER_SECOND));
     }
 
     @Override

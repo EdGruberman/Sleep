@@ -1,5 +1,6 @@
 package edgruberman.bukkit.sleep.supplements;
 
+import java.text.MessageFormat;
 import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
@@ -11,9 +12,9 @@ import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.plugin.Plugin;
 
 import edgruberman.bukkit.sleep.Main;
-import edgruberman.bukkit.sleep.Supplement;
 import edgruberman.bukkit.sleep.Reason;
 import edgruberman.bukkit.sleep.State;
+import edgruberman.bukkit.sleep.Supplement;
 import edgruberman.bukkit.sleep.events.SleepComply;
 import edgruberman.bukkit.sleep.events.SleepNotify;
 
@@ -37,8 +38,7 @@ public final class Underground extends Supplement implements Runnable {
         this.depth = config.getInt("depth");
         this.delay = config.getLong("delay") * Main.TICKS_PER_SECOND;
 
-        this.implementor.getLogger().log(Level.CONFIG, "[{0}] Underground depth: {1}; Underground delay: {2}"
-                , new Object[] { this.state.world.getName(), this.depth, this.delay });
+        this.logConfig(MessageFormat.format("Underground depth: {0}; Underground delay: {1}", this.depth, this.delay));
     }
 
     @Override

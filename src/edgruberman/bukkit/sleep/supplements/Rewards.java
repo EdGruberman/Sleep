@@ -1,6 +1,7 @@
 package edgruberman.bukkit.sleep.supplements;
 
 import java.lang.reflect.InvocationTargetException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -69,7 +70,7 @@ public final class Rewards extends Supplement {
             }
 
             this.rewards.add(reward);
-            this.implementor.getLogger().log(Level.CONFIG, "[{0}] Reward: {1}", new Object[] { this.state.world.getName(), reward });
+            this.logConfig(MessageFormat.format("Reward: {0}", reward));
         }
     }
 

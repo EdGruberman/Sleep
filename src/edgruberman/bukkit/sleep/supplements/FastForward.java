@@ -1,15 +1,15 @@
 package edgruberman.bukkit.sleep.supplements;
 
-import java.util.logging.Level;
+import java.text.MessageFormat;
 
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.event.EventHandler;
 import org.bukkit.plugin.Plugin;
 
-import edgruberman.bukkit.sleep.Supplement;
 import edgruberman.bukkit.sleep.Reason;
 import edgruberman.bukkit.sleep.State;
+import edgruberman.bukkit.sleep.Supplement;
 import edgruberman.bukkit.sleep.events.SleepAdd;
 import edgruberman.bukkit.sleep.events.SleepEnter;
 import edgruberman.bukkit.sleep.events.SleepIgnoredChanged;
@@ -40,8 +40,7 @@ public final class FastForward extends Supplement implements Runnable {
         this.scale = config.getBoolean("scale");
         this.speed = config.getLong("speed");
 
-        this.implementor.getLogger().log(Level.CONFIG, "[{0}] Fast-Forward min: {1,number,#.##%}; max: {2,number,#.##%}; scale: {3}; speed: {4} ticks"
-                , new Object[] { this.state.world.getName(), this.min, this.max, this.scale, this.speed });
+        this.logConfig(MessageFormat.format("Fast-Forward min: {0,number,#.##%}; max: {1,number,#.##%}; scale: {2}; speed: {3} ticks", this.min, this.max, this.scale, this.speed));
     }
 
     @EventHandler(ignoreCancelled = true)

@@ -1,5 +1,6 @@
 package edgruberman.bukkit.sleep.supplements;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,9 +14,9 @@ import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
 
-import edgruberman.bukkit.sleep.Supplement;
 import edgruberman.bukkit.sleep.Reason;
 import edgruberman.bukkit.sleep.State;
+import edgruberman.bukkit.sleep.Supplement;
 import edgruberman.bukkit.sleep.events.SleepNotify;
 
 public final class SpamFilter extends Supplement {
@@ -29,8 +30,7 @@ public final class SpamFilter extends Supplement {
         this.cooldown = config.getInt("cooldown") * 1000;
         this.reasons.addAll(config.getStringList("reasons"));
 
-        this.implementor.getLogger().log(Level.CONFIG, "[{0}] Spam Filter cooldown: {1} seconds (Reasons: {2})"
-                , new Object[] { this.state.world.getName(), this.cooldown / 1000, this.reasons });
+        this.logConfig(MessageFormat.format("Spam Filter cooldown: {0} seconds (Reasons: {1})", this.cooldown / 1000, this.reasons));
     }
 
     @EventHandler(ignoreCancelled = true)

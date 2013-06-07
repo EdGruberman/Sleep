@@ -93,4 +93,8 @@ public class Supplement implements Listener {
 
     protected void onUnload() {}
 
+    protected void logConfig(final String message) {
+        this.implementor.getLogger().log(Level.CONFIG, "[{0}]   {1}", new Object[] { this.state.world.getName(), message });
+    }
+
 }
