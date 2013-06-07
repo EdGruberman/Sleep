@@ -11,7 +11,7 @@ idle:
   idle: '§8{0,time,HH:mm:ss} {1}§8 is now idle ({2,choice,0#§5no more sleepers needed§8|1#§dneed +{2} to sleep§8})' # 1 = Player, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
   active: '§8{0,time,HH:mm:ss} {1}§8 is no longer idle (§dneed +{2} to sleep§8)' # 1 = Player, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
 temporary:
-  instruction: '§f-> §8To §5revert§8 to previous spawn, §5destroy§8 this bed soon' # 1 = Duration
+  instruction: '§f-> §8To §5revert§8 to previous spawn, §5remove§8 this bed soon' # 1 = Duration
   reverted: '§f-> §2Reverted§8 spawn to previous bed'
 away:
   away: '§8{0,time,HH:mm:ss} {1}§8 is now away ({2,choice,0#§5no more sleepers needed§8|1#§dneed +{2} to sleep§8})' # 1 = Player, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
