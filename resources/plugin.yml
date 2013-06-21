@@ -6,59 +6,59 @@ author: EdGruberman (ed@rjump.com)
 website: http://dev.bukkit.org/server-mods/sleep/
 main: edgruberman.bukkit.sleep.Main
 commands:
-    'sleep:status':
-        aliases: [sleep, sleep.status]
-        description: Sleep requirements and who is preventing sleep
-        permission: sleep.status
-        usage: /<command>[ <World>]
-    'sleep:force':
-        aliases: [sleep.force]
-        description: Force sleep for one night
-        permission: sleep.force
-        usage: /<command>[ <World>]
-    'sleep:reload':
-        description: Reload Sleep plugin
-        permission: sleep.reload
-        usage: /<command>
+  'sleep:status':
+    aliases: [sleep, sleep.status]
+    description: Sleep requirements and who is preventing sleep
+    permission: sleep.status
+    usage: /<command>[ <World>]
+  'sleep:force':
+    aliases: [sleep.force]
+    description: Force sleep for one night
+    permission: sleep.force
+    usage: /<command>[ <World>]
+  'sleep:reload':
+    description: Reload Sleep plugin
+    permission: sleep.reload
+    usage: /<command>
 permissions:
-    sleep.admin:
-        description: Can use all features of Sleep plugin    
-        default: op
-        children:
-            sleep.user: true
-            sleep.force: true
-            sleep.reload: true
-    sleep.user:
-        description: Can use basic features of Sleep plugin
-        default: true
-        children:
-            sleep.consider: true
-            sleep.status: true
-            sleep.idle: true
-            sleep.away: true
-    sleep.consider:
-      description: Will prevent sleep if not in bed
-      default: false
-    sleep.idle:
-        description: Will be ignored for sleep while idle
-        default: false
-    sleep.away:
-        description: Will be ignored for sleep while away
-        default: false
-    sleep.enter.force:
-        description: Will automatically force sleep when entering bed
-        default: false
-    sleep.status:
-        description: Can use sleep:status command
-        default: false
-    sleep.force:
-        description: Can use sleep:force command
-        default: false
-    sleep.reload:
-        description: Can use sleep:reload command
-        default: false
-    sleep.ignore:
-        description: DEPRECATED - Use sleep.consider instead
-        default: false
-        children:
-          sleep.consider: false
+  sleep.admin:
+    description: Can use all features of Sleep plugin    
+    default: op
+    children:
+      sleep.user: true
+      sleep.force: true
+      sleep.reload: true
+  sleep.user:
+    description: Can use basic features of Sleep plugin
+    default: true
+    children:
+      sleep.consider: true
+      sleep.status: true
+      sleep.idle: true
+      sleep.away: true
+  sleep.consider:
+    description: Will prevent sleep if not in bed
+    default: false
+  sleep.idle:
+    description: Will be ignored for sleep while idle
+    default: false
+  sleep.away:
+    description: Will be ignored for sleep while away
+    default: false
+  sleep.enter.force:
+    description: Will automatically force sleep when entering bed
+    default: false
+  sleep.status:
+    description: Can use sleep:status command
+    default: false
+  sleep.force:
+    description: Can use sleep:force command
+    default: false
+  sleep.reload:
+    description: Can use sleep:reload command
+    default: false
+  sleep.ignore:
+    description: DEPRECATED - Use sleep.consider instead
+    default: false
+    children:
+      sleep.consider: false
