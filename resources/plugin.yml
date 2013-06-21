@@ -10,16 +10,16 @@ commands:
     aliases: [sleep, sleep.status]
     description: Sleep requirements and who is preventing sleep
     permission: sleep.status
-    usage: /<command>[ <World>]
+    usage: '§f-> §7Usage: §b/<command> §3[§oworld§3]'
   'sleep:force':
     aliases: [sleep.force]
     description: Force sleep for one night
     permission: sleep.force
-    usage: /<command>[ <World>]
+    usage: '§f-> §7Usage: §b/<command> §3[§oworld§3]'
   'sleep:reload':
     description: Reload Sleep plugin
     permission: sleep.reload
-    usage: /<command>
+    usage: '§f-> §7Usage: §b/<command>'
 permissions:
   sleep.admin:
     description: Can use all features of Sleep plugin    
