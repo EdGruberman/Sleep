@@ -61,7 +61,7 @@ public final class Status implements CommandExecutor {
             Collections.sort(preventing, new DisplayNameComparator());
 
             final List<String> names = new JoinList<String>(state.courier.getBase().getConfigurationSection("command-status.need-players"));
-            for (final Player player : preventing) names.add(state.courier.format("player", player.getName(), player.getDisplayName()));
+            for (final Player player : preventing) names.add(state.courier.format("player", player.getName(), player.getDisplayName()).get(0));
             state.courier.send(sender, "command-status.need", names.size(), names);
         }
 

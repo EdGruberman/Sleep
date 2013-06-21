@@ -9,7 +9,7 @@ import edgruberman.bukkit.playeractivity.PlayerMoveBlockEvent;
 import edgruberman.bukkit.sleep.commands.Force;
 import edgruberman.bukkit.sleep.commands.Reload;
 import edgruberman.bukkit.sleep.commands.Status;
-import edgruberman.bukkit.sleep.messaging.ConfigurationCourier;
+import edgruberman.bukkit.sleep.messaging.Courier.ConfigurationCourier;
 import edgruberman.bukkit.sleep.supplements.Away;
 import edgruberman.bukkit.sleep.supplements.FastForward;
 import edgruberman.bukkit.sleep.supplements.Idle;

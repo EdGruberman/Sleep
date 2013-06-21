@@ -24,7 +24,7 @@ import edgruberman.bukkit.sleep.events.SleepIgnoredChanged;
 import edgruberman.bukkit.sleep.events.SleepLeave;
 import edgruberman.bukkit.sleep.events.SleepNotify;
 import edgruberman.bukkit.sleep.events.SleepRemove;
-import edgruberman.bukkit.sleep.messaging.ConfigurationCourier;
+import edgruberman.bukkit.sleep.messaging.Courier.ConfigurationCourier;
 
 /** sleep state for a specific world */
 public final class State {
@@ -201,8 +201,8 @@ public final class State {
         final SleepNotify event = new SleepNotify(this.world, reason, player, this.sleeping.size(), this.possible().size(), needed);
         Bukkit.getPluginManager().callEvent(event);
         if (!event.isCancelled()) {
-            final String name = this.courier.format("player", player.getName(), player.getDisplayName());
-            this.courier.world(this.world, reason.getKey(), name, event.getNeeded(), event.getSleeping(), event.getPossible());
+            final List<String> name = this.courier.format("player", player.getName(), player.getDisplayName());
+            this.courier.world(this.world, reason.getKey(), ( name.size() >= 1 ? name.get(0) : null ), event.getNeeded(), event.getSleeping(), event.getPossible());
         }
 
         if (event.getNeeded() == 0 && (this.forceCount != -1 || this.forcePercent != -1) && this.preventing().size() >= 1 )
