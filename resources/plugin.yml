@@ -36,6 +36,7 @@ permissions:
       sleep.status: true
       sleep.idle: true
       sleep.away: true
+      sleep.daybed: true
   sleep.consider:
     description: Allows preventing sleep if not in bed
     default: false
@@ -44,6 +45,9 @@ permissions:
     default: false
   sleep.away:
     description: Allows being ignored while away if Away supplement is enabled
+    default: false
+  sleep.daybed:
+    description: Allows setting bed spawn during the day if Daybed supplement is enabled
     default: false
   sleep.enter.force:
     description: Will automatically force sleep when entering bed

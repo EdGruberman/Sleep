@@ -16,6 +16,10 @@ temporary:
 away:
   away: '§8{0,time,HH:mm:ss} {1}§8 is now away ({2,choice,0#§5no more sleepers needed§8|1#§dneed +{2} to sleep§8})' # 1 = Player, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
   back: '§8{0,time,HH:mm:ss} {1}§8 is no longer away (§dneed +{2} to sleep§8)' # 1 = Player, 2 = Player Count Needed, 3 = Player Count In Bed, 4 = Player Count Possible
+daybed: # 1 = Revert Duration, 2 = Previous World, 3 = Previous X, 4 = Previous Y, 5 = Previous Z, 6 = Daybed World, 7 = Daybed X, 8 = Daybed Y, 9 = Daybed Z
+  success: '§f-> §8Your §2spawn has been set§8 to this bed' # 10 = Allow Revert(0|1)
+  instruction: '§f-> To §5revert§8 to previous spawn, §5remove§8 this bed soon'
+  reverted: '§f-> §2Reverted§8 to previous spawn'
 insomnia:
   eject: '§f-> §7Sleep is §edisabled§7'
   status: '§f-> §7Sleep is §edisabled§7 for {1}' # 1 = World

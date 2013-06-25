@@ -1,5 +1,7 @@
 package edgruberman.bukkit.sleep;
 
+import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
@@ -11,6 +13,7 @@ import edgruberman.bukkit.sleep.commands.Reload;
 import edgruberman.bukkit.sleep.commands.Status;
 import edgruberman.bukkit.sleep.messaging.Courier.ConfigurationCourier;
 import edgruberman.bukkit.sleep.supplements.Away;
+import edgruberman.bukkit.sleep.supplements.Daybed;
 import edgruberman.bukkit.sleep.supplements.FastForward;
 import edgruberman.bukkit.sleep.supplements.Idle;
 import edgruberman.bukkit.sleep.supplements.Insomnia;
@@ -42,7 +45,7 @@ public final class Main extends CustomPlugin {
     @Override
     public void onLoad() {
         this.putConfigMinimum("7.1.0a1");
-        this.putConfigMinimum(Main.LANGUAGE_FILE, "7.0.0b21");
+        this.putConfigMinimum(Main.LANGUAGE_FILE, "7.2.0b0");
 
         final PluginDependency dependency = new PluginDependency(this, "PlayerActivity", "edgruberman.bukkit.playeractivity", "4.2.1");
         if (dependency.isValid()) {
@@ -89,6 +92,7 @@ public final class Main extends CustomPlugin {
         this.getSupplementManager().register(this, Rewards.class, "rewards");
 
         this.getSupplementManager().register(this, Away.class, "away");
+        this.getSupplementManager().register(this, Daybed.class, "daybed");
         this.getSupplementManager().register(this, Idle.class, "idle");
         this.getSupplementManager().register(this, Insomnia.class, "insomnia");
         this.getSupplementManager().register(this, Temporary.class, "temporary");
@@ -115,6 +119,30 @@ public final class Main extends CustomPlugin {
     public SupplementManager getSupplementManager() {
         if (this.supplementManager == null) this.supplementManager = new SupplementManager(this);
         return this.supplementManager;
+    }
+
+
+
+    public static long parseTime(final String value, final TimeUnit output, final long defaultDuration, final TimeUnit defaultSource) {
+        final String[] elements = value.split(" ");
+        final String valueDuration = elements[0];
+        final String valueSource = ( elements.length >= 2 ? elements[1].toUpperCase(Locale.ENGLISH) : defaultSource.name() );
+
+        long duration;
+        try {
+            duration = Long.valueOf(valueDuration);
+        } catch (final NumberFormatException e) {
+            duration = defaultDuration;
+        }
+
+        TimeUnit source;
+        try {
+            source = TimeUnit.valueOf(valueSource);
+        } catch (final IllegalArgumentException e) {
+            source = defaultSource;
+        }
+
+        return output.convert(duration, source);
     }
 
 }

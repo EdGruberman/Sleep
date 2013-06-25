@@ -13,6 +13,7 @@ import java.util.logging.Level;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.World.Environment;
+import org.bukkit.block.Block;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -27,6 +28,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.event.world.WorldUnloadEvent;
+import org.bukkit.material.Bed;
 import org.bukkit.plugin.Plugin;
 
 import edgruberman.bukkit.sleep.util.CustomPlugin;
@@ -161,6 +163,14 @@ public final class Somnologist implements Listener {
         if (state == null) return;
 
         state.leave(event.getPlayer(), event.getBed());
+    }
+
+
+
+    public static Block bedHead(final Block block) {
+        final Bed material = (Bed) block.getType().getNewData(block.getData());
+        if (material.isHeadOfBed()) return block;
+        return block.getRelative(material.getFacing());
     }
 
 }

@@ -6,6 +6,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.craftbukkit.v1_5_R3.CraftWorld;
 import org.bukkit.craftbukkit.v1_5_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 
@@ -31,6 +32,12 @@ public class CraftBukkit_v1_5_R3 extends CraftBukkit {
         if (id != Material.BED_BLOCK.getId()) return null;
 
         return new Location(world, bed.x, bed.y, bed.z);
+    }
+
+    @Override
+    public boolean isDaytime(final World world) {
+        final CraftWorld cworld = (CraftWorld) world;
+        return cworld.getHandle().v();
     }
 
 }

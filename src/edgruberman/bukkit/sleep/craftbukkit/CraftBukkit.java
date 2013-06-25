@@ -28,6 +28,8 @@ public abstract class CraftBukkit {
     // Unable to get the last used bed block for a player https://bukkit.atlassian.net/browse/BUKKIT-3604
     public abstract Location getBedLocation(Player player);
 
+    public abstract boolean isDaytime(World world);
+
 
 
     /** load chunk if necessary, will revert chunk after */
