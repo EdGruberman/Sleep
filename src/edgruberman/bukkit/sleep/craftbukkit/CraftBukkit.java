@@ -23,15 +23,15 @@ public abstract class CraftBukkit {
 
 
 
-    public abstract void bedEject(Player player);
+    public abstract void wakeUpPlayer(Player player);
 
     // Unable to get the last used bed block for a player https://bukkit.atlassian.net/browse/BUKKIT-3604
-    public abstract Location getBed(Player player);
+    public abstract Location getBedLocation(Player player);
 
 
 
     /** load chunk if necessary, will revert chunk after */
-    protected static int blockTypeId(final World world, final int x, final int y, final int z) {
+    protected static int getBlockTypeIdAt(final World world, final int x, final int y, final int z) {
         final boolean before = world.isChunkLoaded(x >> 4, z >> 4);
         if (!before) world.loadChunk(x >> 4, z >> 4);
         final int id = world.getBlockTypeIdAt(x, y, z);

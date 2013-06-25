@@ -56,7 +56,7 @@ public final class Temporary extends Supplement {
     private void onPlayerBedEnter(final PlayerBedEnterEvent event) {
         if (!event.getPlayer().getWorld().equals(this.state.world)) return;
 
-        final Location previous = this.cb.getBed(event.getPlayer());
+        final Location previous = this.cb.getBedLocation(event.getPlayer());
         if (previous == null) return; // ignore if no previous bed spawn exists
         if (previous.equals(event.getBed().getLocation())) return; // ignore when bed is same as current spawn
 
@@ -103,7 +103,7 @@ public final class Temporary extends Supplement {
         Block head = broken.getBlock();
         final Bed bed = new Bed(broken.getBlock().getTypeId(), broken.getBlock().getData());
         if (!bed.isHeadOfBed()) head = head.getRelative(bed.getFacing());
-        if (!head.getLocation().equals(this.cb.getBed(broken.getPlayer()))) return;
+        if (!head.getLocation().equals(this.cb.getBedLocation(broken.getPlayer()))) return;
 
         // revert to previous bed spawn
         broken.getPlayer().setBedSpawnLocation(previous);

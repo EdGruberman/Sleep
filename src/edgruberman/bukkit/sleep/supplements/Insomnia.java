@@ -86,7 +86,7 @@ public final class Insomnia extends Supplement {
             Insomnia.this.implementor.getLogger().log(Level.FINEST, "Insomnia sets in for {0}; Setting spawn point then ejecting from bed...", this.player.getName());
 
             // eject player from bed before sleep can complete, but set player's spawn point
-            Insomnia.this.cb.bedEject(this.player);
+            Insomnia.this.cb.wakeUpPlayer(this.player);
             Insomnia.this.state.courier.send(this.player, "insomnia.eject");
         }
 

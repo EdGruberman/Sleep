@@ -12,13 +12,13 @@ import org.bukkit.entity.Player;
 public class CraftBukkit_v1_5_R3 extends CraftBukkit {
 
     @Override
-    public void bedEject(final Player player) {
+    public void wakeUpPlayer(final Player player) {
         final CraftPlayer cp = (CraftPlayer) player;
         cp.getHandle().a(true, true, true); // reset sleep ticks, update sleeper status for world, set as current bed spawn
     }
 
     @Override
-    public Location getBed(final Player player) {
+    public Location getBedLocation(final Player player) {
         final CraftPlayer cp = (CraftPlayer) player;
 
         final World world = Bukkit.getServer().getWorld(cp.getHandle().spawnWorld);
@@ -27,7 +27,7 @@ public class CraftBukkit_v1_5_R3 extends CraftBukkit {
         final ChunkCoordinates bed = cp.getHandle().getBed();
         if (bed == null) return null;
 
-        final int id = ( cp.getHandle().isRespawnForced() ? Material.BED_BLOCK.getId() : CraftBukkit.blockTypeId(world, bed.x, bed.y, bed.z) );
+        final int id = ( cp.getHandle().isRespawnForced() ? Material.BED_BLOCK.getId() : CraftBukkit.getBlockTypeIdAt(world, bed.x, bed.y, bed.z) );
         if (id != Material.BED_BLOCK.getId()) return null;
 
         return new Location(world, bed.x, bed.y, bed.z);

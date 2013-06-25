@@ -37,25 +37,25 @@ permissions:
       sleep.idle: true
       sleep.away: true
   sleep.consider:
-    description: Will prevent sleep if not in bed
+    description: Allows preventing sleep if not in bed
     default: false
   sleep.idle:
-    description: Will be ignored for sleep while idle
+    description: Allows being ignored while idle if Idle supplement is enabled
     default: false
   sleep.away:
-    description: Will be ignored for sleep while away
+    description: Allows being ignored while away if Away supplement is enabled
     default: false
   sleep.enter.force:
     description: Will automatically force sleep when entering bed
     default: false
   sleep.status:
-    description: Can use sleep:status command
+    description: Can use status command
     default: false
   sleep.force:
-    description: Can use sleep:force command
+    description: Can use force command
     default: false
   sleep.reload:
-    description: Can use sleep:reload command
+    description: Can use reload command
     default: false
   sleep.ignore:
     description: DEPRECATED - Use sleep.consider instead
