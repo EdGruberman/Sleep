@@ -7,6 +7,7 @@ import java.util.Map;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
@@ -17,6 +18,7 @@ import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerBedLeaveEvent;
 import org.bukkit.material.Bed;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.scheduler.BukkitTask;
 
 import edgruberman.bukkit.sleep.Main;
 import edgruberman.bukkit.sleep.State;
@@ -29,8 +31,8 @@ public final class Temporary extends Supplement {
 
     private final long duration;
     private final CraftBukkit cb;
-    private final Map<String, Location> previous = new HashMap<String, Location>();
-    private final Map<String, Integer> committers = new HashMap<String, Integer>();
+    private final Map<String, CapturedLocation> previous = new HashMap<String, CapturedLocation>();
+    private final Map<String, SpawnCommitter> committers = new HashMap<String, SpawnCommitter>();
 
     public Temporary(final Plugin implementor, final State state, final ConfigurationSection config) {
         super(implementor, state ,config);
@@ -47,9 +49,12 @@ public final class Temporary extends Supplement {
 
     @Override
     protected void onUnload() {
-        for (final int taskId : this.committers.values()) Bukkit.getScheduler().cancelTask(taskId);
-        this.previous.clear();
+        for (final SpawnCommitter committer : this.committers.values()) {
+            committer.message();
+            committer.cancel();
+        }
         this.committers.clear();
+        this.previous.clear();
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -61,32 +66,33 @@ public final class Temporary extends Supplement {
         if (previous.equals(event.getBed().getLocation())) return; // ignore when bed is same as current spawn
 
         // record previous bed spawn location
-        this.previous.put(event.getPlayer().getName(), previous);
+        this.previous.put(event.getPlayer().getName(), new CapturedLocation(previous));
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     private void onPlayerBedLeave(final PlayerBedLeaveEvent event) {
         if (!event.getPlayer().getWorld().equals(this.state.world)) return;
 
-        final Location previous = this.previous.get(event.getPlayer().getName());
+        final CapturedLocation previous = this.previous.get(event.getPlayer().getName());
         if (previous == null) return;
 
         // bed spawn for player will not be updated until event finishes processing
-        if (event.getBed().getLocation().equals(previous)) {
+        if (event.getBed().getLocation().equals(previous.toLocation())) {
             // since bed spawn did not change, remove tracking of bed spawn
             this.previous.remove(event.getPlayer().getName());
             return;
         }
 
         this.implementor.getLogger().log(CustomLevel.TRACE, "Temporary bed used by {0} at {2}; Previous: {1}"
-                , new Object[]{event.getPlayer().getName(), previous, event.getBed()});
-        this.state.courier.send(event.getPlayer(), "temporary.instruction", Temporary.readableDuration(this.duration / 20 * 1000)
-                , previous.getWorld().getName(), previous.getBlockX(), previous.getBlockY(), previous.getBlockZ()
-                , event.getBed().getWorld().getName(), event.getBed().getX(), event.getBed().getY(), event.getBed().getZ());
+                , new Object[]{ event.getPlayer().getName(), previous, event.getBed() });
 
-        // bed spawn changed, commit change after specified duration has elapsed
-        final int taskId = Bukkit.getScheduler().scheduleSyncDelayedTask(this.implementor, new BedChangeCommitter(event.getPlayer()), this.duration);
-        this.committers.put(event.getPlayer().getName(), taskId);
+        this.state.courier.send(event.getPlayer(), "temporary.instruction", Temporary.readableDuration(this.duration / 20 * 1000)
+                , previous.getWorldName(), previous.getBlockX(), previous.getBlockY(), previous.getBlockZ()
+                , event.getBed().getWorld().getName(), event.getBed().getX(), event.getBed().getY(), event.getBed().getZ()
+                , ( previous.getWorldName() == null ? 1 : 0 ));
+
+        // spawn changed, commit change after duration
+        new SpawnCommitter(event.getPlayer(), previous);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -96,7 +102,7 @@ public final class Temporary extends Supplement {
         if (broken.getBlock().getTypeId() != Material.BED_BLOCK.getId()) return;
 
         // ignore if bed spawn change has been committed
-        final Location previous = this.previous.get(broken.getPlayer().getName());
+        final CapturedLocation previous = this.previous.get(broken.getPlayer().getName());
         if (previous == null) return;
 
         // ignore if broken bed is not current spawn
@@ -106,30 +112,114 @@ public final class Temporary extends Supplement {
         if (!head.getLocation().equals(this.cb.getBedLocation(broken.getPlayer()))) return;
 
         // revert to previous bed spawn
-        broken.getPlayer().setBedSpawnLocation(previous);
+        broken.getPlayer().setBedSpawnLocation(previous.toLocation());
         this.previous.remove(broken.getPlayer().getName());
 
         this.implementor.getLogger().log(CustomLevel.TRACE, "Temporary bed reverted by {0} to {1}; Temporary: {2}"
                 , new Object[]{broken.getPlayer().getName(), previous, head});
+
         this.state.courier.send(broken.getPlayer(), "temporary.reverted"
-                , previous.getWorld().getName(), previous.getBlockX(), previous.getBlockY(), previous.getBlockZ()
-                , head.getWorld().getName(), head.getX(), head.getY(), head.getZ());
+                , previous.getWorldName(), previous.getBlockX(), previous.getBlockY(), previous.getBlockZ()
+                , head.getWorld().getName(), head.getX(), head.getY(), head.getZ()
+                , ( previous.getWorldName() == null ? 1 : 0 ));
     }
 
 
 
-    private final class BedChangeCommitter implements Runnable {
+    private final class SpawnCommitter implements Runnable {
 
-        private final Player player;
+        private final String player;
+        private final BukkitTask task;
+        private final CapturedLocation previous;
 
-        private BedChangeCommitter(final Player player) {
-            this.player = player;
+        private SpawnCommitter(final Player player, final CapturedLocation previous) {
+            this.player = player.getName();
+            this.previous = previous;
+
+            final SpawnCommitter existing = Temporary.this.committers.remove(player.getName());
+            if (existing != null) existing.cancel();
+
+            Temporary.this.committers.put(player.getName(), this);
+            this.task = Bukkit.getScheduler().runTaskLater(Temporary.this.implementor, this, Temporary.this.duration);
         }
 
         @Override
         public void run() {
-            Temporary.this.previous.remove(this.player.getName());
-            Temporary.this.committers.remove(this.player.getName());
+            this.message();
+            Temporary.this.previous.remove(this.player);
+            Temporary.this.committers.remove(this.player);
+        }
+
+        void message() {
+            final Player target = Bukkit.getPlayerExact(this.player);
+            if (target == null) return;
+
+            final CapturedLocation current = new CapturedLocation(Temporary.this.cb.getBedLocation(target));
+            Temporary.this.state.courier.send(target, "temporary.committed"
+                    , this.previous.getWorldName(), this.previous.getBlockX(), this.previous.getBlockY(), this.previous.getBlockZ()
+                    , current.getWorldName(), current.getBlockX(), current.getBlockY(), current.getBlockZ()
+                    , ( this.previous.getWorldName() == null ? 1 : 0 ));
+        }
+
+        void cancel() {
+            this.task.cancel();
+        }
+
+    }
+
+
+
+    // do not store world reference which prevents worlds from unloading
+    private static final class CapturedLocation {
+
+        private final String worldName;
+        private final Integer blockX;
+        private final Integer blockY;
+        private final Integer blockZ;
+
+        CapturedLocation(final Location location) {
+            if (location != null) {
+                this.worldName = location.getWorld().getName();
+                this.blockX = location.getBlockX();
+                this.blockY = location.getBlockY();
+                this.blockZ = location.getBlockZ();
+            } else {
+                this.worldName = null;
+                this.blockX = null;
+                this.blockY = null;
+                this.blockZ = null;
+            }
+        }
+
+        String getWorldName() {
+            return this.worldName;
+        }
+
+        Integer getBlockX() {
+            return this.blockX;
+        }
+
+        Integer getBlockY() {
+            return this.blockY;
+        }
+
+        Integer getBlockZ() {
+            return this.blockZ;
+        }
+
+        World toWorld() {
+            return Bukkit.getWorld(this.worldName);
+        }
+
+        Location toLocation() {
+            final World world = this.toWorld();
+            if (world == null) return null;
+            return new Location(world, this.blockX, this.blockY, this.blockZ);
+        }
+
+        @Override
+        public String toString() {
+            return this.toLocation().toString();
         }
 
     }
