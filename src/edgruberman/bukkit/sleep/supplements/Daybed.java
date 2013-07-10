@@ -140,6 +140,8 @@ public final class Daybed extends Supplement {
             final Location current = capture.toLocation();
             broken.getPlayer().setBedSpawnLocation(current);
             Daybed.this.previous.remove(broken.getPlayer().getName());
+            final SpawnCommitter committer = Daybed.this.committers.remove(broken.getPlayer().getName());
+            if (committer != null) committer.cancel();
 
             Daybed.this.implementor.getLogger().log(CustomLevel.TRACE, "Daybed spawn reverted by {0} to {1}; Daybed: {2}"
                     , new Object[]{ broken.getPlayer().getName(), previous, current });

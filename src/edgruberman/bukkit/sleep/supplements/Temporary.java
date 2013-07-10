@@ -114,6 +114,8 @@ public final class Temporary extends Supplement {
         // revert to previous bed spawn
         broken.getPlayer().setBedSpawnLocation(previous.toLocation());
         this.previous.remove(broken.getPlayer().getName());
+        final SpawnCommitter committer = this.committers.remove(broken.getPlayer().getName());
+        if (committer != null) committer.cancel();
 
         this.implementor.getLogger().log(CustomLevel.TRACE, "Temporary bed reverted by {0} to {1}; Temporary: {2}"
                 , new Object[]{broken.getPlayer().getName(), previous, head});
