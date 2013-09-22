@@ -52,7 +52,7 @@ public final class FastForward extends Supplement implements Runnable {
         final int start = (int) Math.ceil(notify.getPossible() * this.min);
         final int force = (int) Math.ceil(notify.getPossible() * this.max);
         if (force < notify.getNeeded()) notify.setNeeded(force);
-        this.state.courier.world(this.state.world, "fast-forward.notify", this.percent, notify.getNeeded(), notify.getSleeping(), notify.getPossible(), start);
+        this.state.courier.announce(this.state.world, "fast-forward.notify", this.percent, notify.getNeeded(), notify.getSleeping(), notify.getPossible(), start);
         this.notify = false;
     }
 

@@ -99,7 +99,7 @@ public final class Underground extends Supplement implements Runnable {
             }
         }
         if (this.initial && below > 0)
-            this.state.courier.world(this.state.world, "underground.initial", below, this.state.needed(), this.state.sleeping.size(), this.state.possible().size());
+            this.state.courier.announce(this.state.world, "underground.initial", below, this.state.needed(), this.state.sleeping.size(), this.state.possible().size());
 
         this.initial = false;
         if (!sleepers) this.disable();
