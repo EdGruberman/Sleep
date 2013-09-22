@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 
@@ -33,12 +34,12 @@ public abstract class CraftBukkit {
 
 
     /** load chunk if necessary, will revert chunk after */
-    protected static int getBlockTypeIdAt(final World world, final int x, final int y, final int z) {
+    protected static Material getMaterial(final World world, final int x, final int y, final int z) {
         final boolean before = world.isChunkLoaded(x >> 4, z >> 4);
         if (!before) world.loadChunk(x >> 4, z >> 4);
-        final int id = world.getBlockTypeIdAt(x, y, z);
+        final Material result = world.getBlockAt(x, y, z).getType();
         if (!before) world.unloadChunk(x >> 4, z >> 4);
-        return id;
+        return result;
     }
 
 }

@@ -99,7 +99,7 @@ public final class Temporary extends Supplement {
     private void onBlockBreak(final BlockBreakEvent broken) {
         if (!broken.getBlock().getWorld().equals(this.state.world)) return;
 
-        if (broken.getBlock().getTypeId() != Material.BED_BLOCK.getId()) return;
+        if (broken.getBlock().getType() != Material.BED_BLOCK) return;
 
         // ignore if bed spawn change has been committed
         final CapturedLocation previous = this.previous.get(broken.getPlayer().getName());
@@ -107,7 +107,7 @@ public final class Temporary extends Supplement {
 
         // ignore if broken bed is not current spawn
         Block head = broken.getBlock();
-        final Bed bed = new Bed(broken.getBlock().getTypeId(), broken.getBlock().getData());
+        final Bed bed = (Bed) broken.getBlock().getState().getData();
         if (!bed.isHeadOfBed()) head = head.getRelative(bed.getFacing());
         if (!head.getLocation().equals(this.cb.getBedLocation(broken.getPlayer()))) return;
 

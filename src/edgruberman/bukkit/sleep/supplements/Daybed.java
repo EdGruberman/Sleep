@@ -19,11 +19,11 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.material.Bed;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
 
 import edgruberman.bukkit.sleep.Main;
-import edgruberman.bukkit.sleep.Somnologist;
 import edgruberman.bukkit.sleep.State;
 import edgruberman.bukkit.sleep.Supplement;
 import edgruberman.bukkit.sleep.craftbukkit.CraftBukkit;
@@ -73,11 +73,11 @@ public final class Daybed extends Supplement {
     private void onRightClickBedInDay(final PlayerInteractEvent interaction) {
         if (!interaction.getPlayer().getWorld().equals(this.state.world)) return;
         if (interaction.getAction() != Action.RIGHT_CLICK_BLOCK) return;
-        if (interaction.getClickedBlock().getTypeId() != Material.BED_BLOCK.getId()) return;
+        if (interaction.getClickedBlock().getType() != Material.BED_BLOCK) return;
         if (!this.cb.isDaytime(interaction.getPlayer().getWorld())) return;
 
         // ignore if bed is same as current spawn
-        final Block head = Somnologist.bedHead(interaction.getClickedBlock());
+        final Block head = Daybed.bedHead(interaction.getClickedBlock());
         final CapturedLocation previous = new CapturedLocation(this.cb.getBedLocation(interaction.getPlayer()));
         if (head.getLocation().equals(previous.toLocation())) return;
 
@@ -117,7 +117,7 @@ public final class Daybed extends Supplement {
         @EventHandler(priority = EventPriority.MONITOR)
         private void onBreakBed(final BlockBreakEvent broken) {
             if (!broken.getBlock().getWorld().equals(Daybed.this.state.world)) return;
-            if (broken.getBlock().getTypeId() != Material.BED_BLOCK.getId()) return;
+            if (broken.getBlock().getType() != Material.BED_BLOCK) return;
 
             // ignore if no bed spawn change was captured
             final CapturedLocation capture = Daybed.this.previous.get(broken.getPlayer().getName());
@@ -132,7 +132,7 @@ public final class Daybed extends Supplement {
             }
 
             // ignore if broken bed is not current daybed spawn
-            final Block head = Somnologist.bedHead(broken.getBlock());
+            final Block head = Daybed.bedHead(broken.getBlock());
             final CapturedLocation previous = new CapturedLocation(Daybed.this.cb.getBedLocation(broken.getPlayer()));
             if (!head.getLocation().equals(previous.toLocation())) return;
 
@@ -261,6 +261,12 @@ public final class Daybed extends Supplement {
     }
 
 
+
+    public static Block bedHead(final Block block) {
+        final Bed material = (Bed) block.getState().getData();
+        if (material.isHeadOfBed()) return block;
+        return block.getRelative(material.getFacing());
+    }
 
     private static String readableDuration(final long total) {
         final long totalSeconds = total / 1000;

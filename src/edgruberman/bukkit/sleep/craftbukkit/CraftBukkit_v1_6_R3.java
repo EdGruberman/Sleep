@@ -28,8 +28,8 @@ public class CraftBukkit_v1_6_R3 extends CraftBukkit {
         final ChunkCoordinates bed = cp.getHandle().getBed();
         if (bed == null) return null;
 
-        final int id = ( cp.getHandle().isRespawnForced() ? Material.BED_BLOCK.getId() : CraftBukkit.getBlockTypeIdAt(world, bed.x, bed.y, bed.z) );
-        if (id != Material.BED_BLOCK.getId()) return null;
+        final Material material = ( cp.getHandle().isRespawnForced() ? Material.BED_BLOCK : CraftBukkit.getMaterial(world, bed.x, bed.y, bed.z) );
+        if (material != Material.BED_BLOCK) return null;
 
         return new Location(world, bed.x, bed.y, bed.z);
     }
