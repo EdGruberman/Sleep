@@ -6,12 +6,12 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.jar.JarInputStream;
 
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.plugin.java.PluginClassLoader;
 
 public class PluginDependency {
 
@@ -65,8 +65,12 @@ public class PluginDependency {
         // first time extraction requires late class path addition
         final Method getClassLoader = JavaPlugin.class.getDeclaredMethod("getClassLoader");
         getClassLoader.setAccessible(true);
-        final PluginClassLoader loader = (PluginClassLoader) getClassLoader.invoke(this.dependent);
-        loader.addURL(utilityURL);
+        final URLClassLoader loader = (URLClassLoader) getClassLoader.invoke(this.dependent);
+
+        final Method addURL = URLClassLoader.class.getDeclaredMethod("addURL");
+        addURL.setAccessible(true);
+        addURL.invoke(loader, utilityURL);
+
         return utilityURL;
     }
 
