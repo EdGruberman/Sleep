@@ -47,7 +47,7 @@ public final class Underground extends Supplement implements Runnable {
     }
 
     private boolean isBelow(final Player player) {
-        return player.getLocation().getBlockY() <= Underground.this.depth;
+        return player.getLocation().getBlockY() <= this.depth;
     }
 
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true) // process before state update to prevent leave notification
@@ -108,6 +108,7 @@ public final class Underground extends Supplement implements Runnable {
     private void disable() {
         Bukkit.getScheduler().cancelTask(this.taskId);
         this.active = false;
+        this.taskId = -1;
 
         for (final Player player : this.state.players)
             this.state.ignore(player, false, Underground.NO_SLEEPERS);
