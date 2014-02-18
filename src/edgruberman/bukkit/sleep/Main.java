@@ -47,7 +47,7 @@ public final class Main extends CustomPlugin {
         this.putConfigMinimum("7.1.0a1");
         this.putConfigMinimum(Main.LANGUAGE_FILE, "7.2.0b4");
 
-        final PluginDependency dependency = new PluginDependency(this, "PlayerActivity", "edgruberman.bukkit.playeractivity", "4.2.1");
+        final PluginDependency dependency = new PluginDependency(this, "PlayerActivity", "edgruberman.bukkit.playeractivity", "4.3.0");
         if (dependency.isValid()) {
             this.loaded = true;
             return;
