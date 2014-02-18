@@ -102,9 +102,9 @@ public final class Main extends CustomPlugin {
 
         this.somnologist = new Somnologist(this, this.getConfig().getStringList("excluded"));
 
-        this.getCommand("sleep:status").setExecutor(new Status(this.somnologist));
-        this.getCommand("sleep:force").setExecutor(new Force(this.somnologist));
-        this.getCommand("sleep:reload").setExecutor(new Reload(this));
+        this.getCommand("status").setExecutor(new Status(this.somnologist));
+        this.getCommand("force").setExecutor(new Force(this.somnologist));
+        this.getCommand("sleep.reload").setExecutor(new Reload(this));
     }
 
     @Override

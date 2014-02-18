@@ -6,17 +6,15 @@ author: EdGruberman (ed@rjump.com)
 website: http://dev.bukkit.org/server-mods/sleep/
 main: edgruberman.bukkit.sleep.Main
 commands:
-  'sleep:status':
-    aliases: [sleep, sleep.status]
+  'status':
     description: Sleep requirements and who is preventing sleep
     permission: sleep.status
     usage: '§f-> §7Usage: §b/<command> §3[§oworld§3]'
-  'sleep:force':
-    aliases: [sleep.force]
+  'force':
     description: Force sleep for one night
     permission: sleep.force
     usage: '§f-> §7Usage: §b/<command> §3[§oworld§3]'
-  'sleep:reload':
+  'sleep.reload':
     description: Reload Sleep plugin
     permission: sleep.reload
     usage: '§f-> §7Usage: §b/<command>'
